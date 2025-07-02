@@ -1,115 +1,216 @@
+"use client";
+import { FaSearch } from "react-icons/fa";
 import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import Header from "@/components/Header";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import { useEffect } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Mentor Data
+const mentorsLeft = [
+  { name: "CA Rohan Mehta", title: "Direct Tax Expert", image: "/mentors/rohan.png", color: "bg-gradient-to-r from-purple-700 to-purple-900" },
+  { name: "CA Anjali Verma", title: "Audit Mentor", image: "/mentors/anjali.png", color: "bg-gradient-to-r from-pink-600 to-pink-800" },
+  { name: "CA Karan Shah", title: "GST Specialist", image: "/mentors/karan.png", color: "bg-gradient-to-r from-blue-600 to-blue-800" },
+];
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const mentorsRight = [
+  { name: "CA Nidhi Sinha", title: "Finance & Investment", image: "/mentors/nidhi.png", color: "bg-gradient-to-r from-teal-600 to-teal-800" },
+  { name: "CA Manish Kapoor", title: "Accounts Guru", image: "/mentors/manish.png", color: "bg-gradient-to-r from-yellow-600 to-yellow-800" },
+  { name: "CA Sneha Goyal", title: "CMA & Costing Mentor", image: "/mentors/sneha.png", color: "bg-gradient-to-r from-red-600 to-red-800" },
+];
 
-export default function Home() {
+export default function HomePage() {
+  useEffect(() => {
+    AOS.init({ duration: 1000, once: true, offset: 100 });
+  }, []);
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-black text-white font-sans relative">
+      <Header />
+
+      <section className="relative z-10 px-4 md:px-10 py-20 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
+          {/* Left Marquee */}
+          <div className="hidden md:block h-[400px] overflow-hidden relative">
+            <div className="marquee-wrapper animate-marquee-up">
+              {[...mentorsLeft, ...mentorsLeft].map((mentor, idx) => (
+                <MentorCard key={`left-${idx}`} mentor={mentor} />
+              ))}
+            </div>
+            <div className="absolute top-0 left-0 w-full h-10 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none z-20" />
+            <div className="absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none z-20" />
+          </div>
+
+          {/* Center Content */}
+          <div className="text-center" data-aos="fade-up">
+            <h1 className="text-3xl md:text-5xl font-extrabold leading-snug">
+              Transform Your <span className="text-blue-500">CA Career</span>
+            </h1>
+            <p className="mt-4 text-gray-400 text-base md:text-lg max-w-md mx-auto leading-relaxed">
+              Join India’s #1 mentorship platform for Chartered Accountants. Get expert guidance, premium resources, and 24x7 doubt-solving.
+            </p>
+
+            {/* Search Bar */}
+            <div className="mt-10 relative max-w-lg mx-auto" data-aos="zoom-in" data-aos-delay="100">
+              <input
+                type="text"
+                placeholder="Search mentors, resources, queries..."
+                className="w-full py-4 pl-12 pr-4 rounded-full bg-gray-900 text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+              <FaSearch className="absolute top-1/2 left-4 transform -translate-y-1/2 text-gray-500" />
+            </div>
+          </div>
+
+          {/* Right Marquee */}
+          <div className="hidden md:block h-[400px] overflow-hidden relative">
+            <div className="marquee-wrapper animate-marquee-down">
+              {[...mentorsRight, ...mentorsRight].map((mentor, idx) => (
+                <MentorCard key={`right-${idx}`} mentor={mentor} />
+              ))}
+            </div>
+            <div className="absolute top-0 left-0 w-full h-10 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none z-20" />
+            <div className="absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none z-20" />
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+        {/* Category Buttons */}
+        <div className="mt-16 flex flex-wrap justify-center gap-4 px-4 md:px-20" data-aos="fade-up" data-aos-delay="200">
+          {[
+            ["Explore Before CA", "from-gray-800 to-gray-900"],
+            ["Start Foundation", "from-blue-600 to-blue-800"],
+            ["Crack CA Inter", "from-green-600 to-green-800"],
+            ["Master Articleship", "from-yellow-600 to-yellow-800"],
+            ["Ace CA Final", "from-purple-600 to-purple-800"],
+            ["Grow After CA", "from-pink-600 to-pink-800"],
+          ].map(([text, color], i) => (
+            <CategoryButton key={i} text={text} color={color} />
+          ))}
+        </div>
+
+        {/* Marquee Animations */}
+        <style jsx>{`
+          .marquee-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+          }
+
+          @keyframes marqueeUp {
+            0% {
+              transform: translateY(0%);
+            }
+            100% {
+              transform: translateY(-50%);
+            }
+          }
+
+          @keyframes marqueeDown {
+            0% {
+              transform: translateY(-50%);
+            }
+            100% {
+              transform: translateY(0%);
+            }
+          }
+
+          .animate-marquee-up {
+            animation: marqueeUp 8s linear infinite;
+          }
+
+          .animate-marquee-down {
+            animation: marqueeDown 8s linear infinite;
+          }
+        `}</style>
+      </section>
+
+      {/* Our Features Section */}
+      <section className="bg-[#0d0d0d] py-20 px-6 md:px-20 text-white">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" data-aos="fade-up">
+          Why Choose <span className="text-blue-500">MyProfession.CA</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            ["📚", "Structured Learning Paths", "Courses and mentorship mapped to each stage of your CA journey."],
+            ["💬", "24x7 Doubt Support", "Never get stuck — mentors and peers are here to help anytime."],
+            ["🎓", "Top CA Mentors", "Learn from industry leaders, exam rankers, and experienced CAs."],
+          ].map(([icon, title, desc], i) => (
+            <div
+              key={i}
+              data-aos="zoom-in"
+              data-aos-delay={i * 150}
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 shadow-lg hover:shadow-blue-600/40 transition-all duration-300"
+            >
+              <div className="text-4xl mb-4">{icon}</div>
+              <h3 className="text-xl font-semibold mb-2">{title}</h3>
+              <p className="text-gray-400 text-sm">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-black text-gray-400 py-10 px-6 md:px-20">
+        <div className="flex flex-col md:flex-row justify-between gap-10">
+          <div>
+            <h3 className="text-2xl font-bold text-white">MyProfession.<span className="text-blue-500">CA</span></h3>
+            <p className="mt-2 text-sm max-w-xs">
+              Empowering Chartered Accountants through expert mentorship, career guidance, and real-world resources.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-3">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
+              {["About Us", "Courses", "Contact", "Privacy Policy"].map((link, i) => (
+                <li key={i}><a href="#" className="hover:text-white transition">{link}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-3">Contact Us</h4>
+            <p className="text-sm">Email: <a href="mailto:support@myprofession.ca" className="text-blue-500 hover:underline">support@myprofession.ca</a></p>
+            <p className="text-sm">Phone: +91-9876543210</p>
+            <div className="mt-3 flex gap-4 text-xl">
+              <a href="#" className="hover:text-white">🔗</a>
+              <a href="#" className="hover:text-white">💼</a>
+              <a href="#" className="hover:text-white">📘</a>
+            </div>
+          </div>
+        </div>
+        <div className="mt-10 border-t border-gray-700 pt-4 text-center text-sm">
+          © {new Date().getFullYear()} MyProfession.CA. All rights reserved.
+        </div>
       </footer>
     </div>
+  );
+}
+
+// Mentor Card
+function MentorCard({ mentor }) {
+  return (
+    <div
+      data-aos="fade-up"
+      className={`flex items-center gap-4 p-4 mx-auto max-w-xs rounded-xl shadow-lg ${mentor.color}`}
+    >
+      <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-white">
+        <Image src={mentor.image} alt={mentor.name} fill className="object-cover" />
+      </div>
+      <div className="text-left">
+        <div className="text-md font-semibold text-white">{mentor.name}</div>
+        <div className="text-sm text-gray-200">{mentor.title}</div>
+      </div>
+    </div>
+  );
+}
+
+// Category Button
+function CategoryButton({ text, color }) {
+  return (
+    <button
+      className={`bg-gradient-to-r ${color} text-white font-semibold py-2 px-5 rounded-full shadow-md hover:scale-105 hover:shadow-xl transition duration-300 ease-in-out whitespace-nowrap`}
+    >
+      {text}
+    </button>
   );
 }
