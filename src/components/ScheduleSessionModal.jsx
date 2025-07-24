@@ -25,7 +25,13 @@ return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Calendar */}
       <div>
-        <Calendar selected={selectedDate} onSelect={setSelectedDate} />
+     <Calendar
+  selected={selectedDate}
+  onSelect={setSelectedDate}
+  availableDates={["2025-07-31", "2025-07-25", "2025-07-29"]} // replace with your real available dates
+  bookedDates={["2025-07-02", "2025-07-06"]}
+/>
+
       </div>
 
       {/* Options */}
