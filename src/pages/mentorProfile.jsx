@@ -21,7 +21,8 @@ import ScheduleSessionModal from "@/components/ScheduleSessionModal";
 const mentor = {
   name: "CA Rohan Mehta",
   title: "Direct Tax Expert",
-  image: "/mentors/rohan.png",
+  image: "https://i.pravatar.cc/150?img=12"
+,
   rating: 4.8,
   pricePerMinute: 30,
   location: "Delhi, India",
