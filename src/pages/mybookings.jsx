@@ -72,16 +72,16 @@ export default function MyBookings() {
               className="w-full px-4 py-2 bg-[#121c2e] border border-blue-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm placeholder:text-gray-400"
             />
           </div>
+{filteredBookings.length ? (
+  <div className="flex flex-col gap-2">
+    {filteredBookings.map((booking) => (
+      <BookingCard key={booking.id} booking={booking} />
+    ))}
+  </div>
+) : (
+  <p className="text-gray-400">No bookings found.</p>
+)}
 
-          {filteredBookings.length ? (
-            <div className="flex flex-col gap-6">
-              {filteredBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400">No bookings found.</p>
-          )}
         </main>
       </div>
     </>

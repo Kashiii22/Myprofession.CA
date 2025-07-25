@@ -43,13 +43,11 @@ export default function HomePage() {
 
           {/* Center Content */}
           <div className="text-center" data-aos="fade-up">
-            <h1 className="text-3xl md:text-5xl font-extrabold leading-snug">
-              Transform Your <span className="text-blue-500">CA Career</span>
-            </h1>
+            <h3 className="text-2xl md:text-3xl font-extrabold leading-snug">
+             Connect with experienced <span className="text-blue-500">CA Experts</span>
+            </h3>
             <p className="mt-4 text-gray-400 text-base md:text-lg max-w-md mx-auto leading-relaxed">
-              Join India’s #1 mentorship platform for Chartered Accountants. Get expert guidance, premium resources, and 24x7 doubt-solving.
-            </p>
-
+If You are facing any issue in your CA journey whether related to Study/Articleship/Guidance/Job,You can connect to our CA Experts for   1:1 discussion        </p>
             {/* Search Bar */}
             <div className="mt-10 relative max-w-lg mx-auto" data-aos="zoom-in" data-aos-delay="100">
               <input
