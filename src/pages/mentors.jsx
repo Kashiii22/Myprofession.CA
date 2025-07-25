@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AOS from "aos";
-import "aos/dist/aos.css";
 import Image from "next/image";
 import Header from "@/components/Header";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
@@ -11,7 +9,7 @@ const mentors = [
   {
     name: "CA Rohan Mehta",
     title: "Direct Tax Expert",
-    image: "/mentors/rohan.png",
+    image: "https://i.pravatar.cc/150?img=12",
     specialization: "Direct Tax, Income Tax, Capital Gains",
     rating: 4.8,
     quote: "Taxation is not just compliance, it's strategy.",
@@ -20,7 +18,7 @@ const mentors = [
   {
     name: "CA Sneha Verma",
     title: "Audit Mentor",
-    image: "/mentors/anjali.png",
+    image: "https://i.pravatar.cc/150?img=32",
     specialization: "Audit, Compliance, Risk Management",
     rating: 4.6,
     quote: "A good auditor sees what others overlook.",
@@ -29,7 +27,7 @@ const mentors = [
   {
     name: "CA Karan Shah",
     title: "GST Specialist",
-    image: "/mentors/karan.png",
+    image: "https://i.pravatar.cc/150?img=44",
     specialization: "GST, Indirect Tax, Business Structuring",
     rating: 4.7,
     quote: "Clarity in tax ensures clarity in business.",
@@ -38,7 +36,7 @@ const mentors = [
   {
     name: "CA Nidhi Sinha",
     title: "Finance & Investment",
-    image: "/mentors/nidhi.png",
+    image: "https://i.pravatar.cc/150?img=47",
     specialization: "Wealth Management, Investment Planning",
     rating: 5.0,
     quote: "Every rupee must know its job.",
@@ -47,7 +45,7 @@ const mentors = [
   {
     name: "CA Manish Kapoor",
     title: "Accounts Guru",
-    image: "/mentors/manish.png",
+    image: "https://i.pravatar.cc/150?img=51",
     specialization: "Accounting, MIS, Finalization",
     rating: 4.4,
     quote: "Behind every successful business is good accounting.",
@@ -56,7 +54,7 @@ const mentors = [
   {
     name: "CA Sneha Goyal",
     title: "CMA & Costing Mentor",
-    image: "/mentors/sneha.png",
+    image: "https://i.pravatar.cc/150?img=57",
     specialization: "Costing, Budgeting, Management Accounting",
     rating: 4.9,
     quote: "Costing is the backbone of smart business decisions.",
@@ -68,7 +66,8 @@ function RenderStars({ rating }) {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
     if (rating >= i) stars.push(<FaStar key={i} className="text-yellow-400" />);
-    else if (rating >= i - 0.5) stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
+    else if (rating >= i - 0.5)
+      stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
     else stars.push(<FaRegStar key={i} className="text-yellow-400" />);
   }
   return <div className="flex justify-center gap-1 mt-1">{stars}</div>;
@@ -78,10 +77,6 @@ export default function MentorListPage() {
   const [searchText, setSearchText] = useState("");
   const [filtered, setFiltered] = useState(mentors);
   const router = useRouter();
-
-  useEffect(() => {
-    AOS.init({ duration: 1000, once: true });
-  }, []);
 
   useEffect(() => {
     const text = searchText.toLowerCase();
@@ -98,18 +93,11 @@ export default function MentorListPage() {
     <div className="bg-black min-h-screen text-white font-sans">
       <Header />
       <section className="px-4 md:px-20 py-20">
-        <h1
-          className="text-4xl md:text-5xl font-bold text-center mb-12"
-          data-aos="fade-down"
-        >
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-12">
           Meet Our <span className="text-blue-500">Mentors</span>
         </h1>
 
-        <div
-          className="max-w-xl mx-auto mb-12"
-          data-aos="fade-up"
-          data-aos-delay="100"
-        >
+        <div className="max-w-xl mx-auto mb-12">
           <input
             type="text"
             placeholder="Search by name or expertise..."
@@ -119,12 +107,11 @@ export default function MentorListPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10"data-aos="fade-up" >
           {filtered.map((mentor) => (
             <div
               key={mentor.name}
-              data-aos="fade-up"
-              className="relative bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-blue-700 rounded-3xl p-6 shadow-2xl hover:scale-[1.02] hover:shadow-blue-500/40 transition-all flex flex-col justify-between group"
+              className="relative bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-700 rounded-3xl p-6 shadow-lg hover:scale-[1.02] hover:shadow-blue-500/40 transition-all flex flex-col justify-between"
             >
               {mentor.rating >= 4.8 && (
                 <span className="absolute top-4 right-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-sm">
@@ -138,6 +125,7 @@ export default function MentorListPage() {
                   alt={mentor.name}
                   fill
                   className="object-cover"
+                  sizes="112px"
                 />
               </div>
 
@@ -178,12 +166,13 @@ export default function MentorListPage() {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && (
-            <p className="col-span-full text-center text-gray-400 text-sm">
-              No mentors found matching your search.
-            </p>
-          )}
         </div>
+
+        {filtered.length === 0 && (
+          <p className="col-span-full text-center text-gray-400 text-sm mt-10">
+            No mentors found matching your search.
+          </p>
+        )}
       </section>
     </div>
   );
