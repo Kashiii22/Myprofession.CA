@@ -78,12 +78,12 @@ export default function HomePage() {
         {/* Category Buttons */}
         <div className="mt-16 flex flex-wrap justify-center gap-4 px-4 md:px-20" data-aos="fade-up" data-aos-delay="200">
           {[
-            ["Explore Before CA", "from-gray-800 to-gray-900"],
-            ["Start Foundation", "from-blue-600 to-blue-800"],
-            ["Crack CA Inter", "from-green-600 to-green-800"],
-            ["Master Articleship", "from-yellow-600 to-yellow-800"],
-            ["Ace CA Final", "from-indigo-600 to-indigo-800"],
-            ["Grow After CA", "from-pink-600 to-pink-800"],
+            ["Before CA", "from-gray-800 to-gray-900"],
+            ["Foundation", "from-blue-600 to-blue-800"],
+            ["CA Inter", "from-green-600 to-green-800"],
+            ["Articleship", "from-yellow-600 to-yellow-800"],
+            ["CA Final", "from-purple-600 to-purple-800"],
+            ["After CA", "from-pink-600 to-pink-800"],
           ].map(([text, color], i) => (
             <CategoryButton key={i} text={text} color={color} />
           ))}
@@ -121,13 +121,12 @@ export default function HomePage() {
         `}</style>
       </section>
 
-      {/* FEATURES SECTION - Dark Glowy Glass Contrast */}
-      <section className="relative bg-[#131317] text-gray-100 py-20 px-6 md:px-20">
+      {/* Our Features Section */}
+      <section className="bg-[#ffffff] py-20 px-6 md:px-20 text-white">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" data-aos="fade-up">
-          Why Choose <span className="text-blue-500">MyProfession.CA</span>
+          <span className="text-black">Why Choose MyProfession.CA?</span>
         </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
           {[
             {
               icon: "📚",

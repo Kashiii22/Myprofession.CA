@@ -35,7 +35,7 @@ return (
 <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800">
 {/* Logo */}
 <Link href="/" className="text-2xl font-extrabold tracking-wide text-white">
-MyProfession.<span className="text-blue-500">CA</span>
+MyProfession.CA
 </Link>
     {/* Nav Links */}
     <nav className="flex gap-6 items-center text-sm">
@@ -46,9 +46,13 @@ MyProfession.<span className="text-blue-500">CA</span>
           className="hover:text-blue-400 transition duration-200"
         >
           {page
+          
             .replace("privacy", "Privacy Policy")
             .replace("about", "About Us")
-            .replace("contact", "Contact Us")}
+            .replace("contact", "Contact Us")
+             .replace("home","Home")
+            }
+           
         </Link>
       ))}
 
