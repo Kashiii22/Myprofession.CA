@@ -49,22 +49,29 @@ export default function HomePage() {
           {/* Center Content */}
           <div className="text-center" data-aos="fade-up">
             <h3 className="text-2xl md:text-3xl font-extrabold leading-snug">
-              Connect with experienced <span className="text-blue-500">CA Experts</span>
+              Connect with experienced <span className="text-blue-500"><br/>CA Experts</span>
             </h3>
-            <p className="mt-4 text-gray-400 text-base md:text-lg max-w-md mx-auto leading-relaxed">
-              If you're facing any issue in your CA journey — study, articleship, guidance, or job — connect with our CA Experts for a 1:1 discussion.
-            </p>
+<div className="mt-4 bg-[#1a1a1e]/80 p-4 rounded-xl border border-blue-700 shadow-md-blue max-w-2xl mx-auto">
+  <div className="text-gray-400 text-base md:text-lg leading-relaxed">
+    If you are facing any issue in your CA journey whether related to Study/ Articleship/ Guidance/ Job 
+    You can connect with our CA Experts for
+    <span className="block mt-2 text-gray-400 font-semibold text-lg">
+      1:1 Discussion
+    </span>
+  </div>
+</div>
+
 
             {/* Search and CTA */}
             <div className="mt-10 relative max-w-lg mx-auto">
-              <div className="relative">
+              {/* <div className="relative">
                 <input
                   type="text"
                   placeholder="Search mentors, resources, queries..."
                   className="w-full py-4 pl-12 pr-4 rounded-full bg-[#1a1a1d] text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
                 <FaSearch className="absolute top-1/2 left-4 transform -translate-y-1/2 text-gray-500" />
-              </div>
+              </div> */}
 
               {/* Explore Mentors Button */}
               <div className="mt-6 flex justify-center">

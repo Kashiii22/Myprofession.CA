@@ -1,48 +1,89 @@
 "use client";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import GoogleIcon from "./GoogleIcon";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function AuthModal({ onClose }) {
   const [isLogin, setIsLogin] = useState(true);
-  const [otpSent, setOtpSent] = useState(false);
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [closing, setClosing] = useState(false);
+  const router = useRouter();
 
   const toggleTab = () => {
     setIsLogin((prev) => !prev);
-    setOtpSent(false);
     setPhone("");
-    setOtp("");
   };
 
   const handleSendOtp = (e) => {
     e.preventDefault();
     if (phone.length === 10) {
-      setOtpSent(true);
+      router.push("./verify-otp");
     } else {
       alert("Please enter a valid 10-digit phone number.");
     }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (otp.length === 6) {
-      alert("Login successful!"); // Replace with real logic
-    } else {
-      alert("Please enter a valid 6-digit OTP.");
-    }
+  const handleClose = () => {
+    console.log("Closing true");
+    setClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300); // matches transition duration
   };
 
+  const InputField = ({ type = "text", placeholder, value, onChange }) => (
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      maxLength={type === "tel" ? 10 : undefined}
+      className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
+    />
+  );
+
+  const GoogleAuthButton = () => (
+    <div className="mt-6">
+      <div className="flex items-center my-4">
+        <div className="h-px bg-gray-600 flex-grow" />
+        <span className="mx-3 text-gray-400 text-sm">or</span>
+        <div className="h-px bg-gray-600 flex-grow" />
+      </div>
+      <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition">
+        <GoogleIcon /> Continue with Google
+      </button>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex justify-center items-center px-4">
+    <div
+      className={`fixed inset-0 z-50 bg-black/70 flex justify-center items-center px-4 transition-opacity duration-300 ${
+        closing ? "opacity-0" : "opacity-100"
+      }`}
+      onClick={handleClose}
+    >
       <div
-        data-aos="zoom-in"
-        className="backdrop-blur-xl bg-[#0e1625]/80 border border-blue-800 ring-1 ring-blue-500/30 shadow-[0_0_40px_#1e3a8a55] rounded-2xl flex w-full max-w-5xl overflow-hidden transition-all duration-700"
+        onClick={(e) => e.stopPropagation()}
+        className={`relative backdrop-blur-xl bg-[#0e1625]/80 border border-blue-800 ring-1 ring-blue-500/30 shadow-[0_0_60px_#1e3a8acc] rounded-2xl flex w-full max-w-5xl overflow-hidden transition-all duration-300 transform ${
+          closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
+        }`}
       >
+        {/* ❌ Close Button - Top Right */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // ✅ Prevent backdrop click conflict
+            handleClose();
+          }}
+          className="absolute top-4 right-4 text-white text-2xl hover:text-red-400 transition rounded-full p-1 shadow-md hover:shadow-lg focus:outline-none"
+          aria-label="Close"
+        >
+          &times;
+        </button>
+
         {/* Left Illustration */}
-        <div className="hidden md:flex w-1/2 bg-transparent flex-col justify-center items-center p-8">
+        <div className="hidden md:flex w-1/2 flex-col justify-center items-center p-8">
           <Image
             src="/illustration2.png"
             alt="Illustration"
@@ -55,113 +96,60 @@ export default function AuthModal({ onClose }) {
           </h2>
         </div>
 
-        {/* Right Form Section */}
-        <div
-          data-aos="fade-left"
-          className="w-full md:w-1/2 text-white flex flex-col justify-center items-center relative overflow-hidden bg-transparent"
-        >
+        {/* Right Auth Form */}
+        <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center bg-transparent">
           <div className="w-full px-8 py-6 relative h-[500px]">
-            {/* Tabs */}
             <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
-              <button
-                onClick={() => setIsLogin(true)}
-                className={`px-6 py-2 font-semibold text-sm cursor-pointer transition-all w-full ${
-                  isLogin ? "bg-blue-600 text-white" : "text-gray-400"
-                }`}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setIsLogin(false)}
-                className={`px-6 py-2 font-semibold text-sm cursor-pointer transition-all w-full ${
-                  !isLogin ? "bg-blue-600 text-white" : "text-gray-400"
-                }`}
-              >
-                Signup
-              </button>
+              {["Login", "Signup"].map((label, i) => (
+                <button
+                  key={label}
+                  onClick={() => setIsLogin(i === 0)}
+                  className={`px-6 py-2 font-semibold text-sm w-full transition-all ${
+                    isLogin === (i === 0)
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            {/* Form Slider */}
             <div className="relative w-full max-w-md h-full overflow-hidden">
               <div
                 className={`transition-transform duration-700 ease-in-out flex w-[200%] absolute top-0 left-0 ${
                   isLogin ? "translate-x-0" : "-translate-x-1/2"
                 }`}
               >
-                {/* Login Form (Phone + OTP) */}
+                {/* Login */}
                 <div className="w-1/2 p-2 flex flex-col justify-between h-full">
-                  <form
-                    className="space-y-4 w-full"
-                    onSubmit={otpSent ? handleLogin : handleSendOtp}
-                  >
-                    <input
+                  <form onSubmit={handleSendOtp} className="space-y-4 w-full">
+                    <InputField
                       type="tel"
                       placeholder="Phone Number"
-                      maxLength={10}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
                     />
-
-                    {otpSent && (
-                      <input
-                        type="text"
-                        placeholder="Enter OTP"
-                        maxLength={6}
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
-                      />
-                    )}
-
                     <button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
                     >
-                      {otpSent ? "Verify OTP" : "Send OTP"}
+                      Send OTP
                     </button>
                   </form>
-
-                  {/* Google Auth */}
-                  <div className="mt-6">
-                    <div className="flex items-center my-4 w-full">
-                      <div className="h-px bg-gray-600 flex-grow" />
-                      <span className="mx-3 text-gray-400 text-sm">or</span>
-                      <div className="h-px bg-gray-600 flex-grow" />
-                    </div>
-                    <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition">
-                      <GoogleIcon /> Continue with Google
-                    </button>
-                  </div>
+                  <p className="text-sm text-right text-blue-500 mt-2 cursor-pointer hover:underline">
+                    Forgot Password?
+                  </p>
+                  <GoogleAuthButton />
                 </div>
 
-                {/* Signup Form */}
+                {/* Signup */}
                 <div className="w-1/2 p-2 flex flex-col justify-between h-full">
                   <form className="space-y-4 w-full">
-                    <input
-                      type="text"
-                      placeholder="Full Name"
-                      className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Phone Number"
-                      className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
-                    />
-                    <div className="relative">
-                      <input
-                        type="password"
-                        placeholder="Create Password"
-                        className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded pr-10 focus:outline-none focus:ring focus:ring-blue-400"
-                      />
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="password"
-                        placeholder="Confirm Password"
-                        className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded pr-10 focus:outline-none focus:ring focus:ring-blue-400"
-                      />
-                    </div>
+                    <InputField placeholder="Full Name" />
+                    <InputField type="tel" placeholder="Phone Number" />
+                    <InputField type="password" placeholder="Create Password" />
+                    <InputField type="password" placeholder="Confirm Password" />
                     <button
                       type="submit"
                       className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
@@ -169,27 +157,17 @@ export default function AuthModal({ onClose }) {
                       Signup
                     </button>
                   </form>
-
-                  <div className="mt-6">
-                    <div className="flex items-center my-4 w-full">
-                      <div className="h-px bg-gray-600 flex-grow" />
-                      <span className="mx-3 text-gray-400 text-sm">or</span>
-                      <div className="h-px bg-gray-600 flex-grow" />
-                    </div>
-                    <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition">
-                      <GoogleIcon /> Continue with Google
-                    </button>
-                  </div>
+                  <GoogleAuthButton />
                 </div>
               </div>
             </div>
 
-            {/* Toggle Text */}
+            {/* Toggle Link */}
             <p className="text-sm text-center text-gray-400 mt-4">
               {isLogin ? "Not a member?" : "Already have an account?"}{" "}
               <button
                 onClick={toggleTab}
-                className="text-blue-500 hover:underline font-medium cursor-pointer"
+                className="text-blue-500 hover:underline font-medium"
               >
                 {isLogin ? "Signup now" : "Login"}
               </button>
