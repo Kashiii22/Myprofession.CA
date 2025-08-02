@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import GoogleIcon from "./GoogleIcon";
+import VerifyOtpModal from "./VerifyOtpModal";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function AuthModal({ onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [phone, setPhone] = useState("");
   const [closing, setClosing] = useState(false);
-  const router = useRouter();
+  const [showOtpModal, setShowOtpModal] = useState(false);
 
   const toggleTab = () => {
     setIsLogin((prev) => !prev);
@@ -19,18 +21,18 @@ export default function AuthModal({ onClose }) {
   const handleSendOtp = (e) => {
     e.preventDefault();
     if (phone.length === 10) {
-      router.push("./verify-otp");
+      toast.success("OTP sent successfully!");
+      setShowOtpModal(true);
     } else {
-      alert("Please enter a valid 10-digit phone number.");
+      toast.error("Please enter a valid 10-digit phone number.");
     }
   };
 
   const handleClose = () => {
-    console.log("Closing true");
     setClosing(true);
     setTimeout(() => {
       onClose();
-    }, 300); // matches transition duration
+    }, 300);
   };
 
   const InputField = ({ type = "text", placeholder, value, onChange }) => (
@@ -64,16 +66,23 @@ export default function AuthModal({ onClose }) {
       }`}
       onClick={handleClose}
     >
+      {/* <Toaster position="top-right" /> */}
+      {showOtpModal && (
+        <VerifyOtpModal
+          phone={phone}
+          onClose={() => setShowOtpModal(false)}
+        />
+      )}
+
       <div
         onClick={(e) => e.stopPropagation()}
         className={`relative backdrop-blur-xl bg-[#0e1625]/80 border border-blue-800 ring-1 ring-blue-500/30 shadow-[0_0_60px_#1e3a8acc] rounded-2xl flex w-full max-w-5xl overflow-hidden transition-all duration-300 transform ${
           closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
         }`}
       >
-        {/* ❌ Close Button - Top Right */}
         <button
           onClick={(e) => {
-            e.stopPropagation(); // ✅ Prevent backdrop click conflict
+            e.stopPropagation();
             handleClose();
           }}
           className="absolute top-4 right-4 text-white text-2xl hover:text-red-400 transition rounded-full p-1 shadow-md hover:shadow-lg focus:outline-none"
@@ -82,7 +91,6 @@ export default function AuthModal({ onClose }) {
           &times;
         </button>
 
-        {/* Left Illustration */}
         <div className="hidden md:flex w-1/2 flex-col justify-center items-center p-8">
           <Image
             src="/illustration2.png"
@@ -96,7 +104,6 @@ export default function AuthModal({ onClose }) {
           </h2>
         </div>
 
-        {/* Right Auth Form */}
         <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center bg-transparent">
           <div className="w-full px-8 py-6 relative h-[500px]">
             <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
@@ -162,7 +169,6 @@ export default function AuthModal({ onClose }) {
               </div>
             </div>
 
-            {/* Toggle Link */}
             <p className="text-sm text-center text-gray-400 mt-4">
               {isLogin ? "Not a member?" : "Already have an account?"}{" "}
               <button

@@ -10,13 +10,16 @@ import expertReducer, {
   removeExpertiseField,
 } from './expertSlice';
 
+import dashboardReducer from './dashboardSlice'; // 👈 Import new reducer
+
 export const store = configureStore({
   reducer: {
-    profile: expertReducer, // Use `profile` to match your useSelector
+    profile: expertReducer,
+    dashboard: dashboardReducer, // 👈 Add this line
   },
 });
 
-// Export actions explicitly
+// Export expert actions explicitly
 export {
   nextStep,
   prevStep,
@@ -24,7 +27,7 @@ export {
   updateProfessionalDetails,
   addExpertiseField,
   updateExpertiseField,
-   removeExpertiseField,
+  removeExpertiseField,
 };
 
 export default store;

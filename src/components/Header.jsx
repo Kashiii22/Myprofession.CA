@@ -3,20 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaBars, FaTimes } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
+
+// Simulating login state (Replace with Redux or real Auth logic)
+const isUserLoggedIn = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("isLoggedIn") === "true";
+  }
+  return false;
+};
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "About Us", path: "/about" },
   { label: "Privacy Policy", path: "/privacy" },
   { label: "Contact Us", path: "/contact" },
-];
-
-const PROFILE_OPTIONS = [
-  { label: "Expert Profile", href: "/register" },
-  { label: "User Profile", href: "/login" }, // this will trigger modal instead of redirect
 ];
 
 const CATEGORIES = [
@@ -43,8 +46,9 @@ export default function Header() {
   const [openCategoryIndex, setOpenCategoryIndex] = useState(null);
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(isUserLoggedIn());
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Close profile dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -55,7 +59,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close category dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -70,24 +73,29 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openCategoryIndex]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    setLoggedIn(false);
+    setProfileDropdownOpen(false);
+  };
+
   return (
     <>
       <header className="backdrop-blur-lg bg-black/80 text-white font-sans shadow-2xl rounded-b-2xl z-50 relative">
         {/* Top Bar */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800">
-          <Link href="/" className="text-3xl font-extrabold tracking-wide text-white">
+          <Link href="/" className="text-3xl font-extrabold tracking-wide">
             MyProfession.CA
           </Link>
 
-          <nav className="flex gap-6 items-center text-lg">
+          {/* Desktop Menu */}
+          <nav className="hidden md:flex gap-6 items-center text-lg">
             {NAV_LINKS.map(({ label, path }, i) => (
               <Link
                 key={i}
                 href={path}
                 className={`transition duration-200 ${
-                  label === "Home"
-                    ? "text-gray-300 "
-                    : pathname === path
+                  pathname === path
                     ? "text-blue-400 font-semibold"
                     : "text-gray-300 hover:text-blue-400"
                 }`}
@@ -105,71 +113,143 @@ export default function Header() {
                 <FaUserCircle size={20} />
                 <IoMdArrowDropdown />
               </button>
+
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-3 w-44 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
-                  {PROFILE_OPTIONS.map((item, idx) => (
+                  {loggedIn ? (
                     <button
-                      key={idx}
-                      onClick={() => {
-                        setProfileDropdownOpen(false);
-                        if (item.label === "User Profile") {
-                          setShowLoginModal(true);
-                        } else {
-                          window.location.href = item.href;
-                        }
-                      }}
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
                     >
-                      {item.label}
+                      Logout
                     </button>
-                  ))}
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowLoginModal(true);
+                          setProfileDropdownOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
+                      >
+                        User Login
+                      </button>
+                      <Link
+                        href="/register"
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
+                      >
+                        Expert Profile
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>
           </nav>
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden text-white text-2xl"
+          >
+            {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+          </button>
         </div>
 
-        {/* Subheader - Only on Home Page */}
-        {(
-          <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
-            <div className="flex flex-wrap justify-center gap-6">
-              {CATEGORIES.map((category, i) => (
-                <div
-                  key={i}
-                  className="relative"
-                  ref={(el) => (categoryRefs.current[i] = el)}
-                >
-                  <button
-                    onClick={() =>
-                      setOpenCategoryIndex(openCategoryIndex === i ? null : i)
-                    }
-                    className="text-xl text-gray-300 flex items-center gap-1 hover:text-blue-400 transition"
-                  >
-                    {category}
-                    <IoMdArrowDropdown size={20} />
-                  </button>
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden px-6 pb-4 space-y-4">
+            {NAV_LINKS.map(({ label, path }, i) => (
+              <Link
+                key={i}
+                href={path}
+                className={`block transition duration-200 ${
+                  pathname === path
+                    ? "text-blue-400 font-semibold"
+                    : "text-gray-300 hover:text-blue-400"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
 
-                  {openCategoryIndex === i && (
-                    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-52 bg-gray-800/95 backdrop-blur-md border border-gray-600 rounded-xl shadow-xl z-50 text-xl">
-                      {DROPDOWN_OPTIONS.map((item, idx) => (
-                        <Link
-                          key={idx}
-                          href="#"
-                          className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
-                        >
-                          {item}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            {loggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="block text-left w-full text-gray-300 hover:text-red-500"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setShowLoginModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block text-left w-full text-gray-300 hover:text-blue-400"
+                >
+                  User Login
+                </button>
+                <Link
+                  href="/register"
+                  className="block text-gray-300 hover:text-blue-400"
+                >
+                  Expert Profile
+                </Link>
+              </>
+            )}
           </div>
         )}
+
+        {/* Subheader */}
+        <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
+          <div className="flex flex-wrap justify-center gap-6">
+            {CATEGORIES.map((category, i) => (
+              <div
+                key={i}
+                className="relative"
+                ref={(el) => (categoryRefs.current[i] = el)}
+              >
+                <button
+                  onClick={() =>
+                    setOpenCategoryIndex(openCategoryIndex === i ? null : i)
+                  }
+                  className="text-xl text-gray-300 flex items-center gap-1 hover:text-blue-400 transition"
+                >
+                  {category}
+                  <IoMdArrowDropdown size={20} />
+                </button>
+
+                {openCategoryIndex === i && (
+                  <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-52 bg-gray-800/95 backdrop-blur-md border border-gray-600 rounded-xl shadow-xl z-50 text-xl">
+                    {DROPDOWN_OPTIONS.map((item, idx) => (
+                      <Link
+                        key={idx}
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
+                      >
+                        {item}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </header>
 
-      {showLoginModal && <AuthModal onClose={() => setShowLoginModal(false)} />}
+      {/* Login Modal */}
+      {showLoginModal && (
+        <AuthModal
+          onClose={() => {
+            setShowLoginModal(false);
+            setLoggedIn(true);
+            localStorage.setItem("isLoggedIn", "true");
+          }}
+        />
+      )}
     </>
   );
 }
