@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { FiRefreshCw } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-
+import Footer from "@/components/Footer";
 const categories = [
   "All", "Tax", "Audit", "GST", "Investment", "Accounts", "Costing",
 ];
@@ -251,6 +251,7 @@ export default function MentorListPage() {
           </p>
         )}
       </section>
+      <Footer/>
     </div>
   );
 } 

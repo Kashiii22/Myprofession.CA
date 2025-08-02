@@ -15,7 +15,7 @@ const NAV_LINKS = [
 ];
 
 const PROFILE_OPTIONS = [
-  { label: "Expert Profile", href: "/expert-profile" },
+  { label: "Expert Profile", href: "/register" },
   { label: "User Profile", href: "/login" }, // this will trigger modal instead of redirect
 ];
 
@@ -130,7 +130,7 @@ export default function Header() {
         </div>
 
         {/* Subheader - Only on Home Page */}
-        {pathname === "/" && (
+        {(
           <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
             <div className="flex flex-wrap justify-center gap-6">
               {CATEGORIES.map((category, i) => (

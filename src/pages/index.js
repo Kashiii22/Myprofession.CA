@@ -6,6 +6,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation"; // for app router. use 'next/router' if you're on pages/
+import { ShinyButton } from "@/components/magicui/shiny-button";
 
 // Mentor Data
 const mentorsLeft = [
@@ -75,13 +76,14 @@ export default function HomePage() {
 
               {/* Explore Mentors Button */}
               <div className="mt-6 flex justify-center">
-                <button
-                  onClick={() => router.push("/mentors")}
-                  className="group flex items-center gap-2 py-3 px-6 rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
-                >
-                  Explore Mentors
-                  <span className="transition-transform duration-300 group-hover:translate-x-1 text-lg">→</span>
-                </button>
+            <ShinyButton
+  onClick={() => router.push("/mentors")}
+  className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+>
+  Explore Mentors →
+</ShinyButton>
+                
+
               </div>
             </div>
           </div>
