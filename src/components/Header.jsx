@@ -20,6 +20,7 @@ const NAV_LINKS = [
   { label: "About Us", path: "/about" },
   { label: "Privacy Policy", path: "/privacy" },
   { label: "Contact Us", path: "/contact" },
+  {label:"Dashboard",path:"/dashboard"},
 ];
 
 const CATEGORIES = [
