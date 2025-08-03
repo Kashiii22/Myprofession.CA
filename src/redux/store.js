@@ -20,6 +20,7 @@ import authReducer, {
   setPhone,
   toggleOtpModal,
   setClosing,
+  setLoginMethod
 } from './authSlice'; // ✅ Import authSlice + actions
 
 // Configure store
