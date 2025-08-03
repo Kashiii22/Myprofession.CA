@@ -7,7 +7,7 @@ import "react-day-picker/dist/style.css";
 const Calendar = ({ selected, onSelect, availableDates = [], bookedDates = [] }) => {
   const today = new Date();
 
-  // Memoize date conversions to avoid recalculating on every render
+  // Memoize date arrays
   const available = useMemo(() => availableDates.map(date => new Date(date)), [availableDates]);
   const booked = useMemo(() => bookedDates.map(date => new Date(date)), [bookedDates]);
 
@@ -19,29 +19,29 @@ const Calendar = ({ selected, onSelect, availableDates = [], bookedDates = [] })
 
   const modifiersStyles = useMemo(() => ({
     available: {
-      backgroundColor: "#16A34A",
-      color: "white",
+      backgroundColor: "#16A34A", // green-600
+      color: "#fff",
       borderRadius: "50%",
     },
     booked: {
-      backgroundColor: "#F1F5F9",
+      backgroundColor: "#F1F5F9", // slate-100
       color: "#000",
-      border: "1px solid #cbd5e1",
+      border: "1px solid #cbd5e1", // slate-300
       borderRadius: "50%",
     },
     disabled: {
-      color: "#9ca3af",
-      opacity: 0.4,
+      color: "#9ca3af", // gray-400
+      opacity: 0.5,
       filter: "blur(0.5px)",
       cursor: "not-allowed",
     },
   }), []);
 
   const styles = useMemo(() => ({
-    caption: { color: "#60A5FA" },
+    caption: { color: "#60A5FA" }, // blue-400
     nav_button: { color: "#60A5FA" },
     day_selected: {
-      backgroundColor: "#3B82F6",
+      backgroundColor: "#3B82F6", // blue-500
       color: "#fff",
       borderRadius: "50%",
     },
@@ -52,7 +52,7 @@ const Calendar = ({ selected, onSelect, availableDates = [], bookedDates = [] })
   }), []);
 
   return (
-    <div className="rounded-md border border-blue-700 bg-gray-900 p-4 text-white shadow-md">
+    <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto p-4 sm:p-6 bg-gray-900 text-white border border-blue-700 rounded-md shadow-md">
       <DayPicker
         mode="single"
         selected={selected}

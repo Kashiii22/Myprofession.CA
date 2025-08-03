@@ -133,3 +133,25 @@ body {
     @apply bg-background text-foreground;
   }
 }
+/* Dark mode for time dropdown */
+.react-datepicker__time-container {
+  background-color: #1f2937; /* Tailwind slate-800 */
+  border-left: 1px solid #374151; /* slate-700 */
+}
+
+.react-datepicker__time-list {
+  background-color: #1f2937;
+  color: #f3f4f6; /* gray-100 */
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+.react-datepicker__time-list-item {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+.react-datepicker__time-list-item--selected,
+.react-datepicker__time-list-item:hover {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+}

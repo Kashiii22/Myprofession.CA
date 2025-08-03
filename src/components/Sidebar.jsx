@@ -1,40 +1,113 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { FaBook, FaBrain, FaUserCircle } from "react-icons/fa";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  FaUser,
+  FaChalkboardTeacher,
+  FaWpforms,
+  FaLock,
+  FaTachometerAlt,
+  FaArrowLeft,
+  FaArrowRight,
+} from "react-icons/fa";
 
-const sidebarLinks = [
-  { label: "My Bookings", href: "/dashboard", Icon: FaBook },
-  { label: "My Learnings", href: "/tax-returns", Icon: FaBrain },
-  { label: "My Profile", href: "/user-profile", Icon: FaUserCircle },
+const navItems = [
+  { label: "Dashboard", icon: FaTachometerAlt, path: "/dashboard" },
+  { label: "My Profile", icon: FaUser, path: "/myProfile" },
+  { label: "My Classes", icon: FaChalkboardTeacher, path: "/myClasses" },
+  { label: "Availability", icon: FaLock, path: "/availability" },
+  { label: "My Forms", icon: FaWpforms, path: "/forms" },
 ];
 
 export default function Sidebar() {
+  const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <aside className="bg-black text-white w-72 rounded-3xl shadow-[0_0_40px_rgba(0,0,100,0.2)] border border-blue-900 p-6 mt-8 ml-4 h-fit max-h-screen sticky top-6 hidden md:block">
-      <h2 className="text-xl font-bold text-blue-400 mb-6 tracking-wide">Dashboard</h2>
-      <nav className="space-y-3">
-        {sidebarLinks.map(({ label, href, Icon }) => {
-          const isActive = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-xl font-medium transition duration-200 ${
-                isActive
-                  ? "bg-gradient-to-r from-blue-700/40 to-blue-900/40 text-blue-300 border border-blue-800 shadow-inner"
-                  : "text-gray-400 hover:bg-blue-800/30 hover:text-blue-300"
-              }`}
-            >
-              <Icon size={16} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+    <>
+      {/* Mobile Header */}
+      <div className="md:hidden bg-black p-4 flex justify-between items-center text-lg">
+        {/* <h1 className="text-white text-xl font-bold">My Dashboard</h1> */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="text-white bg-blue-800 rounded-full p-2 text-xl"
+          aria-label="Open Menu"
+        >
+          <FaArrowLeft />
+        </button>
+      </div>
+
+      {/* Click-to-close Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar Drawer (Mobile) */}
+      <div
+        className={`fixed top-[128px] right-0 h-[calc(100%-128px)] w-64 bg-black border-l border-blue-900/40 z-40 transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "translate-x-full"} md:hidden`}
+      >
+        <div className="flex justify-end p-4 border-b border-blue-800">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-white bg-blue-800 rounded-full p-2 text-xl"
+            aria-label="Close Menu"
+          >
+            <FaArrowRight />
+          </button>
+        </div>
+
+        <nav className="flex flex-col gap-2 px-4 mt-4">
+          {navItems.map(({ label, icon: Icon, path }) => {
+            const isActive = pathname === path;
+            return (
+              <button
+                key={path}
+                onClick={() => {
+                  router.push(path);
+                  setSidebarOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-base transition-all ${
+                  isActive
+                    ? "bg-blue-900/40 text-blue-400 font-semibold"
+                    : "text-gray-400 hover:bg-blue-900/20 hover:text-white"
+                }`}
+              >
+                <Icon className="text-xl" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Sidebar (Desktop) */}
+      <aside className="hidden md:flex md:flex-col w-64 bg-black border-r border-blue-900/40 p-4">
+        <nav className="flex flex-col gap-2">
+          {navItems.map(({ label, icon: Icon, path }) => {
+            const isActive = pathname === path;
+            return (
+              <button
+                key={path}
+                onClick={() => router.push(path)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-base transition-all ${
+                  isActive
+                    ? "bg-blue-900/40 text-blue-400 font-semibold"
+                    : "text-gray-400 hover:bg-blue-900/20 hover:text-white"
+                }`}
+              >
+                <Icon className="text-xl" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

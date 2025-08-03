@@ -9,11 +9,12 @@ import {
 
 import {
   FaEdit, FaCamera, FaBriefcase, FaUserTie, FaEnvelope, FaUser,
-  FaCalendarAlt, FaLanguage, FaMapMarkerAlt, FaGlobe, FaLinkedin,
+  FaCalendarAlt, FaLanguage, FaGlobe, FaLinkedin,
   FaCertificate, FaClock, FaStar, FaBook, FaCheckCircle, FaUniversity, FaBuilding,
 } from 'react-icons/fa';
 
 import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 
 const MyProfile = () => {
   const dispatch = useDispatch();
@@ -68,170 +69,178 @@ const MyProfile = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-[#0e0e10] text-gray-200 p-6 sm:p-10 space-y-10">
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-white">My Profile</h1>
-        </div>
+      <div className="flex flex-col md:flex-row min-h-screen bg-black text-base text-gray-200">
+        <Sidebar />
 
-        <div ref={profileRef} className="space-y-10">
-          {/* Personal Info */}
-          <div className="bg-[#1a1a1d] border border-blue-600 rounded-2xl shadow-lg p-6 flex flex-col lg:flex-row gap-6">
-            <div className="relative group self-start">
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-44 h-44 rounded-full object-cover border-4 border-blue-500 shadow-lg"
-              />
-              <label className="absolute bottom-0 right-0 w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center cursor-pointer hover:bg-blue-700">
-                <FaCamera />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={handleImageChange}
-                />
-              </label>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              <Section title="Personal Information">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Detail label="Full Name" value={personalDetails.name || 'Ritika Gupta'} icon={<FaUser />} />
-                  <Detail label="Email" value={personalDetails.email || 'ritika.ca@domain.com'} icon={<FaEnvelope />} />
-                  <Detail label="Gender" value={personalDetails.gender || 'Female'} icon={<FaUserTie />} />
-                  <Detail label="Date of Birth" value={personalDetails.dob || '1992-11-12'} icon={<FaCalendarAlt />} />
-                  <Detail label="Language" value={personalDetails.languagePrimary || 'English, Hindi'} icon={<FaLanguage />} />
-                  {/* <Detail label="Location" value={personalDetails.location || 'Mumbai, India'} icon={<FaMapMarkerAlt />} /> */}
-                </div>
-              </Section>
-
-              <Section title="Bio">
-                {editingBio ? (
-                  <>
-                    <textarea
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      className="w-full p-2 rounded bg-[#2c2c2e] text-white mt-2"
-                      rows={4}
-                    />
-                    <button
-                      onClick={handleBioSave}
-                      className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
-                    >
-                      Save
-                    </button>
-                  </>
-                ) : (
-                  <p className="text-gray-300 mt-2 flex gap-2 items-start">
-                    {bio} <FaEdit className="text-blue-400 cursor-pointer ml-2" onClick={() => setEditingBio(true)} />
-                  </p>
-                )}
-              </Section>
-            </div>
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 space-y-10">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">My Profile</h1>
           </div>
 
-          {/* Professional Summary */}
-          <Section title="Professional Summary">
-            {editingProfessional ? (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                  placeholder="Status"
+          <div ref={profileRef} className="space-y-10">
+            {/* Personal Info */}
+            <div className="bg-[#1a1a1d] border border-blue-600 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col lg:flex-row gap-6 lg:gap-10">
+              <div className="relative group self-center sm:self-start w-32 h-32 sm:w-36 sm:h-36 md:w-44 md:h-44">
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover border-4 border-blue-500 shadow-lg"
                 />
-                <input
-                  type="number"
-                  value={experience}
-                  onChange={(e) => setExperience(Number(e.target.value))}
-                  className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                  placeholder="Experience (in years)"
-                />
-                <input
-                  type="text"
-                  value={qualifications}
-                  onChange={(e) => setQualifications(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                  placeholder="Qualifications"
-                />
-                <button
-                  onClick={handleProfessionalSave}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                >
-                  Save
-                </button>
+                <label className="absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full text-white flex items-center justify-center cursor-pointer hover:bg-blue-700">
+                  <FaCamera className="text-sm sm:text-base" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleImageChange}
+                  />
+                </label>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Detail label="Current Status" value={status} icon={<FaBuilding />} />
-                <Detail label="Experience" value={`${experience} years`} icon={<FaClock />} />
-                <Detail label="Qualifications" value={qualifications} icon={<FaUniversity />} />
-                <Detail label="Certifications" value="IFRS, GST Specialist, Taxation Pro" icon={<FaCertificate />} />
-                <Detail label="Publications" value="5 articles in CA Club India, 2 in ICAI Journal" icon={<FaBook />} />
-                <FaEdit className="text-blue-400 cursor-pointer mt-2" onClick={() => setEditingProfessional(true)} />
-              </div>
-            )}
-          </Section>
 
-          {/* Skills & Expertise */}
-          <Section title="Skills & Expertise">
-            {editingSkills ? (
-              <div className="space-y-4">
-                <textarea
-                  value={expertise}
-                  onChange={(e) => setExpertise(e.target.value)}
-                  className="w-full p-2 rounded bg-[#2c2c2e] text-white"
-                  rows={2}
-                  placeholder="Expertise (comma-separated)"
-                />
-                <input
-                  type="text"
-                  value={softSkills}
-                  onChange={(e) => setSoftSkills(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                  placeholder="Soft Skills"
-                />
-                <input
-                  type="text"
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                  placeholder="Interests"
-                />
-                <button
-                  onClick={handleSkillsSave}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Detail label="Expertise" value={expertise} icon={<FaStar />} />
-                <Detail label="Soft Skills" value={softSkills} icon={<FaCheckCircle />} />
-                <Detail label="Interests" value={interests} icon={<FaCheckCircle />} />
-                <FaEdit className="text-blue-400 cursor-pointer mt-2" onClick={() => setEditingSkills(true)} />
-              </div>
-            )}
-          </Section>
+              <div className="flex-1 space-y-4">
+                <Section title="Personal Information">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Detail label="Full Name" value={personalDetails.name || 'Ritika Gupta'} icon={<FaUser />} />
+                    <Detail label="Email" value={personalDetails.email || 'ritika.ca@domain.com'} icon={<FaEnvelope />} />
+                    <Detail label="Gender" value={personalDetails.gender || 'Female'} icon={<FaUserTie />} />
+                    <Detail label="Date of Birth" value={personalDetails.dob || '1992-11-12'} icon={<FaCalendarAlt />} />
+                    <Detail label="Language" value={personalDetails.languagePrimary || 'English, Hindi'} icon={<FaLanguage />} />
+                  </div>
+                </Section>
 
-          {/* Online Links */}
-          <Section title="Online Presence">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Detail label="Portfolio" value="www.ritikaca.dev" icon={<FaGlobe />} />
-              <Detail label="LinkedIn" value="linkedin.com/in/ritika-ca" icon={<FaLinkedin />} />
+                <Section title="Bio">
+                  {editingBio ? (
+                    <>
+                      <textarea
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        className="w-full p-2 rounded bg-[#2c2c2e] text-white mt-2"
+                        rows={4}
+                      />
+                      <button
+                        onClick={handleBioSave}
+                        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-gray-300 mt-2 flex gap-2 items-start">
+                      {bio}
+                      <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base ml-2" onClick={() => setEditingBio(true)} />
+                    </p>
+                  )}
+                </Section>
+              </div>
             </div>
-          </Section>
-        </div>
+
+            {/* Professional Summary */}
+            <Section title="Professional Summary">
+              {editingProfessional ? (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full bg-[#2c2c2e] text-white p-2 rounded"
+                    placeholder="Status"
+                  />
+                  <input
+                    type="number"
+                    value={experience}
+                    onChange={(e) => setExperience(Number(e.target.value))}
+                    className="w-full bg-[#2c2c2e] text-white p-2 rounded"
+                    placeholder="Experience (in years)"
+                  />
+                  <input
+                    type="text"
+                    value={qualifications}
+                    onChange={(e) => setQualifications(e.target.value)}
+                    className="w-full bg-[#2c2c2e] text-white p-2 rounded"
+                    placeholder="Qualifications"
+                  />
+                  <button
+                    onClick={handleProfessionalSave}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Detail label="Current Status" value={status} icon={<FaBuilding />} />
+                  <Detail label="Experience" value={`${experience} years`} icon={<FaClock />} />
+                  <Detail label="Qualifications" value={qualifications} icon={<FaUniversity />} />
+                  <Detail label="Certifications" value="IFRS, GST Specialist, Taxation Pro" icon={<FaCertificate />} />
+                  <Detail label="Publications" value="5 articles in CA Club India, 2 in ICAI Journal" icon={<FaBook />} />
+                  <div className="flex justify-end col-span-full">
+                    <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingProfessional(true)} />
+                  </div>
+                </div>
+              )}
+            </Section>
+
+            {/* Skills & Expertise */}
+            <Section title="Skills & Expertise">
+              {editingSkills ? (
+                <div className="space-y-4">
+                  <textarea
+                    value={expertise}
+                    onChange={(e) => setExpertise(e.target.value)}
+                    className="w-full p-2 rounded bg-[#2c2c2e] text-white"
+                    rows={2}
+                    placeholder="Expertise (comma-separated)"
+                  />
+                  <input
+                    type="text"
+                    value={softSkills}
+                    onChange={(e) => setSoftSkills(e.target.value)}
+                    className="w-full bg-[#2c2c2e] text-white p-2 rounded"
+                    placeholder="Soft Skills"
+                  />
+                  <input
+                    type="text"
+                    value={interests}
+                    onChange={(e) => setInterests(e.target.value)}
+                    className="w-full bg-[#2c2c2e] text-white p-2 rounded"
+                    placeholder="Interests"
+                  />
+                  <button
+                    onClick={handleSkillsSave}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Detail label="Expertise" value={expertise} icon={<FaStar />} />
+                  <Detail label="Soft Skills" value={softSkills} icon={<FaCheckCircle />} />
+                  <Detail label="Interests" value={interests} icon={<FaCheckCircle />} />
+                  <div className="flex justify-end col-span-full">
+                    <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingSkills(true)} />
+                  </div>
+                </div>
+              )}
+            </Section>
+
+            {/* Online Links */}
+            <Section title="Online Presence">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Detail label="Portfolio" value="www.ritikaca.dev" icon={<FaGlobe />} />
+                <Detail label="LinkedIn" value="linkedin.com/in/ritika-ca" icon={<FaLinkedin />} />
+              </div>
+            </Section>
+          </div>
+        </main>
       </div>
     </>
   );
 };
 
 const Section = ({ title, children }) => (
-  <div className="bg-[#1a1a1d] border border-blue-600 rounded-2xl shadow-md p-6 space-y-4">
-    <h2 className="text-2xl font-bold text-white flex items-center gap-2">{title}</h2>
+  <div className="bg-[#1a1a1d] border border-blue-600 rounded-2xl shadow-md p-4 sm:p-6 space-y-4">
+    <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">{title}</h2>
     {children}
   </div>
 );
@@ -259,7 +268,7 @@ const Detail = ({ label, value, icon }) => {
 
   return (
     <div className="text-gray-300 flex gap-2 items-start">
-      {icon && <span className="text-blue-400 mt-1">{icon}</span>}
+      {icon && <span className="text-blue-400 mt-1 text-sm sm:text-base">{icon}</span>}
       <div>
         <p className="text-sm text-gray-400 font-semibold">{label}</p>
         <p className="text-white">{displayValue}</p>
