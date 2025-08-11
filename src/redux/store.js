@@ -1,7 +1,6 @@
-// redux/store.js
 import { configureStore } from '@reduxjs/toolkit';
 
-// Slice reducers
+// Existing slice reducers
 import expertReducer, {
   nextStep,
   prevStep,
@@ -15,15 +14,34 @@ import expertReducer, {
 import dashboardReducer from './dashboardSlice';
 import classReducer from './classSlice';
 import availabilityReducer from './availabilitySlice';
+
 import authReducer, {
   toggleTab,
   setPhone,
   toggleOtpModal,
   setClosing,
   setLoginMethod
-} from './authSlice'; // ✅ Import authSlice + actions
+} from './authSlice';
 
-// Configure store
+// New Mentor Slice
+import mentorsReducer, {
+  approveRequest,
+  rejectRequest
+} from './mentorSlice';
+
+// New Transactions Slice
+import transactionsReducer, {
+  setSearchFilter,
+  setStatusFilter,
+  setPaymentMethodFilter,
+  setTypeFilter,
+  setDateRangeFilter,
+  toggleSelect,
+  selectAll,
+  clearSelection,
+  updateStatusBulk,
+} from './transactionsSlice';
+
 export const store = configureStore({
   reducer: {
     profile: expertReducer,
@@ -31,6 +49,8 @@ export const store = configureStore({
     classes: classReducer,
     availability: availabilityReducer,
     auth: authReducer,
+    mentors: mentorsReducer,
+    transactions: transactionsReducer,
   },
 });
 
@@ -52,6 +72,25 @@ export {
   toggleOtpModal,
   setClosing,
   setLoginMethod,
+};
+
+// Export mentor actions
+export {
+  approveRequest,
+  rejectRequest,
+};
+
+// Export transactions actions
+export {
+  setSearchFilter,
+  setStatusFilter,
+  setPaymentMethodFilter,
+  setTypeFilter,
+  setDateRangeFilter,
+  toggleSelect,
+  selectAll,
+  clearSelection,
+  updateStatusBulk,
 };
 
 export default store;
