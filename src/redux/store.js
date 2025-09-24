@@ -77,10 +77,12 @@ export {
 };
 
 // Export mentor actions
+// Export mentor actions
 export {
-  approveRequest,
-  rejectRequest,
+  approveMentor,
+  rejectMentor,
 };
+
 
 // Export transactions actions
 export {
