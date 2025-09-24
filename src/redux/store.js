@@ -24,9 +24,11 @@ import authReducer, {
 } from './authSlice';
 
 // New Mentor Slice
+// New Mentor Slice
+// New Mentor Slice
 import mentorsReducer, {
-  approveRequest,
-  rejectRequest
+  approveMentor,
+  rejectMentor
 } from './mentorSlice';
 
 // New Transactions Slice
