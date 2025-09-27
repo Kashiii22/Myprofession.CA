@@ -48,6 +48,25 @@ const GoogleAuthButton = () => (
   </div>
 );
 
+// IT Laws Description Panel
+const ITLawsPanel = () => (
+  <div className="hidden md:flex md:w-1/2 flex-col justify-center items-start p-6 lg:p-10 text-left">
+    <Image
+      src="/illustration2.png"
+      alt="Illustration"
+      width={320}
+      height={320}
+      className="object-contain mb-4"
+    />
+    <h2 className="text-lg lg:text-xl font-semibold text-blue-300 px-4 leading-snug mb-2">
+      Learn & Grow Safely
+    </h2>
+    <p className="text-gray-400 text-sm px-4">
+      Our platform follows IT laws. Users must provide accurate info and respect privacy, copyright, and secure authentication rules.
+    </p>
+  </div>
+);
+
 // Main Modal
 export default function AuthModal({ onClose }) {
   const dispatch = useDispatch();
@@ -91,31 +110,8 @@ export default function AuthModal({ onClose }) {
           closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
         }`}
       >
-        {/* Close Button */}
-        {/* <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClose();
-          }}
-          className="absolute top-4 right-4 text-white text-2xl hover:text-red-400 transition rounded-full p-1 shadow-md focus:outline-none"
-          aria-label="Close"
-        >
-          &times;
-        </button> */}
-
-        {/* Left Panel */}
-        <div className="hidden md:flex md:w-1/2 flex-col justify-center items-center p-6 lg:p-10">
-          <Image
-            src="/illustration2.png"
-            alt="Illustration"
-            width={320}
-            height={320}
-            className="object-contain mb-4"
-          />
-          <h2 className="text-lg lg:text-xl font-semibold text-blue-300 text-center px-4 leading-snug">
-            Learn, Connect & Grow with our Expert Mentors!
-          </h2>
-        </div>
+        {/* Left Panel with IT Laws */}
+        <ITLawsPanel />
 
         {/* Right Panel */}
         <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center">
@@ -140,7 +136,11 @@ export default function AuthModal({ onClose }) {
             {/* Forms */}
             <div className="space-y-4 w-full max-w-md mx-auto">
               {isLogin ? (
-                <form onSubmit={handleSendOtp} autoComplete="off" className="space-y-4">
+                <form
+                  onSubmit={handleSendOtp}
+                  autoComplete="off"
+                  className="space-y-4"
+                >
                   <div className="flex justify-center space-x-4">
                     {["otp", "password"].map((method) => (
                       <button

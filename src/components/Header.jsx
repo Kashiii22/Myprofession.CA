@@ -7,7 +7,7 @@ import { FaUserCircle, FaBars, FaTimes } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
 
-// Simulating login state (Replace with Redux or real Auth logic)
+// Simulate login state
 const isUserLoggedIn = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("isLoggedIn") === "true";
@@ -20,18 +20,20 @@ const NAV_LINKS = [
   { label: "About Us", path: "/about" },
   { label: "Privacy Policy", path: "/privacy" },
   { label: "Contact Us", path: "/contact" },
-  {label:"Dashboard",path:"/dashboard"},
+  { label: "Dashboard", path: "/dashboard" },
 ];
 
+// Categories with slugs
 const CATEGORIES = [
-  "Income Tax",
-  "GST",
-  "Accounting",
-  "Audit",
-  "Investment",
-  "Exam Oriented",
+  { name: "Income Tax", slug: "income-tax" },
+  { name: "GST", slug: "gst" },
+  { name: "Accounting", slug: "accounting" },
+  { name: "Audit", slug: "audit" },
+  { name: "Investment", slug: "investment" },
+  { name: "Exam Oriented", slug: "exam-oriented" },
 ];
 
+// Dropdown options
 const DROPDOWN_OPTIONS = [
   "Mentorship",
   "Files and Documents",
@@ -203,7 +205,7 @@ export default function Header() {
           </div>
         )}
 
-        {/* Subheader */}
+        {/* Subheader with categories and dropdown */}
         <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
           <div className="flex flex-wrap justify-center gap-6">
             {CATEGORIES.map((category, i) => (
@@ -218,7 +220,7 @@ export default function Header() {
                   }
                   className="text-xl text-gray-300 flex items-center gap-1 hover:text-blue-400 transition"
                 >
-                  {category}
+                  {category.name}
                   <IoMdArrowDropdown size={20} />
                 </button>
 
@@ -227,7 +229,7 @@ export default function Header() {
                     {DROPDOWN_OPTIONS.map((item, idx) => (
                       <Link
                         key={idx}
-                        href="#"
+                        href={`/category/${category.slug}`}
                         className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
                       >
                         {item}
