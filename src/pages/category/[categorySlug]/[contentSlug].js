@@ -1,58 +1,145 @@
-// pages/category/[slug].js
 "use client";
 
-import { useState, useMemo } from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import { contents, categories } from "../../../data/dummyData";
+import { useState, useMemo, useEffect } from "react";
+import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import { contents, categories } from "../../../../data/dummyData";
 
 export async function getStaticPaths() {
-  const paths = categories.map((cat) => ({ params: { slug: cat.slug } }));
+  const paths = [];
+
+  // Build all category/content combinations
+  Object.keys(contents).forEach((categorySlug) => {
+    contents[categorySlug].forEach((item) => {
+      paths.push({
+        params: {
+          categorySlug,           // first segment
+          contentSlug: item.slug, // second segment
+        },
+      });
+    });
+  });
+
   return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
-  const categoryContents = contents[params.slug] || [];
-  return { props: { slug: params.slug, categoryContents } };
+  const { categorySlug, contentSlug } = params;
+
+  const categoryContents = contents[categorySlug] || [];
+  const contentItem =
+    categoryContents.find((c) => c.slug === contentSlug) || null;
+
+  return {
+    props: {
+      categorySlug,
+      contentSlug,
+      categoryContents,
+      contentItem,
+    },
+  };
 }
 
-export default function CategoryPage({ slug, categoryContents }) {
-  const articles = categoryContents.filter(c => c.contentType === "text");
-  const documents = categoryContents.filter(c => c.attachments.length > 0);
+export default function CategoryPage({
+  categorySlug,
+  contentSlug,
+  categoryContents,
+  contentItem,
+}) {
+  const articles = categoryContents.filter((c) => c.contentType === "text");
+  const documents = categoryContents.filter((c) => c.attachments.length > 0);
 
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [openSections, setOpenSections] = useState({ articles: true, documents: true });
+  // Preselect item based on the URL slug
+  const buildSelected = (item) => {
+    if (!item) return null;
+    if (item.attachments?.length > 0) {
+      return {
+        type: "document",
+        data: item,
+        id: item.attachments[0].asset.url,
+        attachment: item.attachments[0],
+      };
+    }
+    return { type: "article", data: item, id: item.slug };
+  };
+
+  const [selectedItem, setSelectedItem] = useState(buildSelected(contentItem));
+
+  // If contentItem changes because of navigation, update selectedItem
+  useEffect(() => {
+    setSelectedItem(buildSelected(contentItem));
+  }, [contentItem]);
+
+  const [openSections, setOpenSections] = useState({
+    articles: true,
+    documents: true,
+  });
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredArticles = useMemo(
-    () => articles.filter(a => a.title.toLowerCase().includes(searchTerm.toLowerCase())),
+    () =>
+      articles.filter((a) =>
+        a.title.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
     [articles, searchTerm]
   );
 
   const filteredDocuments = useMemo(
-    () => documents.filter(d => d.title.toLowerCase().includes(searchTerm.toLowerCase())),
+    () =>
+      documents.filter((d) =>
+        d.title.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
     [documents, searchTerm]
   );
 
   const toggleSection = (section) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   // Render Markdown-like text manually
   const renderContent = (body) => {
     return body.map((block, idx) => (
-      <div key={idx} className="mb-4 text-gray-300 text-lg md:text-xl leading-relaxed font-sans">
+      <div
+        key={idx}
+        className="mb-4 text-gray-300 text-lg md:text-xl leading-relaxed font-sans"
+      >
         {block.children[0].text.split("\n").map((line, i) => {
           if (line.startsWith("### ")) {
-            return <h3 key={i} className="text-blue-300 font-semibold text-2xl my-2">{line.replace("### ", "")}</h3>;
+            return (
+              <h3
+                key={i}
+                className="text-blue-300 font-semibold text-2xl my-2"
+              >
+                {line.replace("### ", "")}
+              </h3>
+            );
           } else if (line.startsWith("## ")) {
-            return <h2 key={i} className="text-blue-400 font-bold text-3xl my-3">{line.replace("## ", "")}</h2>;
+            return (
+              <h2 key={i} className="text-blue-400 font-bold text-3xl my-3">
+                {line.replace("## ", "")}
+              </h2>
+            );
           } else if (line.startsWith("# ")) {
-            return <h1 key={i} className="text-blue-500 font-extrabold text-4xl my-4">{line.replace("# ", "")}</h1>;
+            return (
+              <h1
+                key={i}
+                className="text-blue-500 font-extrabold text-4xl my-4"
+              >
+                {line.replace("# ", "")}
+              </h1>
+            );
           } else if (line.startsWith("- ")) {
-            return <li key={i} className="ml-6 list-disc">{line.replace("- ", "")}</li>;
+            return (
+              <li key={i} className="ml-6 list-disc">
+                {line.replace("- ", "")}
+              </li>
+            );
           } else if (line.match(/^\d+\./)) {
-            return <li key={i} className="ml-6 list-decimal">{line}</li>;
+            return (
+              <li key={i} className="ml-6 list-decimal">
+                {line}
+              </li>
+            );
           } else {
             return <p key={i} className="my-2">{line}</p>;
           }
@@ -84,19 +171,27 @@ export default function CategoryPage({ slug, categoryContents }) {
               onClick={() => toggleSection("articles")}
               className="w-full text-left font-semibold text-blue-400 mb-2 flex justify-between items-center"
             >
-              Articles ({filteredArticles.length}) {openSections.articles ? "▾" : "▸"}
+              Articles ({filteredArticles.length}){" "}
+              {openSections.articles ? "▾" : "▸"}
             </button>
             {openSections.articles && (
               <ul className="flex flex-col gap-2">
-                {filteredArticles.map(a => (
+                {filteredArticles.map((a) => (
                   <li
                     key={a.slug}
                     className={`p-2 rounded-md cursor-pointer hover:bg-gray-800 transition ${
-                      selectedItem?.type === "article" && selectedItem?.id === a.slug
+                      selectedItem?.type === "article" &&
+                      selectedItem?.id === a.slug
                         ? "bg-gray-800 border-l-4 border-blue-400"
                         : ""
                     }`}
-                    onClick={() => setSelectedItem({ type: "article", data: a, id: a.slug })}
+                    onClick={() =>
+                      setSelectedItem({
+                        type: "article",
+                        data: a,
+                        id: a.slug,
+                      })
+                    }
                   >
                     {a.title}
                   </li>
@@ -114,7 +209,8 @@ export default function CategoryPage({ slug, categoryContents }) {
               onClick={() => toggleSection("documents")}
               className="w-full text-left font-semibold text-yellow-400 mb-2 flex justify-between items-center"
             >
-              Documents ({filteredDocuments.length}) {openSections.documents ? "▾" : "▸"}
+              Documents ({filteredDocuments.length}){" "}
+              {openSections.documents ? "▾" : "▸"}
             </button>
             {openSections.documents && (
               <ul className="flex flex-col gap-2">
@@ -129,7 +225,12 @@ export default function CategoryPage({ slug, categoryContents }) {
                           : ""
                       }`}
                       onClick={() =>
-                        setSelectedItem({ type: "document", data: doc, attachment: att, id: att.asset.url })
+                        setSelectedItem({
+                          type: "document",
+                          data: doc,
+                          attachment: att,
+                          id: att.asset.url,
+                        })
                       }
                     >
                       {doc.title} - {att.asset.originalFilename}
@@ -153,13 +254,13 @@ export default function CategoryPage({ slug, categoryContents }) {
                   {selectedItem.data.title}
                 </h1>
 
-                <div>
-                  {renderContent(selectedItem.data.body)}
-                </div>
+                <div>{renderContent(selectedItem.data.body)}</div>
 
                 {selectedItem.data.attachments.length > 0 && (
                   <div className="mt-6">
-                    <h4 className="text-yellow-400 font-semibold mb-2">Attachments:</h4>
+                    <h4 className="text-yellow-400 font-semibold mb-2">
+                      Attachments:
+                    </h4>
                     {selectedItem.data.attachments.map((att, i) => (
                       <a
                         key={i}
@@ -175,10 +276,15 @@ export default function CategoryPage({ slug, categoryContents }) {
 
                 {selectedItem.data.youtubeUrl && (
                   <div className="mt-6">
-                    <h4 className="text-green-400 font-semibold mb-2">Video Tutorial:</h4>
+                    <h4 className="text-green-400 font-semibold mb-2">
+                      Video Tutorial:
+                    </h4>
                     <iframe
                       className="w-full aspect-video rounded-md"
-                      src={selectedItem.data.youtubeUrl.replace("watch?v=", "embed/")}
+                      src={selectedItem.data.youtubeUrl.replace(
+                        "watch?v=",
+                        "embed/"
+                      )}
                       title={selectedItem.data.title}
                       frameBorder="0"
                       allowFullScreen
@@ -192,7 +298,8 @@ export default function CategoryPage({ slug, categoryContents }) {
                   {selectedItem.data.title}
                 </h1>
                 <p className="text-gray-300 text-lg md:text-xl mb-4 leading-relaxed">
-                  {selectedItem.data.description || "Download this document for practical use."}
+                  {selectedItem.data.description ||
+                    "Download this document for practical use."}
                 </p>
                 <a
                   href={selectedItem.attachment.asset.url}
