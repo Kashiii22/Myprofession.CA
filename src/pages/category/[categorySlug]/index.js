@@ -20,9 +20,9 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 10; // 10 rows per page
 
-  const filteredContents = categoryContents.filter(c =>
+  const filteredContents = categoryContents.filter((c) =>
     c.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -32,21 +32,12 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
     currentPage * itemsPerPage
   );
 
-  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
-  // Sample data for side panels
   const allContents = Object.values(contents).flat();
   const upcomingFiles = allContents.slice(0, 5);
-  const incomeTaxTips = [
-    "Keep track of all deductions.",
-    "Invest in tax-saving instruments.",
-    "File your returns on time.",
-    "Maintain all invoices and receipts.",
-    "Check eligibility for rebates under section 87A."
-  ];
 
-  // Function to navigate to content page
   const goToContentPage = (categorySlug, contentSlug) => {
     router.push(`/category/${categorySlug}/${contentSlug}`);
   };
@@ -55,35 +46,47 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
     <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100 font-sans">
       <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-8 gap-6 flex">
+      <main className="flex-1 container mx-auto px-6 py-10 gap-6 flex">
         {/* Left Side Panels */}
         <aside className="w-80 flex flex-col gap-6">
-          {/* Upcoming Files Box */}
-          <div className="bg-gray-900 rounded-2xl p-4 shadow-lg border border-gray-700">
-            <h2 className="text-xl font-bold text-blue-400 mb-4">Upcoming Files</h2>
-            <ul className="flex flex-col gap-2">
-              {upcomingFiles.map((file, idx) => (
-                <li key={idx} className="p-2 rounded-md hover:bg-gray-800 transition cursor-pointer">
-                  {file.title}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Upcoming Files */}
+<div className="bg-gray-900 rounded-2xl p-4 shadow-lg border border-gray-700">
+    <h2 className="text-2xl font-bold text-blue-400 mb-4">Upcoming Files</h2>
+    <div className="vertical-marquee">
+      <ul className="flex flex-col gap-2 text-xl">
+        {upcomingFiles.concat(upcomingFiles).map((file, idx) => (
+          <li
+            key={idx}
+            className="p-2 rounded-md hover:bg-gray-800 transition cursor-pointer"
+          >
+            {file.title}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
 
-          {/* Income Tax Tips Box */}
-          <div className="bg-gray-900 rounded-2xl p-4 shadow-lg border border-gray-700">
-            <h2 className="text-xl font-bold text-yellow-400 mb-4">Income Tax Tips</h2>
-            <ul className="list-disc list-inside space-y-1 text-gray-300">
-              {incomeTaxTips.map((tip, idx) => (
-                <li key={idx}>{tip}</li>
-              ))}
-            </ul>
+          {/* Apply as Content Writer */}
+          <div className="bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-700 flex flex-col items-center text-center">
+            <h2 className="text-3xl font-bold text-green-400 mb-4">
+              Join as a Content Writer
+            </h2>
+            <p className="text-gray-300 mb-6 text-lg">
+              Love writing about tax, finance & compliance?  
+              Contribute your expertise to help thousands of readers.
+            </p>
+            <button
+              onClick={() => router.push("/ApplyContentWriter")}
+              className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-md font-semibold text-white transition shadow-md text-lg"
+            >
+              Apply Now
+            </button>
           </div>
         </aside>
 
         {/* Main Table */}
         <section className="flex-1 flex flex-col">
-          <h1 className="text-4xl font-extrabold text-blue-400 mb-6">
+          <h1 className="text-5xl font-extrabold text-blue-400 mb-8">
             {categorySlug.replace("-", " ").toUpperCase()}
           </h1>
 
@@ -92,39 +95,49 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
             placeholder="Search contents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full mb-6 p-3 rounded-md bg-gray-900 border border-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full mb-6 p-4 rounded-md bg-gray-900 border border-gray-700 text-gray-100 text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <div className="overflow-x-auto bg-gray-900 rounded-2xl shadow-lg border border-gray-700">
-            <table className="min-w-full divide-y divide-gray-700">
+            <table className="min-w-full border-collapse border border-gray-700 text-lg">
               <thead>
-                <tr className="bg-gray-800">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">Sr NO.</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">Uploaded On</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">Topic</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">File Type</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">Author</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-300">Action</th>
+                <tr className="bg-gray-800 text-xl">
+                  {["Sr No.", "Topic", "Uploaded By", "Uploaded On", "File Type", "Action"].map(
+                    (h, i) => (
+                      <th
+                        key={i}
+                        className="px-6 py-4 text-left font-semibold text-gray-300 border-r border-gray-700 last:border-r-0"
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-700">
+              <tbody>
                 {paginatedContents.map((c, idx) => (
                   <tr
                     key={idx}
-                    className={`transition hover:bg-gray-800 cursor-pointer ${idx % 2 === 0 ? "bg-gray-900" : "bg-gray-850"}`}
+                    className={`transition hover:bg-gray-800 cursor-pointer ${
+                      idx % 2 === 0 ? "bg-gray-900" : "bg-gray-850"
+                    }`}
                     onClick={() => goToContentPage(categorySlug, c.slug)}
                   >
-                    <td className="px-6 py-4">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td className="px-6 py-4">{c.uploadedOn || "N/A"}</td>
-                    <td className="px-6 py-4 font-semibold text-blue-300">{c.title}</td>
-                    <td className="px-6 py-4">{c.contentType.toUpperCase()}</td>
-                    <td className="px-6 py-4">{c.author || "Unknown"}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">
+                      {(currentPage - 1) * itemsPerPage + idx + 1}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-blue-300 border-r border-gray-700 text-lg">
+                      {c.title}
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.author || "Unknown"}</td>
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.uploadedOn || "N/A"}</td>
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.contentType.toUpperCase()}</td>
+                    <td className="px-6 py-4 text-lg">
                       <button
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md font-semibold transition"
+                        className="px-5 py-3 bg-blue-500 hover:bg-blue-600 rounded-md font-semibold transition text-lg"
                         onClick={(e) => {
-                          e.stopPropagation(); // prevent row click
+                          e.stopPropagation();
                           goToContentPage(categorySlug, c.slug);
                         }}
                       >
@@ -136,7 +149,7 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
 
                 {paginatedContents.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-400">
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-400 text-lg">
                       No matching contents.
                     </td>
                   </tr>
@@ -147,11 +160,11 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-4 gap-2">
+            <div className="flex justify-center mt-6 gap-3 text-lg">
               <button
                 onClick={prevPage}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md transition disabled:opacity-50"
+                className="px-5 py-3 bg-gray-800 hover:bg-gray-700 rounded-md transition disabled:opacity-50"
               >
                 Prev
               </button>
@@ -159,7 +172,7 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`px-4 py-2 rounded-md transition ${
+                  className={`px-5 py-3 rounded-md transition ${
                     currentPage === i + 1 ? "bg-blue-500" : "bg-gray-800 hover:bg-gray-700"
                   }`}
                 >
@@ -169,7 +182,7 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md transition disabled:opacity-50"
+                className="px-5 py-3 bg-gray-800 hover:bg-gray-700 rounded-md transition disabled:opacity-50"
               >
                 Next
               </button>
@@ -182,3 +195,4 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
     </div>
   );
 }
+import Link from "next/link";

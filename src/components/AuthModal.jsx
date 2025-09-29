@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 import GoogleIcon from "./GoogleIcon";
 import VerifyOtpModal from "./VerifyOtpModal";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 import {
   toggleTab,
   setPhone,
@@ -62,7 +64,8 @@ const ITLawsPanel = () => (
       Learn & Grow Safely
     </h2>
     <p className="text-gray-400 text-sm px-4">
-      Our platform follows IT laws. Users must provide accurate info and respect privacy, copyright, and secure authentication rules.
+      Our platform follows IT laws. Users must provide accurate info and respect
+      privacy, copyright, and secure authentication rules.
     </p>
   </div>
 );
@@ -70,13 +73,20 @@ const ITLawsPanel = () => (
 // Main Modal
 export default function AuthModal({ onClose }) {
   const dispatch = useDispatch();
-  const { isLogin, phone, closing, showOtpModal, loginMethod } = useSelector(
+  const { isLogin, closing, showOtpModal, loginMethod } = useSelector(
     (state) => state.auth
   );
 
+  // local state for phone number
+  const [localPhone, setLocalPhone] = useState("");
+
+  const [showForgotModal, setShowForgotModal] = useState(false);
+
   const handleSendOtp = (e) => {
     e.preventDefault();
-    if (phone.length === 10) {
+    if (localPhone.length === 10) {
+      // push phone to redux only on submit
+      dispatch(setPhone(localPhone));
       toast.success("OTP sent successfully!");
       dispatch(toggleOtpModal(true));
     } else {
@@ -91,140 +101,154 @@ export default function AuthModal({ onClose }) {
   };
 
   return (
-    <div
-      className={`fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 transition-opacity duration-300 ${
-        closing ? "opacity-0" : "opacity-100"
-      }`}
-      onClick={handleClose}
-    >
-      {showOtpModal && (
-        <VerifyOtpModal
-          phone={phone}
-          onClose={() => dispatch(toggleOtpModal(false))}
-        />
-      )}
-
+    <>
       <div
-        onClick={(e) => e.stopPropagation()}
-        className={`relative w-full max-w-md md:max-w-5xl bg-[#0e1625]/80 border border-blue-800 ring-1 ring-blue-500/30 shadow-[0_0_60px_#1e3a8acc] rounded-none md:rounded-2xl overflow-hidden flex flex-col md:flex-row backdrop-blur-xl transition-all duration-300 transform ${
-          closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
+        className={`fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 transition-opacity duration-300 ${
+          closing ? "opacity-0" : "opacity-100"
         }`}
+        onClick={handleClose}
       >
-        {/* Left Panel with IT Laws */}
-        <ITLawsPanel />
+        {showOtpModal && (
+          <VerifyOtpModal
+            phone={localPhone}
+            onClose={() => dispatch(toggleOtpModal(false))}
+          />
+        )}
 
-        {/* Right Panel */}
-        <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center">
-          <div className="w-full px-4 py-6 sm:px-6 md:px-10 lg:px-12 relative min-h-[550px] overflow-y-auto max-h-screen">
-            {/* Toggle Tabs */}
-            <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
-              {["Login", "Signup"].map((label, i) => (
-                <button
-                  key={label}
-                  onClick={() => dispatch(toggleTab())}
-                  className={`px-6 py-2 font-semibold text-sm w-full transition-all ${
-                    isLogin === (i === 0)
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-400"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`relative w-full max-w-md md:max-w-5xl bg-[#0e1625]/80 border border-blue-800 ring-1 ring-blue-500/30 shadow-[0_0_60px_#1e3a8acc] rounded-none md:rounded-2xl overflow-hidden flex flex-col md:flex-row backdrop-blur-xl transition-all duration-300 transform ${
+            closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
+          }`}
+        >
+          {/* Left Panel with IT Laws */}
+          <ITLawsPanel />
 
-            {/* Forms */}
-            <div className="space-y-4 w-full max-w-md mx-auto">
-              {isLogin ? (
-                <form
-                  onSubmit={handleSendOtp}
-                  autoComplete="off"
-                  className="space-y-4"
-                >
-                  <div className="flex justify-center space-x-4">
-                    {["otp", "password"].map((method) => (
-                      <button
-                        key={method}
-                        type="button"
-                        onClick={() => dispatch(setLoginMethod(method))}
-                        className={`px-4 py-1 rounded-full text-sm font-medium transition ${
-                          loginMethod === method
-                            ? "bg-blue-600 text-white"
-                            : "bg-[#1c2938] text-gray-400"
-                        }`}
-                      >
-                        {method.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-
-                  <InputField
-                    type="tel"
-                    placeholder="Phone Number"
-                    value={phone}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (/^\d{0,10}$/.test(raw)) dispatch(setPhone(raw));
-                    }}
-                    onBlur={() => dispatch(setPhone(phone.replace(/\D/g, "")))}
-                  />
-
-                  {loginMethod === "password" && (
-                    <InputField type="password" placeholder="Password" />
-                  )}
-
+          {/* Right Panel */}
+          <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center">
+            <div className="w-full px-4 py-6 sm:px-6 md:px-10 lg:px-12 relative min-h-[550px] overflow-y-auto max-h-screen">
+              {/* Toggle Tabs */}
+              <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
+                {["Login", "Signup"].map((label, i) => (
                   <button
-                    type="submit"
-                    className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                    key={label}
+                    onClick={() => dispatch(toggleTab())}
+                    className={`px-6 py-2 font-semibold text-sm w-full transition-all ${
+                      isLogin === (i === 0)
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-400"
+                    }`}
                   >
-                    {loginMethod === "otp" ? "Send OTP" : "Login"}
+                    {label}
                   </button>
+                ))}
+              </div>
 
-                  <p className="text-sm text-right text-blue-500 mt-2 cursor-pointer hover:underline">
-                    Forgot Password?
-                  </p>
-                </form>
-              ) : (
-                <form className="space-y-4 w-full">
-                  <InputField placeholder="Full Name" />
-                  <InputField
-                    type="tel"
-                    placeholder="Phone Number"
-                    value={phone}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (/^\d{0,10}$/.test(raw)) dispatch(setPhone(raw));
-                    }}
-                    onBlur={() => dispatch(setPhone(phone.replace(/\D/g, "")))}
-                  />
-                  <InputField type="password" placeholder="Create Password" />
-                  <InputField type="password" placeholder="Confirm Password" />
+              {/* Forms */}
+              <div className="space-y-4 w-full max-w-md mx-auto">
+                {isLogin ? (
+                  <form
+                    onSubmit={handleSendOtp}
+                    autoComplete="off"
+                    className="space-y-4"
+                  >
+                    <div className="flex justify-center space-x-4">
+                      {["otp", "password"].map((method) => (
+                        <button
+                          key={method}
+                          type="button"
+                          onClick={() => dispatch(setLoginMethod(method))}
+                          className={`px-4 py-1 rounded-full text-sm font-medium transition ${
+                            loginMethod === method
+                              ? "bg-blue-600 text-white"
+                              : "bg-[#1c2938] text-gray-400"
+                          }`}
+                        >
+                          {method.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+
+                    <InputField
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={localPhone}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (/^\d{0,10}$/.test(raw)) setLocalPhone(raw);
+                      }}
+                      onBlur={() =>
+                        setLocalPhone(localPhone.replace(/\D/g, ""))
+                      }
+                    />
+
+                    {loginMethod === "password" && (
+                      <InputField type="password" placeholder="Password" />
+                    )}
+
+                    <button
+                      type="submit"
+                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                    >
+                      {loginMethod === "otp" ? "Send OTP" : "Login"}
+                    </button>
+
+                    <p
+                      className="text-sm text-right text-blue-500 mt-2 cursor-pointer hover:underline"
+                      onClick={() => setShowForgotModal(true)}
+                    >
+                      Forgot Password?
+                    </p>
+                  </form>
+                ) : (
+                  <form className="space-y-4 w-full">
+                    <InputField placeholder="Full Name" />
+                    <InputField
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={localPhone}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (/^\d{0,10}$/.test(raw)) setLocalPhone(raw);
+                      }}
+                      onBlur={() =>
+                        setLocalPhone(localPhone.replace(/\D/g, ""))
+                      }
+                    />
+                    <InputField type="password" placeholder="Create Password" />
+                    <InputField type="password" placeholder="Confirm Password" />
+                    <button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                    >
+                      Signup
+                    </button>
+                  </form>
+                )}
+
+                {/* Google Button */}
+                <GoogleAuthButton />
+
+                {/* Switch Prompt */}
+                <p className="text-sm text-center text-gray-400 mt-4">
+                  {isLogin ? "Not a member?" : "Already have an account?"}{" "}
                   <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                    onClick={() => dispatch(toggleTab())}
+                    className="text-blue-500 hover:underline font-medium"
                   >
-                    Signup
+                    {isLogin ? "Signup now" : "Login"}
                   </button>
-                </form>
-              )}
-
-              {/* Google Button */}
-              <GoogleAuthButton />
-
-              {/* Switch Prompt */}
-              <p className="text-sm text-center text-gray-400 mt-4">
-                {isLogin ? "Not a member?" : "Already have an account?"}{" "}
-                <button
-                  onClick={() => dispatch(toggleTab())}
-                  className="text-blue-500 hover:underline font-medium"
-                >
-                  {isLogin ? "Signup now" : "Login"}
-                </button>
-              </p>
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <ForgotPasswordModal onClose={() => setShowForgotModal(false)} />
+      )}
+    </>
   );
 }

@@ -155,3 +155,30 @@ body {
   background-color: #2563eb; /* blue-600 */
   color: white;
 }
+
+/* add in your global.css or a module */
+.vertical-marquee {
+  overflow: hidden;
+  height: 200px; /* adjust height to show 4–5 items */
+  position: relative;
+}
+
+.vertical-marquee ul {
+  display: flex;
+  flex-direction: column;
+  animation: scrollUp 10s linear infinite;
+}
+
+.vertical-marquee li {
+  padding: 8px 0;
+}
+
+/* Keyframes for scrolling */
+@keyframes scrollUp {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}

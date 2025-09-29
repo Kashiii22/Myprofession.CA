@@ -102,20 +102,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Category Buttons */}
-        <div className="mt-16 flex flex-wrap justify-center gap-4 px-4 md:px-20">
-          {[
-            ["Before CA", "from-gray-800 to-gray-900"],
-            ["Foundation", "from-blue-600 to-blue-800"],
-            ["CA Inter", "from-green-600 to-green-800"],
-            ["Articleship", "from-yellow-600 to-yellow-800"],
-            ["CA Final", "from-purple-600 to-purple-800"],
-            ["After CA", "from-pink-600 to-pink-800"],
-          ].map(([text, color], i) => (
-            <CategoryButton key={i} text={text} color={color} />
-          ))}
-        </div>
-
         {/* Keyframe Styles */}
         <style jsx>{`
           .marquee-container {

@@ -38,7 +38,7 @@ const mentor = {
 };
 
 const RenderStars = memo(({ rating }) => (
-  <div className="flex gap-1 mt-2 justify-center text-xl">
+  <div className="flex gap-2 mt-3 justify-center text-2xl sm:text-3xl">
     {Array.from({ length: 5 }, (_, i) => {
       const value = i + 1;
       if (rating >= value) return <FaStar key={value} className="text-yellow-400" />;
@@ -64,7 +64,7 @@ export default function MentorProfile() {
   }, []);
 
   const SocialLinks = () => (
-    <div className="flex flex-wrap gap-4 mt-4 justify-center lg:justify-start text-2xl text-blue-400">
+    <div className="flex flex-wrap gap-5 mt-4 justify-center lg:justify-start text-3xl text-blue-400">
       <a href={mentor.socials.twitter} target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
       <a href={mentor.socials.linkedin} target="_blank" rel="noopener noreferrer"><FaLinkedin /></a>
       <a href={mentor.socials.website} target="_blank" rel="noopener noreferrer"><FaGlobe /></a>
@@ -72,47 +72,47 @@ export default function MentorProfile() {
   );
 
   const StatCard = ({ icon: Icon, label, value, bg, border, text }) => (
-    <div className={`flex items-center ${bg} p-4 rounded-lg gap-3 border ${border} w-full`}> 
-      <Icon className="text-white text-3xl shrink-0" />
+    <div className={`flex items-center ${bg} p-5 rounded-xl gap-4 border ${border} w-full`}>
+      <Icon className="text-white text-4xl shrink-0" />
       <div className="overflow-hidden">
-        <p className="text-base text-gray-300 truncate">{label}</p>
-        <p className={`font-bold text-lg ${text}`}>{value}</p>
+        <p className="text-lg sm:text-xl text-gray-300 truncate">{label}</p>
+        <p className={`font-bold text-xl sm:text-2xl ${text}`}>{value}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="bg-black text-white min-h-screen text-[17px] sm:text-[18px] font-['Outfit']">
+    <div className="bg-black text-white min-h-screen text-[18px] sm:text-[20px] font-['Outfit']">
       <Header />
-      <section className="px-4 sm:px-6 md:px-12 lg:px-20 py-12 space-y-12 max-w-screen-xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-center">
+      <section className="px-6 sm:px-8 md:px-14 lg:px-24 py-14 space-y-14 max-w-screen-xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
           <div className="lg:col-span-2 flex flex-col items-center text-center lg:text-left">
-            <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full overflow-hidden border-4 border-blue-500">
+            <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-full overflow-hidden border-4 border-blue-500">
               <Image src={mentor.image} alt={mentor.name} fill className="object-cover" />
             </div>
             <RenderStars rating={mentor.rating} />
-            <p className="text-gray-400 mt-1">Rated {mentor.rating} / 5</p>
+            <p className="text-gray-400 mt-2 text-lg">Rated {mentor.rating} / 5</p>
             <SocialLinks />
           </div>
 
-          <div className="lg:col-span-3 space-y-4 text-center lg:text-left">
-            <h1 className="text-3xl sm:text-4xl font-bold">{mentor.name}</h1>
-            <p className="text-lg sm:text-xl text-blue-400">{mentor.title}</p>
-            <p className="text-base text-gray-400">{mentor.location}</p>
-            <p className="text-base text-blue-100">{mentor.experience}</p>
+          <div className="lg:col-span-3 space-y-5 text-center lg:text-left">
+            <h1 className="text-4xl sm:text-5xl font-bold">{mentor.name}</h1>
+            <p className="text-2xl sm:text-3xl text-blue-400">{mentor.title}</p>
+            <p className="text-lg sm:text-xl text-gray-400">{mentor.location}</p>
+            <p className="text-lg sm:text-xl text-blue-100">{mentor.experience}</p>
 
-            <div className="bg-gray-800 p-4 mt-4 rounded-lg">
-              <h3 className="text-blue-300 font-semibold mb-2">Specializations</h3>
-              <ul className="list-disc list-inside text-gray-200 space-y-1 text-base">
+            <div className="bg-gray-800 p-5 mt-5 rounded-xl">
+              <h3 className="text-blue-300 font-semibold mb-2 text-xl">Specializations</h3>
+              <ul className="list-disc list-inside text-gray-200 space-y-2 text-lg sm:text-xl">
                 {mentor.expertise.map((item, idx) => (
                   <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
 
-            <div className="mt-5 flex justify-center lg:justify-start">
+            <div className="mt-6 flex justify-center lg:justify-start">
               <button
-                className="border border-blue-600 text-blue-400 px-6 py-3 rounded-full hover:bg-blue-800/20 text-base"
+                className="border border-blue-600 text-blue-400 px-8 py-4 rounded-full hover:bg-blue-800/20 text-lg sm:text-xl font-medium"
                 onClick={() => setShowModal(true)}
               >
                 Schedule Session
@@ -121,32 +121,32 @@ export default function MentorProfile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-6" data-aos="fade-right">
-            <div className="bg-[#0f172a] p-6 rounded-xl border border-gray-700 shadow-lg">
-              <h2 className="text-2xl font-semibold text-blue-400 mb-2">About</h2>
-              <p className="text-gray-300 leading-relaxed text-base">{mentor.about}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-2 space-y-8" data-aos="fade-right">
+            <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-3">About</h2>
+              <p className="text-gray-300 leading-relaxed text-lg sm:text-xl">{mentor.about}</p>
             </div>
 
-            <div className="bg-[#0f172a] p-6 rounded-xl border border-gray-700 shadow-lg space-y-6">
-              <h2 className="text-2xl font-semibold text-blue-400">Reviews</h2>
-              <div className="space-y-4">
+            <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg space-y-6">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400">Reviews</h2>
+              <div className="space-y-5">
                 {reviews.map((review, idx) => (
-                  <div key={idx} className="bg-gray-800 p-4 rounded-lg">
-                    <p className="text-gray-200 text-base">“{review}”</p>
-                    <p className="text-sm text-gray-500 mt-1">– Anonymous</p>
+                  <div key={idx} className="bg-gray-800 p-5 rounded-xl">
+                    <p className="text-gray-200 text-lg sm:text-xl">“{review}”</p>
+                    <p className="text-sm sm:text-base text-gray-500 mt-2">– Anonymous</p>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-4 border-t border-gray-600">
-                <h3 className="text-lg font-medium text-blue-300 mb-2">Add a Review</h3>
+              <div className="pt-5 border-t border-gray-600">
+                <h3 className="text-xl sm:text-2xl font-medium text-blue-300 mb-3">Add a Review</h3>
                 <textarea
                   value={newReview}
                   onChange={(e) => setNewReview(e.target.value)}
                   placeholder="Share your experience..."
-                  className="w-full p-3 text-base bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
+                  className="w-full p-4 text-lg sm:text-xl bg-gray-800 text-white rounded-xl border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
                 />
                 <button
                   onClick={() => {
@@ -155,7 +155,7 @@ export default function MentorProfile() {
                       setNewReview("");
                     }
                   }}
-                  className="mt-3 px-6 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-base font-medium"
+                  className="mt-4 px-8 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-lg sm:text-xl font-medium"
                 >
                   Submit Review
                 </button>
@@ -163,13 +163,13 @@ export default function MentorProfile() {
             </div>
           </div>
 
-          <div className="space-y-6" data-aos="fade-left">
-            <div className="bg-[#0e1a2b] border border-blue-800 rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-2 text-blue-400 text-2xl font-semibold mb-4">
+          <div className="space-y-8" data-aos="fade-left">
+            <div className="bg-[#0e1a2b] border border-blue-800 rounded-2xl p-6 sm:p-8 shadow-lg">
+              <div className="flex items-center gap-3 text-blue-400 text-2xl sm:text-3xl font-semibold mb-5">
                 <FaChartLine className="text-blue-500" />
                 <h3>Community Stats</h3>
               </div>
-              <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+              <div className="grid gap-5 md:grid-cols-1 lg:grid-cols-1">
                 <StatCard
                   icon={FaRegClock}
                   label="Minutes Mentored"

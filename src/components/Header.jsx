@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaUserCircle, FaBars, FaTimes } from "react-icons/fa";
+import { 
+  FaUserCircle, FaBars, FaTimes, 
+  FaInstagram, FaYoutube, FaEnvelope 
+} from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
 
@@ -18,9 +21,7 @@ const isUserLoggedIn = () => {
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "About Us", path: "/about" },
-  { label: "Privacy Policy", path: "/privacy" },
   { label: "Contact Us", path: "/contact" },
-  { label: "Dashboard", path: "/dashboard" },
 ];
 
 // Categories with slugs
@@ -30,13 +31,14 @@ const CATEGORIES = [
   { name: "Accounting", slug: "accounting" },
   { name: "Audit", slug: "audit" },
   { name: "Investment", slug: "investment" },
-  { name: "Exam Oriented", slug: "exam-oriented" },
+  { name: "Articleship", slug: "articleship" },
+  { name: "Law & MCA", slug: "law-mca" },
 ];
 
 // Dropdown options
 const DROPDOWN_OPTIONS = [
   "Mentorship",
-  "Files and Documents",
+  "Files and Content",
   "Articles",
   "Courses",
   "Queries",
@@ -107,6 +109,19 @@ export default function Header() {
               </Link>
             ))}
 
+            {/* Social Icons */}
+            <div className="flex items-center gap-4 text-2xl text-blue-400 ml-4">
+              <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
+                <FaInstagram className="hover:text-pink-500 transition" />
+              </a>
+              <a href="https://youtube.com/yourchannel" target="_blank" rel="noopener noreferrer">
+                <FaYoutube className="hover:text-red-500 transition" />
+              </a>
+              <a href="mailto:yourmail@gmail.com">
+                <FaEnvelope className="hover:text-green-500 transition" />
+              </a>
+            </div>
+
             {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
               <button
@@ -176,10 +191,23 @@ export default function Header() {
               </Link>
             ))}
 
+            {/* Social Icons */}
+            <div className="flex items-center gap-4 text-2xl text-blue-400 mt-2">
+              <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
+                <FaInstagram className="hover:text-pink-500 transition" />
+              </a>
+              <a href="https://youtube.com/yourchannel" target="_blank" rel="noopener noreferrer">
+                <FaYoutube className="hover:text-red-500 transition" />
+              </a>
+              <a href="mailto:yourmail@gmail.com">
+                <FaEnvelope className="hover:text-green-500 transition" />
+              </a>
+            </div>
+
             {loggedIn ? (
               <button
                 onClick={handleLogout}
-                className="block text-left w-full text-gray-300 hover:text-red-500"
+                className="block text-left w-full text-gray-300 hover:text-red-500 mt-2"
               >
                 Logout
               </button>
@@ -190,13 +218,13 @@ export default function Header() {
                     setShowLoginModal(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="block text-left w-full text-gray-300 hover:text-blue-400"
+                  className="block text-left w-full text-gray-300 hover:text-blue-400 mt-2"
                 >
                   User Login
                 </button>
                 <Link
                   href="/register"
-                  className="block text-gray-300 hover:text-blue-400"
+                  className="block text-gray-300 hover:text-blue-400 mt-2"
                 >
                   Expert Profile
                 </Link>
