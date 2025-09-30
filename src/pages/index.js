@@ -48,45 +48,37 @@ export default function HomePage() {
           </div>
 
           {/* Center Content */}
-          <div className="text-center" data-aos="fade-up">
-            <h3 className="text-2xl md:text-3xl font-extrabold leading-snug">
-              Connect with experienced <span className="text-blue-500"><br/>CA Experts</span>
-            </h3>
-<div className="mt-4 bg-[#1a1a1e]/80 p-4 rounded-xl border border-blue-700 shadow-md-blue max-w-2xl mx-auto">
-  <div className="text-gray-400 text-base md:text-lg leading-relaxed">
-    If you are facing any issue in your CA journey whether related to Study/ Articleship/ Guidance/ Job 
+ <div className="text-center" data-aos="fade-up">
+  <h3 className="text-2xl md:text-3xl font-extrabold leading-snug">
+    Connect with experienced <span className="text-blue-500"><br />CA Experts</span>
+  </h3>
+
+<div className="mt-6 bg-[#1a1a1e]/90 p-8 rounded-xl border border-blue-700 shadow-md-blue w-full max-w-5xl text-center">
+  <div className="text-white text-base md:text-lg leading-relaxed break-words">
+    If you are facing any issue in your CA journey whether related to <br />
+    <span className="text-cyan-400 font-medium">Study/ Articleship/ Guidance/ Job</span> <br />
     You can connect with our CA Experts for
-    <span className="block mt-2 text-gray-400 font-semibold text-lg">
+    <span className="block mt-3 text-blue-400 font-semibold text-3xl">
       1:1 Discussion
     </span>
   </div>
 </div>
 
 
-            {/* Search and CTA */}
-            <div className="mt-10 relative max-w-lg mx-auto">
-              {/* <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search mentors, resources, queries..."
-                  className="w-full py-4 pl-12 pr-4 rounded-full bg-[#1a1a1d] text-white placeholder-gray-500 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                />
-                <FaSearch className="absolute top-1/2 left-4 transform -translate-y-1/2 text-gray-500" />
-              </div> */}
+  {/* Search and CTA */}
+  <div className="mt-10 relative max-w-lg mx-auto">
+    {/* Explore Mentors Button */}
+    <div className="mt-6 flex justify-center">
+      <ShinyButton
+        onClick={() => router.push("/mentors")}
+        className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+      >
+        Explore Mentors →
+      </ShinyButton>
+    </div>
+  </div>
+</div>
 
-              {/* Explore Mentors Button */}
-              <div className="mt-6 flex justify-center">
-            <ShinyButton
-  onClick={() => router.push("/mentors")}
-  className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
->
-  Explore Mentors →
-</ShinyButton>
-                
-
-              </div>
-            </div>
-          </div>
 
           {/* Right Marquee */}
           <div className="hidden md:block h-[400px] overflow-hidden relative group">

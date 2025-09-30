@@ -9,7 +9,7 @@ import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { FiRefreshCw } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
-const categories = ["All", "Tax", "Audit", "GST", "Investment", "Accounts", "Costing"];
+const categories = ["IncomeTax", "GST", "Accounting", "Audit", "Investment", "Exam Oriented" ];
 
 const mentors = [
   { name: "CA Rohan Mehta", title: "Direct Tax Expert", image: "https://i.pravatar.cc/150?img=12", specialization: "Direct Tax, Income Tax, Capital Gains", rating: 4.8 },
@@ -40,7 +40,8 @@ const MentorCard = ({ mentor }) => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
-      className="relative w-full bg-[#0D1117] border border-blue-600 rounded-3xl p-6 shadow-xl hover:scale-[1.02] hover:shadow-blue-500/30 transition-all flex flex-col justify-between mx-auto sm:max-w-[300px]"
+      onClick={() => router.push("/mentorProfile")}
+      className="cursor-pointer relative w-full bg-[#0D1117] border border-blue-600 rounded-3xl p-6 shadow-xl hover:scale-[1.02] hover:shadow-blue-500/30 transition-all flex flex-col justify-between mx-auto sm:max-w-[300px]"
     >
       {mentor.rating >= 4.8 && (
         <span className="absolute top-4 right-4 bg-blue-600 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-sm">
@@ -69,17 +70,11 @@ const MentorCard = ({ mentor }) => {
         ))}
       </div>
 
-      <div className="mt-6 flex justify-center">
-        <button
-          className="border border-blue-500 text-blue-400 hover:bg-blue-800 hover:text-white px-6 py-2 rounded-full text-base font-medium transition"
-          onClick={() => router.push("/mentorProfile")}
-        >
-          View
-        </button>
-      </div>
+<div className="mt-6 flex justify-center"> <button className="border border-blue-500 text-blue-400 hover:bg-blue-800 hover:text-white px-6 py-2 rounded-full text-base font-medium transition" onClick={() => router.push("/mentorProfile")} > View </button> </div>
     </motion.div>
   );
 };
+
 
 export default function MentorListPage() {
   const [searchText, setSearchText] = useState("");
