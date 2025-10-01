@@ -5,16 +5,47 @@ import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { contents, categories } from "../../../../data/dummyData";
+import { sanityClient } from "../../../lib/sanityClient"; 
 
 export async function getStaticPaths() {
   const paths = categories.map((cat) => ({ params: { categorySlug: cat.slug } }));
   return { paths, fallback: false };
 }
 
+
 export async function getStaticProps({ params }) {
-  const categoryContents = contents[params.categorySlug] || [];
-  return { props: { categorySlug: params.categorySlug, categoryContents } };
+  const { categorySlug } = params;
+
+  // Fetch category ID based on slug
+  const categoryQuery = `*[_type == "category" && slug.current == $slug][0]{_id}`;
+  const category = await sanityClient.fetch(categoryQuery, { slug: categorySlug });
+
+  if (!category) {
+    return { notFound: true };
+  }
+
+  // Fetch content for this category, including slug
+  const contentQuery = `*[_type == "content" && category._ref == $categoryId]{
+    _id,
+    title,
+    author,
+    createdAt,
+    "slug": slug.current
+  }`;
+
+  const categoryContents = await sanityClient.fetch(contentQuery, { categoryId: category._id });
+  console.log("Fetched contents:", categoryContents);
+
+  return {
+    props: {
+      categorySlug,
+      categoryContents: categoryContents || [], // ensure array
+    },
+    revalidate: 60,
+  };
 }
+
+
 
 export default function CategoryPage({ categorySlug, categoryContents }) {
   const router = useRouter();
@@ -131,8 +162,15 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
                       {c.title}
                     </td>
                     <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.author || "Unknown"}</td>
-                    <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.uploadedOn || "N/A"}</td>
-                    <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.contentType.toUpperCase()}</td>
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">
+  {new Date(c.createdAt).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })}
+</td>
+
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg"> {(c.contentType || 'text').toUpperCase()}</td>
                     <td className="px-6 py-4 text-lg">
                       <button
                         className="px-5 py-3 bg-blue-500 hover:bg-blue-600 rounded-md font-semibold transition text-lg"

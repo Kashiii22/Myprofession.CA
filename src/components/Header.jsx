@@ -38,7 +38,7 @@ const CATEGORIES = [
 // Dropdown options
 const DROPDOWN_OPTIONS = [
   "Mentorship",
-  "Files and Content",
+  "Contents & Files",
   "Articles",
   "Courses",
   "Queries",
