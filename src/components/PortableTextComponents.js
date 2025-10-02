@@ -27,15 +27,14 @@ const TableComponent = ({ value }) => {
 
 export const ptComponents = {
   types: {
-    // ✅ This MUST be named 'imageBlock' to match your schema
     imageBlock: ({ value }) => {
-      if (!value?.asset?.url) { // Check for the URL now that data is expanded
+      if (!value?.asset?.url) {
         return null;
       }
       return (
         <div className="relative my-6 shadow-lg rounded-md overflow-hidden">
           <Image
-            src={value.asset.url} // Use the direct URL
+            src={value.asset.url}
             alt={value.alt || 'Image'}
             loading="lazy"
             width={800}
@@ -74,10 +73,11 @@ export const ptComponents = {
   },
 
   block: {
-    normal: ({ children }) => <p className="my-4 text-lg">{children}</p>,
-    h1: ({ children }) => <h1>{children}</h1>, // Add styling as needed
-    h2: ({ children }) => <h2>{children}</h2>,
-    h3: ({ children }) => <h3>{children}</h3>,
-    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4">{children}</blockquote>,
+    // ✅ Added 'text-white' to make the paragraph text pure white
+    normal: ({ children }) => <p className="my-4 text-lg text-white font-sans">{children}</p>,
+    h1: ({ children }) => <h1 className="text-blue-500 font-extrabold text-4xl my-4 font-sans">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-blue-400 font-bold text-3xl my-3 font-sans">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-blue-300 font-semibold text-2xl my-2 font-sans">{children}</h3>,
+    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans">{children}</blockquote>,
   },
 };

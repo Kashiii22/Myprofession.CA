@@ -104,7 +104,7 @@ export default function CategoryPage({ contentItem }) {
       <div key={idx} className="mb-8">
         <h2 className="text-3xl font-bold text-blue-400 mb-4">{section.title}</h2>
         {section.description && (
-          <div className="portable-text-content text-gray-300 text-lg md:text-xl leading-relaxed font-sans">
+          <div className="portable-text-content text-lg md:text-xl leading-relaxed font-sans">
             <PortableText value={section.description} components={ptComponents} />
           </div>
         )}
@@ -129,7 +129,7 @@ export default function CategoryPage({ contentItem }) {
                 {openSections.documents && (
                   <ul className="flex flex-col gap-2">
                     {documents.map((docName, idx) => (
-                      <li key={idx} className="p-2 rounded-md text-xl text-gray-300 flex items-center gap-2">
+                      <li key={idx} className="p-2 rounded-md text-xl text-white flex items-center gap-2">
                         <svg className="h-6 w-6 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         {docName}
                       </li>
