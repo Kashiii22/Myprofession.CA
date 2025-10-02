@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   FaUserCircle, FaBars, FaTimes, 
-  FaInstagram, FaYoutube, FaEnvelope 
+  FaInstagram, FaYoutube, FaEnvelope, FaSearch
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
@@ -46,6 +46,7 @@ const DROPDOWN_OPTIONS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileRef = useRef(null);
   const [openCategoryIndex, setOpenCategoryIndex] = useState(null);
@@ -53,6 +54,16 @@ export default function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loggedIn, setLoggedIn] = useState(isUserLoggedIn());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${searchQuery}`);
+      setSearchQuery("");
+      setMobileMenuOpen(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -92,6 +103,22 @@ export default function Header() {
           <Link href="/" className="text-3xl font-extrabold tracking-wide">
             MyProfession.CA
           </Link>
+
+          {/* Center: Search Bar (Desktop) */}
+          <div className="hidden md:flex flex-1 justify-center px-8">
+            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-lg">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <FaSearch className="h-5 w-5 text-gray-500" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search any topic..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-3 pl-10 rounded-full bg-gray-900 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+            </form>
+          </div>
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex gap-6 items-center text-lg">
@@ -177,6 +204,19 @@ export default function Header() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden px-6 pb-4 space-y-4">
+            <form onSubmit={handleSearchSubmit} className="relative w-full pt-2">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pt-2">
+                <FaSearch className="h-5 w-5 text-gray-500" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search any topic..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-3 pl-10 rounded-full bg-gray-900 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              />
+            </form>
+
             {NAV_LINKS.map(({ label, path }, i) => (
               <Link
                 key={i}
@@ -191,7 +231,6 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Social Icons */}
             <div className="flex items-center gap-4 text-2xl text-blue-400 mt-2">
               <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
                 <FaInstagram className="hover:text-pink-500 transition" />

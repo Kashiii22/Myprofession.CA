@@ -127,46 +127,42 @@ export default function HomePage() {
       </section>
 
       {/* FEATURES SECTION */}
-      <section className="bg-[#1a1a1e]/80 backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12" data-aos="fade-up">
-          Why Choose <span className="text-blue-400">MyProfession.CA?</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: "📚",
-              title: "Structured Learning Paths",
-              desc: "Roadmaps tailored to every stage of your CA journey.",
-              color: "from-blue-700 to-indigo-800",
-            },
-            {
-              icon: "💬",
-              title: "24x7 Doubt Support",
-              desc: "Instant help from mentors and peers whenever you're stuck.",
-              color: "from-green-700 to-emerald-800",
-            },
-            {
-              icon: "🎓",
-              title: "Top CA Mentors",
-              desc: "Guidance from experts, rank holders & industry leaders.",
-              color: "from-purple-700 to-fuchsia-800",
-            },
-          ].map(({ icon, title, desc, color }, i) => (
-            <div
-              key={i}
-              data-aos="zoom-in"
-              data-aos-delay={i * 150}
-              className="bg-[#1f1f23]/80 backdrop-blur-lg rounded-xl p-6 border border-gray-700 shadow-xl hover:shadow-2xl transition duration-300 group"
-            >
-              <div className={`w-14 h-14 flex items-center justify-center text-2xl rounded-full mb-4 text-white bg-gradient-to-br ${color} shadow-lg`}>
-                {icon}
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition">{title}</h3>
-              <p className="text-gray-400 text-sm mt-2 leading-relaxed">{desc}</p>
+    <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <div className="flex justify-center" data-aos="fade-right">
+      <img
+        src="/unnamed.png"
+        alt="Why Choose MyProfession.CA"
+        className="max-w-md w-full drop-shadow-2xl rounded-2xl"
+      />
+    </div>
+    <div data-aos="fade-left">
+      <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
+        Why Choose <span className="text-blue-400">MyProfession.CA?</span>
+      </h2>
+      <ul className="space-y-6">
+        {[
+          { icon: "💬", title: "Reach out to mentors to get solution for your any doubt" },
+          { icon: "📚", title: "Enhance your practical knowledge with our Content and Files" },
+          { icon: "📰", title: "Stay updated & ahead by reading the recent articles" },
+        ].map(({ icon, title }, i) => (
+          <li
+            key={i}
+            className="flex items-start space-x-4 bg-[#1f1f23]/70 hover:bg-[#24242a]/80 transition rounded-xl p-5 border border-gray-700 shadow-xl hover:shadow-2xl text-xl"
+            data-aos="zoom-in"
+            data-aos-delay={i * 150}
+          >
+            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-2xl rounded-full text-white bg-gradient-to-br from-blue-700 to-indigo-800 shadow-lg">
+              {icon}
             </div>
-          ))}
-        </div>
-      </section>
+            <p className="text-white text-base leading-relaxed">{title}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
 
       {/* FOOTER */}
       <footer className="bg-[#0e0e10] text-gray-400 py-10 px-6 md:px-20 border-t border-gray-800">

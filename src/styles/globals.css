@@ -182,3 +182,32 @@ body {
     transform: translateY(-50%);
   }
 }
+/* styles/globals.css */
+
+/* Add margin to nested lists for indentation */
+.portable-text-content ul ul,
+.portable-text-content ol ol,
+.portable-text-content ul ol,
+.portable-text-content ol ul {
+  margin-left: 2rem; /* You can adjust this value */
+  margin-top: 0.5rem; /* Optional: Adds some space above the nested list */
+}
+/* Add this to your existing globals.css file */
+
+.styled-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.styled-scrollbar::-webkit-scrollbar-track {
+  background: #1a202c; /* A slightly lighter dark color */
+}
+
+.styled-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* Gray color for the thumb */
+  border-radius: 10px;
+  border: 2px solid #1a202c;
+}
+
+.styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #718096;
+}

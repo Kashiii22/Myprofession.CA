@@ -12,11 +12,9 @@ export async function getStaticPaths() {
   return { paths, fallback: false };
 }
 
-
 export async function getStaticProps({ params }) {
   const { categorySlug } = params;
 
-  // Fetch category ID based on slug
   const categoryQuery = `*[_type == "category" && slug.current == $slug][0]{_id}`;
   const category = await sanityClient.fetch(categoryQuery, { slug: categorySlug });
 
@@ -24,34 +22,31 @@ export async function getStaticProps({ params }) {
     return { notFound: true };
   }
 
-  // Fetch content for this category, including slug
   const contentQuery = `*[_type == "content" && category._ref == $categoryId]{
     _id,
     title,
+    subtitle,
     author,
     createdAt,
     "slug": slug.current
   }`;
 
   const categoryContents = await sanityClient.fetch(contentQuery, { categoryId: category._id });
-  console.log("Fetched contents:", categoryContents);
 
   return {
     props: {
       categorySlug,
-      categoryContents: categoryContents || [], // ensure array
+      categoryContents: categoryContents || [],
     },
     revalidate: 60,
   };
 }
 
-
-
 export default function CategoryPage({ categorySlug, categoryContents }) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // 10 rows per page
+  const itemsPerPage = 10;
 
   const filteredContents = categoryContents.filter((c) =>
     c.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,34 +71,31 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100 font-sans">
       <Header />
-
       <main className="flex-1 container mx-auto px-6 py-10 gap-6 flex">
         {/* Left Side Panels */}
         <aside className="w-80 flex flex-col gap-6">
-          {/* Upcoming Files */}
-<div className="bg-gray-900 rounded-2xl p-4 shadow-lg border border-gray-700">
-    <h2 className="text-2xl font-bold text-blue-400 mb-4">Upcoming Files</h2>
-    <div className="vertical-marquee">
-      <ul className="flex flex-col gap-2 text-xl">
-        {upcomingFiles.concat(upcomingFiles).map((file, idx) => (
-          <li
-            key={idx}
-            className="p-2 rounded-md hover:bg-gray-800 transition cursor-pointer"
-          >
-            {file.title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
+          <div className="bg-gray-900 rounded-2xl p-4 shadow-lg border border-gray-700">
+            <h2 className="text-2xl font-bold text-blue-400 mb-4">Upcoming Files</h2>
+            <div className="vertical-marquee">
+              <ul className="flex flex-col gap-2 text-xl">
+                {upcomingFiles.concat(upcomingFiles).map((file, idx) => (
+                  <li
+                    key={idx}
+                    className="p-2 rounded-md hover:bg-gray-800 transition cursor-pointer"
+                  >
+                    {file.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
 
-          {/* Apply as Content Writer */}
           <div className="bg-gray-900 rounded-2xl p-6 shadow-lg border border-gray-700 flex flex-col items-center text-center">
             <h2 className="text-3xl font-bold text-green-400 mb-4">
               Join as a Content Writer
             </h2>
             <p className="text-gray-300 mb-6 text-lg">
-              Love writing about tax, finance & compliance?  
+              Love writing about tax, finance & compliance?   
               Contribute your expertise to help thousands of readers.
             </p>
             <button
@@ -145,7 +137,6 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
                   )}
                 </tr>
               </thead>
-
               <tbody>
                 {paginatedContents.map((c, idx) => (
                   <tr
@@ -158,18 +149,23 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
                     <td className="px-6 py-4 border-r border-gray-700 text-lg">
                       {(currentPage - 1) * itemsPerPage + idx + 1}
                     </td>
-                    <td className="px-6 py-4 font-semibold text-blue-300 border-r border-gray-700 text-lg">
-                      {c.title}
+                    <td className="px-6 py-4 border-r border-gray-700 text-lg">
+                      <div>
+                        <div className="font-semibold text-blue-300">{c.title}</div>
+                        {c.subtitle && (
+                          // ✅ UPDATED: Changed 'text-gray-400' to 'text-white'
+                          <div className="text-sm text-white mt-1">{c.subtitle}</div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 border-r border-gray-700 text-lg">{c.author || "Unknown"}</td>
                     <td className="px-6 py-4 border-r border-gray-700 text-lg">
-  {new Date(c.createdAt).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })}
-</td>
-
+                      {new Date(c.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
                     <td className="px-6 py-4 border-r border-gray-700 text-lg"> {(c.contentType || 'text').toUpperCase()}</td>
                     <td className="px-6 py-4 text-lg">
                       <button
@@ -184,7 +180,6 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
                     </td>
                   </tr>
                 ))}
-
                 {paginatedContents.length === 0 && (
                   <tr>
                     <td colSpan="6" className="px-6 py-4 text-center text-gray-400 text-lg">
@@ -228,9 +223,7 @@ export default function CategoryPage({ categorySlug, categoryContents }) {
           )}
         </section>
       </main>
-
       <Footer />
     </div>
   );
 }
-import Link from "next/link";
