@@ -125,7 +125,7 @@ export default function CategoryPage({ contentItem }) {
       const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
       return (
         <div key={sectionId} id={sectionId} className="mb-8 scroll-mt-24">
-          <h2 className="text-3xl font-bold text-blue-400 mb-4">{section.title}</h2>
+          <h2 className="text-3xl font-bold text-yellow-400 mb-4">{section.title}</h2>
           {section.description && (
             <div className="portable-text-content text-lg md:text-xl leading-relaxed font-sans">
               <PortableText value={section.description} components={ptComponents} />
@@ -139,11 +139,11 @@ export default function CategoryPage({ contentItem }) {
  // In your CategoryPage component in [contentSlug].js
 
 return (
-  <div className="min-h-screen flex flex-col bg-gray-950 text-gray-100 font-sans">
+  <div className="min-h-screen flex flex-col bg-black text-gray-100 font-sans">
     <Header />
     <main className="flex flex-col flex-1 container mx-auto px-4 py-8 gap-6">
       <div className="flex flex-1 gap-8">
-        <aside className="w-80 flex-shrink-0 bg-gray-900 rounded-2xl p-6 border border-gray-700 shadow-lg self-start sticky top-8">
+        <aside className="w-80 flex-shrink-0 bg-black rounded-2xl p-6 border border-gray-700 shadow-lg self-start sticky top-8">
           <div className="overflow-y-auto h-[calc(100vh-8rem)] pr-2">
             <h2 className="text-2xl font-bold text-white mb-1">{selectedItem.data.title}</h2>
             <p className="text-sm text-gray-400 mb-6 border-b border-gray-700 pb-4">Article Contents</p>
@@ -206,12 +206,12 @@ return (
         </aside>
         
         {/* ✨ UPDATED RIGHT PANE WITH STICKY HEADER AND SCROLLABLE CONTENT ✨ */}
-        <section className="flex-1 bg-gray-900 rounded-3xl shadow-lg flex flex-col overflow-hidden">
+        <section className="flex-1 bg-black rounded-3xl shadow-lg flex flex-col overflow-hidden">
           {selectedItem ? (
             <>
               {/* Part 1: The Fixed Header */}
               <div className="flex-shrink-0 p-8">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-blue-400 mb-2">{selectedItem.data.title}</h1>
+                <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">{selectedItem.data.title}</h1>
                 {selectedItem.data.subtitle && <p className="text-2xl text-gray-300 italic">{selectedItem.data.subtitle}</p>}
               </div>
 
@@ -219,7 +219,7 @@ return (
               <hr className="border-gray-700 mx-8"/>
 
               {/* Part 3: The Scrollable Content Area */}
-              <div className="flex-grow overflow-y-auto p-8">
+              <div className="flex-grow overflow-y-auto p-8 text-xl">
                 {renderContent(selectedItem.data.sections)}
               </div>
             </>

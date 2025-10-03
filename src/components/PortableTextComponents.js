@@ -111,10 +111,10 @@ export const ptComponents = {
   },
 
   block: {
-    normal: ({ children }) => <p className="my-4 text-lg text-gray-300 font-sans">{children}</p>,
-    h1: ({ children }) => <h1 className="text-blue-500 font-extrabold text-4xl my-6 font-sans">{children}</h1>,
+    normal: ({ children }) => <p className="my-4 text-xl text-white font-sans">{children}</p>,
+    h1: ({ children }) => <h1 className="text-white font-extrabold text-4xl my-6 font-sans">{children}</h1>,
     h2: ({ children }) => <h2 className="text-blue-400 font-bold text-3xl my-5 font-sans border-b-2 border-gray-800 pb-2">{children}</h2>,
     h3: ({ children }) => <h3 className="text-blue-300 font-semibold text-2xl my-4 font-sans">{children}</h3>,
-    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans text-gray-400">{children}</blockquote>,
+    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans text-white">{children}</blockquote>,
   },
 };
