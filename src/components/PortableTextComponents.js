@@ -3,6 +3,31 @@ import Image from 'next/image';
 import { PortableText } from '@portabletext/react';
 import { urlFor } from '../lib/sanityClient';
 
+// --- Reusable Image Component ---
+const SanityImage = ({ value }) => {
+  if (!value?.asset) {
+    return null;
+  }
+  return (
+    <div className="relative my-6 shadow-lg rounded-md overflow-hidden">
+      <Image
+        src={urlFor(value).width(800).fit('max').auto('format').url()}
+        alt={value.alt || ' '}
+        loading="lazy"
+        width={800}
+        height={600}
+        className="w-full h-auto object-contain bg-gray-800"
+      />
+      {value.caption && (
+        <figcaption className="text-center text-sm text-gray-400 p-2 bg-gray-900">
+          {value.caption}
+        </figcaption>
+      )}
+    </div>
+  );
+};
+
+// --- Reusable Table Component ---
 const TableComponent = ({ value }) => {
   const { rows } = value;
   if (!rows) return null;
@@ -13,7 +38,7 @@ const TableComponent = ({ value }) => {
           {rows.map((row) => (
             <tr key={row._key}>
               {row.cells.map((cell) => (
-                <td key={cell._key} className="py-4 px-4 text-sm text-gray-300">
+                <td key={cell._key} className="py-4 px-4 text-lg text-gray-300">
                   <PortableText value={cell.content} components={ptComponents} />
                 </td>
               ))}
@@ -25,34 +50,37 @@ const TableComponent = ({ value }) => {
   );
 };
 
+// --- Reusable Nested List Component ---
+const NestedOrderedList = ({ children, level }) => {
+  const getListStyle = (lvl) => {
+    switch (lvl) {
+      case 1: return 'list-decimal';
+      case 2: return 'list-[lower-alpha]';
+      case 3: return 'list-[lower-roman]';
+      case 4: return 'list-[upper-roman]';
+      default: return 'list-decimal';
+    }
+  };
+
+  return (
+    <ol className={`${getListStyle(level)} pl-8 my-4 space-y-3 text-lg`}>
+      {children}
+    </ol>
+  );
+};
+
+
+// --- Main Export: All Components ---
 export const ptComponents = {
   types: {
-    imageBlock: ({ value }) => {
-      if (!value?.asset?.url) {
-        return null;
-      }
-      return (
-        <div className="relative my-6 shadow-lg rounded-md overflow-hidden">
-          <Image
-            src={value.asset.url}
-            alt={value.alt || 'Image'}
-            loading="lazy"
-            width={800}
-            height={600}
-            className="w-full h-auto object-contain"
-          />
-          {value.caption && (
-            <figcaption className="text-center text-sm text-gray-400 mt-2">{value.caption}</figcaption>
-          )}
-        </div>
-      );
-    },
+    image: SanityImage,
+    imageBlock: SanityImage,
     table: TableComponent,
   },
 
   list: {
-    bullet: ({ children }) => <ul className="list-disc pl-8 my-4 space-y-2">{children}</ul>,
-    number: ({ children }) => <ol className="list-decimal pl-8 my-4 space-y-2">{children}</ol>,
+    bullet: ({ children }) => <ul className="list-disc pl-8 my-4 space-y-3 text-lg">{children}</ul>,
+    number: NestedOrderedList,
   },
 
   listItem: {
@@ -61,23 +89,32 @@ export const ptComponents = {
   },
 
   marks: {
-    strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+    strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
     em: ({ children }) => <em className="italic">{children}</em>,
     underline: ({ children }) => <u className="underline">{children}</u>,
+    
     link: ({ value, children }) => {
-      // Your link component
+      const { href } = value;
+      return <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{children}</a>;
     },
+    
+    // ✨ CORRECTED INTERNAL LINK COMPONENT ✨
     internalLink: ({ value, children }) => {
-      // Your internalLink component
+      const href = `/category/${value.categorySlug}/${value.slug}`;
+      return (
+        // The <a> tag is removed, and its className is moved to the <Link> component
+        <Link href={href} className="text-blue-400 hover:underline font-semibold">
+          {children}
+        </Link>
+      );
     },
   },
 
   block: {
-    // ✅ Added 'text-white' to make the paragraph text pure white
-    normal: ({ children }) => <p className="my-4 text-lg text-white font-sans">{children}</p>,
-    h1: ({ children }) => <h1 className="text-blue-500 font-extrabold text-4xl my-4 font-sans">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-blue-400 font-bold text-3xl my-3 font-sans">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-blue-300 font-semibold text-2xl my-2 font-sans">{children}</h3>,
-    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans">{children}</blockquote>,
+    normal: ({ children }) => <p className="my-4 text-lg text-gray-300 font-sans">{children}</p>,
+    h1: ({ children }) => <h1 className="text-blue-500 font-extrabold text-4xl my-6 font-sans">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-blue-400 font-bold text-3xl my-5 font-sans border-b-2 border-gray-800 pb-2">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-blue-300 font-semibold text-2xl my-4 font-sans">{children}</h3>,
+    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans text-gray-400">{children}</blockquote>,
   },
 };
