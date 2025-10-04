@@ -1,20 +1,16 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from 'next/link';
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { sanityClient } from "../../../lib/sanityClient";
 import { PortableText } from '@portabletext/react';
 import { ptComponents } from "../../../components/PortableTextComponents";
 
-// --- DATA FETCHING (No changes needed) ---
+// --- DATA FETCHING (No changes here) ---
 export async function getStaticPaths() {
-  const query = `*[_type == "content"]{
-    "slug": slug.current,
-    "categorySlug": category->slug.current
-  }`;
+  const query = `*[_type == "content"]{ "slug": slug.current, "categorySlug": category->slug.current }`;
   const allContents = await sanityClient.fetch(query);
   const paths = allContents
     .filter(c => c.categorySlug && c.slug)
@@ -24,11 +20,8 @@ export async function getStaticPaths() {
   return { paths, fallback: "blocking" };
 }
 
-// In your [contentSlug].js page file
-
 export async function getStaticProps({ params }) {
   const { categorySlug, contentSlug } = params;
-  
   const contentQuery = `*[_type == "content" && slug.current == $slug && category->slug.current == $categorySlug][0]{
     ..., 
     "slug": slug.current,
@@ -37,8 +30,7 @@ export async function getStaticProps({ params }) {
       description[]{
         ..., 
         _type in ["image", "imageBlock"] => { asset-> },
-
-        // ✨ THIS IS THE CRUCIAL PART THAT FETCHES LINK DATA ✨
+        _type == "attachment" => { "fileURL": asset->url, "fileName": asset->originalFilename },
         markDefs[]{
           ...,
           _type == "internalLink" => {
@@ -49,7 +41,6 @@ export async function getStaticProps({ params }) {
       }
     }
   }`;
-
   const contentItem = await sanityClient.fetch(contentQuery, { slug: contentSlug, categorySlug });
   
   if (!contentItem) {
@@ -63,10 +54,8 @@ export async function getStaticProps({ params }) {
 }
 // --- END OF DATA FETCHING ---
 
-
 export default function CategoryPage({ contentItem }) {
   const router = useRouter(); 
-  // ✨ "isContentVisible" state is removed
   const [openSections, setOpenSections] = useState({ documents: true, topic: true });
   const [activeSection, setActiveSection] = useState('');
   
@@ -75,7 +64,6 @@ export default function CategoryPage({ contentItem }) {
   
   const toggleSection = (section) => setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
-  // This useEffect now runs as soon as the component mounts
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -96,23 +84,7 @@ export default function CategoryPage({ contentItem }) {
       const el = document.getElementById(id);
       if (el) observer.unobserve(el);
     });
-  }, [selectedItem.data.sections]); // ✨ Dependency updated
-
-  // ✨ New useEffect to automatically scroll to the first topic
-  useEffect(() => {
-    const sections = selectedItem.data.sections || [];
-    if (sections.length > 0) {
-        const firstSectionId = sections[0].title.toLowerCase().replace(/\s+/g, '-');
-        // A small timeout ensures the page has rendered before we try to scroll
-        setTimeout(() => {
-            const element = document.getElementById(firstSectionId);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }, 100);
-    }
   }, [selectedItem.data.sections]);
-
 
   const handleSectionClick = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -124,10 +96,10 @@ export default function CategoryPage({ contentItem }) {
     return sections.map((section) => {
       const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
       return (
-        <div key={sectionId} id={sectionId} className="mb-8 scroll-mt-24">
-          <h2 className="text-3xl font-bold text-yellow-400 mb-4">{section.title}</h2>
+        <div key={sectionId} id={sectionId} className="mb-10 scroll-mt-24">
           {section.description && (
-            <div className="portable-text-content text-lg md:text-xl leading-relaxed font-sans">
+            // ✅ CHANGED: prose-lg is now prose-xl for larger text overall
+            <div className="prose prose-xl max-w-none">
               <PortableText value={section.description} components={ptComponents} />
             </div>
           )}
@@ -136,98 +108,94 @@ export default function CategoryPage({ contentItem }) {
     });
   };
 
- // In your CategoryPage component in [contentSlug].js
-
-return (
-  <div className="min-h-screen flex flex-col bg-black text-gray-100 font-sans">
-    <Header />
-    <main className="flex flex-col flex-1 container mx-auto px-4 py-8 gap-6">
-      <div className="flex flex-1 gap-8">
-        <aside className="w-80 flex-shrink-0 bg-black rounded-2xl p-6 border border-gray-700 shadow-lg self-start sticky top-8">
-          <div className="overflow-y-auto h-[calc(100vh-8rem)] pr-2">
-            <h2 className="text-2xl font-bold text-white mb-1">{selectedItem.data.title}</h2>
-            <p className="text-sm text-gray-400 mb-6 border-b border-gray-700 pb-4">Article Contents</p>
-            
-            {documents.length > 0 && (
-              <div className="mb-6">
-                <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-yellow-400 mb-3 flex justify-between items-center text-xl">
-                  <div className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Documents Required
-                  </div>
-                  <span>{openSections.documents ? "▾" : "▸"}</span>
-                </button>
-                {openSections.documents && (
-                  <ul className="flex flex-col gap-2 text-gray-300">
-                    {documents.map((docName, idx) => (
-                      <li key={idx} className="pl-4 text-lg flex items-center gap-3">
-                        <svg className="h-5 w-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                        {docName}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-            
-            {selectedItem.data.sections && (
-              <div className="mb-6">
-                <button onClick={() => toggleSection("topic")} className="w-full text-left font-semibold text-yellow-400 mb-3 flex justify-between items-center text-xl">
-                  <div className="flex items-center gap-2">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                     Topic
-                  </div>
-                   <span>{openSections.topic ? "▾" : "▸"}</span>
-                </button>
-                {openSections.topic && (
-                  <ul className="flex flex-col text-lg">
-                    {selectedItem.data.sections.map((section) => {
-                      const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
-                      return (
-                        <li key={sectionId}>
-                          <button
-                            onClick={() => handleSectionClick(sectionId)}
-                            className={`w-full text-left py-2 px-4 border-l-4 transition-colors duration-200 ${
-                              activeSection === sectionId 
-                              ? "border-blue-400 bg-blue-400/10 text-blue-300 font-semibold" 
-                              : "border-transparent text-gray-400 hover:text-white hover:border-gray-500"
-                            }`}
-                          >
-                            {section.title}
-                          </button>
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
+      <Header />
+      <main className="flex flex-col flex-1 container mx-auto px-4 py-8">
+        <div className="flex flex-1 gap-8 items-start">
+          <aside className="w-80 flex-shrink-0 bg-white rounded-xl p-6 border border-slate-200 shadow-sm self-start sticky top-8 hidden lg:block">
+            <div className="overflow-y-auto h-[calc(100vh-8rem)] pr-2">
+              <h2 className="text-xl font-bold text-slate-900 mb-1">{selectedItem.data.title}</h2>
+              <p className="text-sm text-slate-500 mb-6 border-b border-slate-200 pb-4">Article Contents</p>
+              
+              {documents.length > 0 && (
+                <div className="mb-6">
+                   {/* ✅ CHANGED: text-lg is now text-xl */}
+                  <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-teal-600 mb-3 flex justify-between items-center text-xl">
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      Documents Required
+                    </div>
+                    <span>{openSections.documents ? "▾" : "▸"}</span>
+                  </button>
+                  {openSections.documents && (
+                    <ul className="flex flex-col gap-2 text-slate-600">
+                      {documents.map((docName, idx) => (
+                        // ✅ CHANGED: text-base is now text-lg
+                        <li key={idx} className="pl-4 text-lg flex items-center gap-3">
+                          <svg className="h-5 w-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                          {docName}
                         </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        </aside>
-        
-        {/* ✨ UPDATED RIGHT PANE WITH STICKY HEADER AND SCROLLABLE CONTENT ✨ */}
-        <section className="flex-1 bg-black rounded-3xl shadow-lg flex flex-col overflow-hidden">
-          {selectedItem ? (
-            <>
-              {/* Part 1: The Fixed Header */}
-              <div className="flex-shrink-0 p-8">
-                <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">{selectedItem.data.title}</h1>
-                {selectedItem.data.subtitle && <p className="text-2xl text-gray-300 italic">{selectedItem.data.subtitle}</p>}
-              </div>
-
-              {/* Part 2: The Separator Line */}
-              <hr className="border-gray-700 mx-8"/>
-
-              {/* Part 3: The Scrollable Content Area */}
-              <div className="flex-grow overflow-y-auto p-8 text-xl">
-                {renderContent(selectedItem.data.sections)}
-              </div>
-            </>
-          ) : (<p className="p-8">Loading Content...</p>)}
-        </section>
-      </div>
-    </main>
-    <Footer />
-  </div>
-);
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              
+              {selectedItem.data.sections && (
+                <div className="mb-6">
+                   {/* ✅ CHANGED: text-lg is now text-xl */}
+                  <button onClick={() => toggleSection("topic")} className="w-full text-left font-semibold text-teal-600 mb-3 flex justify-between items-center text-xl">
+                    <div className="flex items-center gap-2">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                       Topic
+                    </div>
+                    <span>{openSections.topic ? "▾" : "▸"}</span>
+                  </button>
+                  {openSections.topic && (
+                    <ul className="flex flex-col">
+                      {selectedItem.data.sections.map((section) => {
+                        const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
+                        return (
+                          <li key={sectionId}>
+                            <button
+                              onClick={() => handleSectionClick(sectionId)}
+                              // ✅ CHANGED: text-base is now text-lg
+                              className={`w-full text-left py-2 px-4 border-l-4 transition-colors duration-200 text-lg ${
+                                activeSection === sectionId 
+                                ? "border-indigo-500 bg-indigo-50 text-indigo-600 font-semibold" 
+                                : "border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-400"
+                              }`}
+                            >
+                              {section.title}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </aside>
+          
+          <section className="flex-1 bg-white rounded-xl shadow-md border border-slate-200 flex flex-col overflow-hidden">
+            {selectedItem ? (
+              <>
+                <div className="flex-shrink-0 p-8">
+                  <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 mb-2">{selectedItem.data.title}</h1>
+                  {selectedItem.data.subtitle && <p className="text-xl text-slate-600 italic">{selectedItem.data.subtitle}</p>}
+                </div>
+                <hr className="border-slate-200 mx-8"/>
+                <div className="flex-grow overflow-y-auto p-8">
+                  {renderContent(selectedItem.data.sections)}
+                </div>
+              </>
+            ) : (<p className="p-8">Loading Content...</p>)}
+          </section>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
 }

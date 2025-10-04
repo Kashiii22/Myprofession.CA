@@ -99,7 +99,7 @@ export default function Header() {
     <>
       <header className="backdrop-blur-lg bg-black/80 text-white font-sans shadow-2xl rounded-b-2xl z-50 relative">
         {/* Top Bar */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800 bg-black">
           <Link href="/" className="text-3xl font-extrabold tracking-wide">
             MyProfession.CA
           </Link>

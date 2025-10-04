@@ -5,25 +5,23 @@ import { urlFor } from '../lib/sanityClient';
 
 // --- Reusable Image Component ---
 const SanityImage = ({ value }) => {
-  if (!value?.asset) {
-    return null;
-  }
+  if (!value?.asset) return null;
   return (
-    <div className="relative my-6 shadow-lg rounded-md overflow-hidden">
+    <figure className="relative my-6 shadow-md rounded-lg overflow-hidden border border-slate-200">
       <Image
         src={urlFor(value).width(800).fit('max').auto('format').url()}
         alt={value.alt || ' '}
         loading="lazy"
         width={800}
         height={600}
-        className="w-full h-auto object-contain bg-gray-800"
+        className="w-full h-auto object-contain bg-slate-50"
       />
       {value.caption && (
-        <figcaption className="text-center text-sm text-gray-400 p-2 bg-gray-900">
+        <figcaption className="text-center text-sm text-slate-500 p-2 bg-slate-100">
           {value.caption}
         </figcaption>
       )}
-    </div>
+    </figure>
   );
 };
 
@@ -32,13 +30,14 @@ const TableComponent = ({ value }) => {
   const { rows } = value;
   if (!rows) return null;
   return (
-    <div className="overflow-x-auto my-6">
-      <table className="min-w-full divide-y divide-gray-700 border border-gray-700">
-        <tbody className="bg-gray-900 divide-y divide-gray-700">
+    <div className="overflow-x-auto my-6 border border-slate-300 rounded-lg">
+      <table className="min-w-full">
+        <tbody className="divide-y divide-slate-200">
           {rows.map((row) => (
-            <tr key={row._key}>
+            <tr key={row._key} className="bg-white">
               {row.cells.map((cell) => (
-                <td key={cell._key} className="py-4 px-4 text-lg text-gray-300">
+                // ✅ CHANGED: text-base is now text-lg for better table readability
+                <td key={cell._key} className="py-3 px-4 text-lg text-slate-700">
                   <PortableText value={cell.content} components={ptComponents} />
                 </td>
               ))}
@@ -50,6 +49,29 @@ const TableComponent = ({ value }) => {
   );
 };
 
+// --- Reusable Attachment Component ---
+const AttachmentComponent = ({ value }) => {
+  if (!value?.fileURL) return null;
+  return (
+    <div className="my-6 p-4 bg-slate-100 border border-slate-200 rounded-lg flex items-center gap-4">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+      <div className="flex-grow">
+        <p className="font-semibold text-slate-800">{value.description || 'Download File'}</p>
+        <p className="text-sm text-slate-500">{value.fileName}</p>
+      </div>
+      <a 
+        href={value.fileURL} 
+        download 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+      >
+        Download
+      </a>
+    </div>
+  );
+};
+
 // --- Reusable Nested List Component ---
 const NestedOrderedList = ({ children, level }) => {
   const getListStyle = (lvl) => {
@@ -57,18 +79,15 @@ const NestedOrderedList = ({ children, level }) => {
       case 1: return 'list-decimal';
       case 2: return 'list-[lower-alpha]';
       case 3: return 'list-[lower-roman]';
-      case 4: return 'list-[upper-roman]';
       default: return 'list-decimal';
     }
   };
-
   return (
-    <ol className={`${getListStyle(level)} pl-8 my-4 space-y-3 text-lg`}>
+    <ol className={`${getListStyle(level)} pl-6 my-4 space-y-2`}>
       {children}
     </ol>
   );
 };
-
 
 // --- Main Export: All Components ---
 export const ptComponents = {
@@ -76,45 +95,47 @@ export const ptComponents = {
     image: SanityImage,
     imageBlock: SanityImage,
     table: TableComponent,
+    attachment: AttachmentComponent,
   },
 
   list: {
-    bullet: ({ children }) => <ul className="list-disc pl-8 my-4 space-y-3 text-lg">{children}</ul>,
+    bullet: ({ children }) => <ul className="list-disc pl-6 my-4 space-y-2">{children}</ul>,
     number: NestedOrderedList,
   },
 
-  listItem: {
-    bullet: ({ children }) => <li>{children}</li>,
-    number: ({ children }) => <li>{children}</li>,
-  },
+  listItem: ({ children }) => <li>{children}</li>,
 
   marks: {
-    strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
+    strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
     em: ({ children }) => <em className="italic">{children}</em>,
     underline: ({ children }) => <u className="underline">{children}</u>,
     
     link: ({ value, children }) => {
       const { href } = value;
-      return <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{children}</a>;
+      return <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">{children}</a>;
     },
     
-    // ✨ CORRECTED INTERNAL LINK COMPONENT ✨
     internalLink: ({ value, children }) => {
       const href = `/category/${value.categorySlug}/${value.slug}`;
       return (
-        // The <a> tag is removed, and its className is moved to the <Link> component
-        <Link href={href} className="text-blue-400 hover:underline font-semibold">
+        <Link href={href} className="text-indigo-600 hover:underline font-semibold">
           {children}
         </Link>
       );
     },
   },
 
+  // ✅ CLEANED UP: Removed redundant text-size classes (e.g., text-4xl).
+  // The 'prose-xl' class now handles this automatically for better consistency.
   block: {
-    normal: ({ children }) => <p className="my-4 text-xl text-white font-sans">{children}</p>,
-    h1: ({ children }) => <h1 className="text-white font-extrabold text-4xl my-6 font-sans">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-blue-400 font-bold text-3xl my-5 font-sans border-b-2 border-gray-800 pb-2">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-blue-300 font-semibold text-2xl my-4 font-sans">{children}</h3>,
-    blockquote: ({ children }) => <blockquote className="border-l-4 border-gray-500 pl-4 italic my-4 font-sans text-white">{children}</blockquote>,
+    normal: ({ children }) => <p className="my-4 leading-relaxed text-slate-700">{children}</p>,
+    h1: ({ children }) => <h1 className="text-slate-900 font-bold mt-8 mb-4">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-teal-700 font-semibold mt-8 mb-4 border-b border-slate-200 pb-2">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-slate-800 font-semibold mt-6 mb-3">{children}</h3>,
+    blockquote: ({ children }) => <blockquote className="border-l-4 border-slate-300 pl-4 italic my-4 text-slate-600 bg-slate-100 py-2">{children}</blockquote>,
+    
+    // Alignment styles
+    center: ({ children }) => <p className="my-4 leading-relaxed text-slate-700 text-center">{children}</p>,
+    right: ({ children }) => <p className="my-4 leading-relaxed text-slate-700 text-right">{children}</p>,
   },
 };
