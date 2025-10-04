@@ -230,11 +230,6 @@ export default function CategoryPage({ contentItem }) {
                  <div className="mb-10">
                    <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 mb-4">{contentItem.title}</h1>
                    {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
-                   <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500 border-t border-b border-slate-200 py-3">
-                     <div><strong>Author:</strong> {contentItem.authorName || 'Anonymous'}</div>
-                     <div><strong>Published:</strong> {new Date(contentItem.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
-                     <div className="flex items-center gap-1.5 font-medium"><FiClock /><span>{timeToRead} min read</span></div>
-                   </div>
                  </div>
                  {renderContent(contentItem.sections)}
                </>

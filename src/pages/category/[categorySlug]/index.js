@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { contents, categories } from "../../../../data/dummyData";
 import { sanityClient } from "../../../lib/sanityClient";
 import { FaEye } from "react-icons/fa";
+import { FiClock } from "react-icons/fi";
 
 // --- DATA FETCHING ---
 export async function getStaticPaths() {
@@ -20,24 +21,19 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
     const { categorySlug } = params;
-
     const categoryQuery = `*[_type == "category" && slug.current == $slug][0]{_id, title}`;
     const category = await sanityClient.fetch(categoryQuery, { slug: categorySlug });
-
-    if (!category) {
-        return { notFound: true };
-    }
+    if (!category) { return { notFound: true }; }
 
     const contentQuery = `*[_type == "content" && references($categoryId)] | order(createdAt desc) {
         _id,
         title,
         subtitle,
-        "authorName": author->name,
+        "authorName": author,
         createdAt,
         contentType,
         "slug": slug.current
     }`;
-
     const categoryContents = await sanityClient.fetch(contentQuery, { categoryId: category._id });
 
     return {
@@ -57,10 +53,24 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
+    // FIX: Changed from useMemo to useState to prevent hydration error
+    const [simulatedData, setSimulatedData] = useState(new Map());
+
+    // FIX: useEffect now generates the random data only on the client side
+    useEffect(() => {
+        const dataMap = new Map();
+        categoryContents.forEach(item => {
+            dataMap.set(item._id, {
+                timeToRead: Math.floor(Math.random() * (10 - 2 + 1)) + 2,
+                liveReaders: Math.floor(Math.random() * (150 - 10 + 1)) + 10,
+            });
+        });
+        setSimulatedData(dataMap);
+    }, [categoryContents]);
+
     const filteredContents = categoryContents.filter((c) =>
         c.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
     const totalPages = Math.ceil(filteredContents.length / itemsPerPage);
     const paginatedContents = filteredContents.slice(
         (currentPage - 1) * itemsPerPage,
@@ -69,9 +79,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
 
     const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-
     const upcomingFiles = Object.values(contents).flat().slice(0, 5);
-
     const goToContentPage = (contentSlug) => {
         router.push(`/category/${categorySlug}/${contentSlug}`);
     };
@@ -80,36 +88,41 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
             <Header />
             <main className="flex-1 container mx-auto px-6 py-10 gap-8 flex">
-                {/* Left Side Panels */}
-                <aside className="w-80 flex-col gap-8 hidden lg:flex">
-                    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
-                        <h2 className="text-2xl font-bold text-indigo-600 mb-4">Trending Files</h2>
-                        <ul className="flex flex-col gap-3">
+                
+                <aside className="w-64 flex-shrink-0 flex-col gap-8 hidden lg:flex">
+                    {/* Upcoming Files Panel (Subtle Version) */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-600 mb-3">Upcoming Files</h3>
+                        <ul className="space-y-2">
                             {upcomingFiles.map((file, idx) => (
-                                <li key={idx} className="p-2 rounded-md hover:bg-slate-100 transition cursor-pointer font-medium text-slate-700">
+                                <li key={idx} className="text-slate-500 hover:text-indigo-600 transition cursor-pointer text-sm font-medium truncate">
                                     {file.title}
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 flex flex-col items-center text-center">
-                        <h2 className="text-2xl font-bold text-teal-600 mb-4">Join as a Content Writer</h2>
-                        <p className="text-slate-600 mb-6">Contribute your expertise to help thousands of readers.</p>
+
+                    {/* Join as Content Writer Panel (Subtle Version) */}
+                    <div className="border-t border-slate-200 pt-8 mt-8 text-center">
+                        <h3 className="text-lg font-semibold text-slate-600 mb-2">
+                            Join as a Content Writer
+                        </h3>
+                        <p className="text-slate-500 mb-4 text-sm">
+                            Contribute your expertise to help thousands of readers.
+                        </p>
                         <button
                             onClick={() => router.push("/ApplyContentWriter")}
-                            className="px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-md font-semibold text-white transition shadow-sm text-md"
+                            className="px-5 py-2 border border-teal-500 text-teal-500 rounded-md font-semibold hover:bg-teal-500 hover:text-white transition-all text-sm"
                         >
                             Apply Now
                         </button>
                     </div>
                 </aside>
 
-                {/* Main Table */}
                 <section className="flex-1 flex flex-col">
                     <h1 className="text-4xl font-extrabold text-indigo-700 mb-6">
                         {categoryTitle || categorySlug.replace("-", " ").toUpperCase()}
                     </h1>
-
                     <input
                         type="text"
                         placeholder="Search within this category..."
@@ -117,7 +130,6 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full mb-6 p-3 rounded-md bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
-
                     <div className="overflow-x-auto bg-white rounded-xl shadow-md border border-slate-200">
                         <table className="min-w-full">
                             <thead className="bg-slate-100">
@@ -133,7 +145,6 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                             </thead>
                             <tbody className="divide-y divide-slate-200">
                                 {paginatedContents.map((c, idx) => (
-                                    // ✅ ROW: Now the entire row is clickable
                                     <tr 
                                         key={c._id} 
                                         className="transition hover:bg-slate-50 cursor-pointer"
@@ -143,10 +154,23 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                                             {(currentPage - 1) * itemsPerPage + idx + 1}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-semibold text-indigo-700">
-                                                {c.title}
-                                            </div>
+                                            <div className="font-semibold text-indigo-700">{c.title}</div>
                                             {c.subtitle && (<div className="text-sm text-slate-500 mt-1">{c.subtitle}</div>)}
+                                            
+                                            <div className="mt-2 flex items-center gap-4">
+                                                {simulatedData.has(c._id) && (
+                                                    <>
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                                            <FiClock />
+                                                            {simulatedData.get(c._id)?.timeToRead} min read
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                                                            <span className="live-dot"></span>
+                                                            {simulatedData.get(c._id)?.liveReaders} reading
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{c.authorName || "Admin"}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
@@ -160,11 +184,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <button
                                                 className="animated-view-button"
-                                                // ✅ BUTTON: Stops the row's click event from firing twice
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    goToContentPage(c.slug);
-                                                }}
+                                                onClick={(e) => { e.stopPropagation(); goToContentPage(c.slug); }}
                                             >
                                                 <FaEye />
                                                 <span>View</span>
@@ -182,8 +202,6 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex justify-center mt-6 gap-2">
                            <button onClick={prevPage} disabled={currentPage === 1} className="px-4 py-2 bg-white border border-slate-300 rounded-md transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -232,7 +250,6 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                     width: 100%;
                     height: 100%;
                     background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-                    transition: all 0.7s;
                     animation: shine 4s infinite linear;
                 }
                 @keyframes pulse-glow {
@@ -242,6 +259,17 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                 @keyframes shine {
                     0% { transform: translateX(-100%); }
                     100% { transform: translateX(200%); }
+                }
+                .live-dot {
+                    width: 7px;
+                    height: 7px;
+                    background-color: #ef4444;
+                    border-radius: 50%;
+                    animation: pulse-live 1.5s infinite;
+                }
+                @keyframes pulse-live {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(0.9); }
                 }
             `}</style>
             
