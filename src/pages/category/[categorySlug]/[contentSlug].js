@@ -96,9 +96,15 @@ export default function CategoryPage({ contentItem }) {
     return sections.map((section) => {
       const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
       return (
-        <div key={sectionId} id={sectionId} className="mb-10 scroll-mt-24">
+        // ✅ CHANGED: Increased bottom margin for better spacing between sections
+        <div key={sectionId} id={sectionId} className="mb-12 scroll-mt-24">
+          
+          {/* ✅ ADDED: Section title is now rendered here with prominent styling */}
+          <h2 className="text-3xl font-bold text-teal-700 mb-4 border-b border-slate-200 pb-2">
+            {section.title}
+          </h2>
+
           {section.description && (
-            // ✅ CHANGED: prose-lg is now prose-xl for larger text overall
             <div className="prose prose-xl max-w-none">
               <PortableText value={section.description} components={ptComponents} />
             </div>
@@ -120,7 +126,6 @@ export default function CategoryPage({ contentItem }) {
               
               {documents.length > 0 && (
                 <div className="mb-6">
-                   {/* ✅ CHANGED: text-lg is now text-xl */}
                   <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-teal-600 mb-3 flex justify-between items-center text-xl">
                     <div className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -131,7 +136,6 @@ export default function CategoryPage({ contentItem }) {
                   {openSections.documents && (
                     <ul className="flex flex-col gap-2 text-slate-600">
                       {documents.map((docName, idx) => (
-                        // ✅ CHANGED: text-base is now text-lg
                         <li key={idx} className="pl-4 text-lg flex items-center gap-3">
                           <svg className="h-5 w-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                           {docName}
@@ -144,7 +148,6 @@ export default function CategoryPage({ contentItem }) {
               
               {selectedItem.data.sections && (
                 <div className="mb-6">
-                   {/* ✅ CHANGED: text-lg is now text-xl */}
                   <button onClick={() => toggleSection("topic")} className="w-full text-left font-semibold text-teal-600 mb-3 flex justify-between items-center text-xl">
                     <div className="flex items-center gap-2">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
@@ -160,7 +163,6 @@ export default function CategoryPage({ contentItem }) {
                           <li key={sectionId}>
                             <button
                               onClick={() => handleSectionClick(sectionId)}
-                              // ✅ CHANGED: text-base is now text-lg
                               className={`w-full text-left py-2 px-4 border-l-4 transition-colors duration-200 text-lg ${
                                 activeSection === sectionId 
                                 ? "border-indigo-500 bg-indigo-50 text-indigo-600 font-semibold" 
