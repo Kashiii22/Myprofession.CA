@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
-import { contents, categories } from "../../../../data/dummyData";
+import { contents } from "../../../../data/dummyData"; // Removed unused 'categories'
 import { sanityClient } from "../../../lib/sanityClient";
 import { FaEye } from "react-icons/fa";
-import { FiClock } from "react-icons/fi";
 
-// --- DATA FETCHING ---
+// --- DATA FETCHING (No changes needed here) ---
 export async function getStaticPaths() {
     const query = `*[_type == "category"]{"slug": slug.current}`;
     const allCategories = await sanityClient.fetch(query);
@@ -53,21 +52,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    // FIX: Changed from useMemo to useState to prevent hydration error
-    const [simulatedData, setSimulatedData] = useState(new Map());
-
-    // FIX: useEffect now generates the random data only on the client side
-    useEffect(() => {
-        const dataMap = new Map();
-        categoryContents.forEach(item => {
-            dataMap.set(item._id, {
-                timeToRead: Math.floor(Math.random() * (10 - 2 + 1)) + 2,
-                liveReaders: Math.floor(Math.random() * (150 - 10 + 1)) + 10,
-            });
-        });
-        setSimulatedData(dataMap);
-    }, [categoryContents]);
-
+    // Filter, then paginate the contents
     const filteredContents = categoryContents.filter((c) =>
         c.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -79,7 +64,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
 
     const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-    const upcomingFiles = Object.values(contents).flat().slice(0, 5);
+
     const goToContentPage = (contentSlug) => {
         router.push(`/category/${categorySlug}/${contentSlug}`);
     };
@@ -87,39 +72,12 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
     return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
             <Header />
-            <main className="flex-1 container mx-auto px-6 py-10 gap-8 flex">
+            {/* MODIFICATION: Removed 'flex' and 'gap-8' for full-width layout */}
+            <main className="flex-1 container mx-auto px-6 py-10">
                 
-                <aside className="w-64 flex-shrink-0 flex-col gap-8 hidden lg:flex">
-                    {/* Upcoming Files Panel (Subtle Version) */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-600 mb-3">Upcoming Files</h3>
-                        <ul className="space-y-2">
-                            {upcomingFiles.map((file, idx) => (
-                                <li key={idx} className="text-slate-500 hover:text-indigo-600 transition cursor-pointer text-sm font-medium truncate">
-                                    {file.title}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                {/* MODIFICATION: The entire <aside> block has been removed */}
 
-                    {/* Join as Content Writer Panel (Subtle Version) */}
-                    <div className="border-t border-slate-200 pt-8 mt-8 text-center">
-                        <h3 className="text-lg font-semibold text-slate-600 mb-2">
-                            Join as a Content Writer
-                        </h3>
-                        <p className="text-slate-500 mb-4 text-sm">
-                            Contribute your expertise to help thousands of readers.
-                        </p>
-                        <button
-                            onClick={() => router.push("/ApplyContentWriter")}
-                            className="px-5 py-2 border border-teal-500 text-teal-500 rounded-md font-semibold hover:bg-teal-500 hover:text-white transition-all text-sm"
-                        >
-                            Apply Now
-                        </button>
-                    </div>
-                </aside>
-
-                <section className="flex-1 flex flex-col">
+                <section className="flex flex-col">
                     <h1 className="text-4xl font-extrabold text-indigo-700 mb-6">
                         {categoryTitle || categorySlug.replace("-", " ").toUpperCase()}
                     </h1>
@@ -136,7 +94,11 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                                 <tr>
                                     {["Sr No.", "Topic", "Uploaded By", "Uploaded On", "File Type", "Action"].map(
                                         (h, i) => (
-                                            <th key={i} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            <th 
+                                                key={i} 
+                                                // MODIFICATION: Updated classes for more readable headers
+                                                className="px-6 py-3 text-left text-sm font-bold text-slate-800"
+                                            >
                                                 {h}
                                             </th>
                                         )
@@ -157,20 +119,8 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                                             <div className="font-semibold text-indigo-700">{c.title}</div>
                                             {c.subtitle && (<div className="text-sm text-slate-500 mt-1">{c.subtitle}</div>)}
                                             
-                                            <div className="mt-2 flex items-center gap-4">
-                                                {simulatedData.has(c._id) && (
-                                                    <>
-                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                                                            <FiClock />
-                                                            {simulatedData.get(c._id)?.timeToRead} min read
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                                                            <span className="live-dot"></span>
-                                                            {simulatedData.get(c._id)?.liveReaders} reading
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </div>
+                                            {/* MODIFICATION: Removed the time to read / live readers div */}
+                                            
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{c.authorName || "Admin"}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
@@ -260,6 +210,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                     0% { transform: translateX(-100%); }
                     100% { transform: translateX(200%); }
                 }
+                /* CSS for 'live-dot' is no longer needed but kept in case you reuse it */
                 .live-dot {
                     width: 7px;
                     height: 7px;
