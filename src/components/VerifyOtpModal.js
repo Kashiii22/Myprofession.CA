@@ -3,13 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { FaShieldAlt } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import { resendOTP } from "@/lib/api/auth";
 
-export default function VerifyOtpModal({ phone, onClose }) {
+export default function VerifyOtpModal({ phone, onClose, onVerify, loading }) {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [counter, setCounter] = useState(30);
+  const [resendLoading, setResendLoading] = useState(false);
   const inputsRef = useRef([]);
 
   useEffect(() => {
+    inputsRef.current[0]?.focus(); // Auto-focus the first input
     const timer = setInterval(() => {
       setCounter((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -36,17 +39,28 @@ export default function VerifyOtpModal({ phone, onClose }) {
     e.preventDefault();
     const code = otp.join("");
     if (code.length === 6) {
-      toast.success("OTP Verified!");
-      onClose();
+      onVerify?.(code); // Pass the OTP to the parent handler
     } else {
       toast.error("Please enter all 6 digits.");
     }
   };
 
-  const handleResend = () => {
-    if (counter === 0) {
-      toast.success("OTP resent to " + phone);
-      setCounter(30);
+  // ✅ HANDLES RESEND OTP API CALL with new response logic
+  const handleResend = async () => {
+    if (counter > 0 || resendLoading) return;
+    setResendLoading(true);
+    try {
+      const response = await resendOTP({ phone: `+91${phone}` });
+      if (response.success) {
+        toast.success(response.message);
+        setCounter(30); // Reset timer on success
+      } else {
+        toast.error(response.message);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend OTP.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -73,7 +87,7 @@ export default function VerifyOtpModal({ phone, onClose }) {
           Verify OTP
         </h1>
         <p className="text-sm text-center text-gray-400 mb-6">
-          Enter the 6-digit OTP sent to {phone}
+          Enter the 6-digit OTP sent to +91{phone}
         </p>
 
         <form onSubmit={handleVerify} className="space-y-6">
@@ -100,23 +114,24 @@ export default function VerifyOtpModal({ phone, onClose }) {
             </span>
             <button
               type="button"
-              disabled={counter > 0}
+              disabled={counter > 0 || resendLoading}
               onClick={handleResend}
               className={`font-semibold ${
-                counter === 0
+                counter === 0 && !resendLoading
                   ? "text-blue-500 hover:underline"
                   : "text-gray-500 cursor-not-allowed"
               }`}
             >
-              Resend OTP
+              {resendLoading ? "Sending..." : "Resend OTP"}
             </button>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-700 to-blue-500 hover:opacity-90 transition duration-300 text-white py-2 rounded-lg font-semibold"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-700 to-blue-500 hover:opacity-90 transition duration-300 text-white py-2 rounded-lg font-semibold disabled:opacity-50"
           >
-            Verify OTP
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
       </div>

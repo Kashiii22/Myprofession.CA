@@ -14,6 +14,13 @@ import {
   setClosing,
   setLoginMethod,
 } from "@/redux/authSlice";
+import {
+  signup,
+  login,
+  requestLoginOTP,
+  verifyLoginOTP,
+  verifyOtpAndCreateUser,
+} from "@/lib/api/auth";
 
 // Input Field
 const InputField = ({
@@ -22,9 +29,11 @@ const InputField = ({
   value,
   onChange,
   onBlur,
+  name,
 }) => (
   <input
     type={type}
+    name={name}
     inputMode={type === "tel" ? "numeric" : undefined}
     pattern={type === "tel" ? "[0-9]*" : undefined}
     placeholder={placeholder}
@@ -33,6 +42,7 @@ const InputField = ({
     onBlur={onBlur}
     maxLength={type === "tel" ? 10 : undefined}
     className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400"
+    autoComplete="off"
   />
 );
 
@@ -77,20 +87,123 @@ export default function AuthModal({ onClose }) {
     (state) => state.auth
   );
 
-  // local state for phone number
-  const [localPhone, setLocalPhone] = useState("");
-
+  const [formState, setFormState] = useState({
+    name: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  const handleSendOtp = (e) => {
-    e.preventDefault();
-    if (localPhone.length === 10) {
-      // push phone to redux only on submit
-      dispatch(setPhone(localPhone));
-      toast.success("OTP sent successfully!");
-      dispatch(toggleOtpModal(true));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "phone") {
+      if (/^\d{0,10}$/.test(value)) {
+        setFormState((prev) => ({ ...prev, [name]: value }));
+      }
     } else {
-      toast.error("Please enter a valid 10-digit phone number.");
+      setFormState((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // ✅ HANDLES LOGIN API CALLS with new response logic
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    dispatch(setPhone(formState.phone));
+    const phoneWithPrefix = `+91${formState.phone}`;
+
+    try {
+      if (loginMethod === "otp") {
+        const response = await requestLoginOTP({ phone: phoneWithPrefix });
+        if (response.success) {
+          toast.success(response.message);
+          dispatch(toggleOtpModal(true));
+        } else {
+          toast.error(response.message);
+        }
+      } else {
+        const response = await login({
+          phone: phoneWithPrefix,
+          password: formState.password,
+        });
+        if (response.success) {
+          toast.success(response.message);
+          // You would typically handle token storage/user context here
+          console.log("Logged in user:", response.user);
+          handleClose();
+        } else {
+          toast.error(response.message);
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "A network error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ HANDLES SIGNUP API CALLS with new response logic
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    if (formState.password !== formState.confirmPassword) {
+      return toast.error("Passwords do not match.");
+    }
+    setLoading(true);
+    dispatch(setPhone(formState.phone));
+    const phoneWithPrefix = `+91${formState.phone}`;
+    try {
+      const response = await signup({
+        name: formState.name,
+        phone: phoneWithPrefix,
+        password: formState.password,
+      });
+
+      if (response.success) {
+        toast.success(response.message);
+        dispatch(toggleOtpModal(true));
+      } else {
+        toast.error(response.message);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "A network error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ HANDLES OTP VERIFICATION API CALLS with new response logic
+  const handleOtpVerification = async (otp) => {
+    setLoading(true);
+    const phoneWithPrefix = `+91${formState.phone}`;
+    try {
+      if (isLogin) {
+        const response = await verifyLoginOTP({ phone: phoneWithPrefix, otp });
+        if (response.success) {
+          toast.success(response.message);
+          console.log("Logged in user:", response.user);
+          handleClose();
+        } else {
+          toast.error(response.message);
+        }
+      } else {
+        const response = await verifyOtpAndCreateUser({
+          phone: phoneWithPrefix,
+          otp,
+        });
+        if (response.success) {
+          toast.success(response.message);
+          dispatch(toggleOtpModal(false));
+          dispatch(toggleTab()); // Switch to login tab after successful signup
+        } else {
+          toast.error(response.message);
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "OTP verification failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,8 +223,10 @@ export default function AuthModal({ onClose }) {
       >
         {showOtpModal && (
           <VerifyOtpModal
-            phone={localPhone}
+            phone={formState.phone}
             onClose={() => dispatch(toggleOtpModal(false))}
+            onVerify={handleOtpVerification}
+            loading={loading}
           />
         )}
 
@@ -121,13 +236,10 @@ export default function AuthModal({ onClose }) {
             closing ? "scale-95 opacity-0" : "scale-100 opacity-100"
           }`}
         >
-          {/* Left Panel with IT Laws */}
           <ITLawsPanel />
 
-          {/* Right Panel */}
           <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center">
             <div className="w-full px-4 py-6 sm:px-6 md:px-10 lg:px-12 relative min-h-[550px] overflow-y-auto max-h-screen">
-              {/* Toggle Tabs */}
               <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
                 {["Login", "Signup"].map((label, i) => (
                   <button
@@ -144,11 +256,10 @@ export default function AuthModal({ onClose }) {
                 ))}
               </div>
 
-              {/* Forms */}
               <div className="space-y-4 w-full max-w-md mx-auto">
                 {isLogin ? (
                   <form
-                    onSubmit={handleSendOtp}
+                    onSubmit={handleLoginSubmit}
                     autoComplete="off"
                     className="space-y-4"
                   >
@@ -171,26 +282,32 @@ export default function AuthModal({ onClose }) {
 
                     <InputField
                       type="tel"
+                      name="phone"
                       placeholder="Phone Number"
-                      value={localPhone}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^\d{0,10}$/.test(raw)) setLocalPhone(raw);
-                      }}
-                      onBlur={() =>
-                        setLocalPhone(localPhone.replace(/\D/g, ""))
-                      }
+                      value={formState.phone}
+                      onChange={handleInputChange}
                     />
 
                     {loginMethod === "password" && (
-                      <InputField type="password" placeholder="Password" />
+                      <InputField
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        value={formState.password}
+                        onChange={handleInputChange}
+                      />
                     )}
 
                     <button
                       type="submit"
-                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                      disabled={loading}
+                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
                     >
-                      {loginMethod === "otp" ? "Send OTP" : "Login"}
+                      {loading
+                        ? "Processing..."
+                        : loginMethod === "otp"
+                        ? "Send OTP"
+                        : "Login"}
                     </button>
 
                     <p
@@ -201,35 +318,49 @@ export default function AuthModal({ onClose }) {
                     </p>
                   </form>
                 ) : (
-                  <form className="space-y-4 w-full">
-                    <InputField placeholder="Full Name" />
+                  <form
+                    onSubmit={handleSignupSubmit}
+                    className="space-y-4 w-full"
+                  >
+                    <InputField
+                      name="name"
+                      placeholder="Full Name"
+                      value={formState.name}
+                      onChange={handleInputChange}
+                    />
                     <InputField
                       type="tel"
+                      name="phone"
                       placeholder="Phone Number"
-                      value={localPhone}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^\d{0,10}$/.test(raw)) setLocalPhone(raw);
-                      }}
-                      onBlur={() =>
-                        setLocalPhone(localPhone.replace(/\D/g, ""))
-                      }
+                      value={formState.phone}
+                      onChange={handleInputChange}
                     />
-                    <InputField type="password" placeholder="Create Password" />
-                    <InputField type="password" placeholder="Confirm Password" />
+                    <InputField
+                      type="password"
+                      name="password"
+                      placeholder="Create Password"
+                      value={formState.password}
+                      onChange={handleInputChange}
+                    />
+                    <InputField
+                      type="password"
+                      name="confirmPassword"
+                      placeholder="Confirm Password"
+                      value={formState.confirmPassword}
+                      onChange={handleInputChange}
+                    />
                     <button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition"
+                      disabled={loading}
+                      className="w-full bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
                     >
-                      Signup
+                      {loading ? "Processing..." : "Signup"}
                     </button>
                   </form>
                 )}
 
-                {/* Google Button */}
                 <GoogleAuthButton />
 
-                {/* Switch Prompt */}
                 <p className="text-sm text-center text-gray-400 mt-4">
                   {isLogin ? "Not a member?" : "Already have an account?"}{" "}
                   <button
@@ -244,8 +375,6 @@ export default function AuthModal({ onClose }) {
           </div>
         </div>
       </div>
-
-      {/* Forgot Password Modal */}
       {showForgotModal && (
         <ForgotPasswordModal onClose={() => setShowForgotModal(false)} />
       )}
