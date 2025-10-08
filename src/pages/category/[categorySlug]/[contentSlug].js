@@ -77,7 +77,7 @@ export async function getStaticProps({ params }) {
 
 export default function CategoryPage({ contentItem }) {
     const router = useRouter(); 
-    const [openSections, setOpenSections] = useState({ documents: true, topic: true });
+    const [openSections, setOpenSections] = useState({ documents: false, topic: false });
     const [activeSection, setActiveSection] = useState('');
     
     const headerRef = useRef(null);
@@ -176,21 +176,10 @@ export default function CategoryPage({ contentItem }) {
                 <aside className="w-80 flex-shrink-0 bg-slate-50 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
-                        <p className="text-sm text-slate-500">Article Contents</p>
+                        <p className="text-xl text-slate-500">Summary Box</p>
                     </div>
                     <div className="flex-grow p-4 overflow-y-auto">
-                        {contentItem.attachmentURL && (
-                            <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    Attachment
-                                </h3>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm text-slate-600 truncate" title={contentItem.attachmentFileName}>{contentItem.attachmentFileName || 'Download file'}</span>
-                                    <a href={contentItem.attachmentURL} download target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">Download</a>
-                                </div>
-                            </div>
-                        )}
+
                         {documents.length > 0 && (
                             <div className="mb-4">
                                <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-slate-700 mb-2 flex justify-between items-center text-lg p-2 rounded-md hover:bg-slate-200">
@@ -211,7 +200,7 @@ export default function CategoryPage({ contentItem }) {
                                 <button onClick={() => toggleSection("topic")} className="w-full text-left font-semibold text-slate-700 mb-2 flex justify-between items-center text-lg p-2 rounded-md hover:bg-slate-200">
                                     <div className="flex items-center gap-3">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                                        Topics
+                                        Sub-Topics
                                     </div>
                                     <span className={`transition-transform text-slate-500 ${openSections.topic ? "rotate-180" : ""}`}>▾</span>
                                 </button>
@@ -232,6 +221,18 @@ export default function CategoryPage({ contentItem }) {
                                         })}
                                     </ul>
                                 )}
+                            </div>
+                        )}
+                                                {contentItem.attachmentURL && (
+                            <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Attachment
+                                </h3>
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm text-slate-600 truncate" title={contentItem.attachmentFileName}>{contentItem.attachmentFileName || 'Download file'}</span>
+                                    <a href={contentItem.attachmentURL} download target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">Download</a>
+                                </div>
                             </div>
                         )}
                     </div>

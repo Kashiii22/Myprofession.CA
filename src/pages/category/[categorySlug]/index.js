@@ -73,7 +73,7 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
             <Header />
             {/* MODIFICATION: Removed 'flex' and 'gap-8' for full-width layout */}
-            <main className="flex-1 container mx-auto px-6 py-10">
+            <main className="flex-1 container mx-auto px-6 py-5">
                 
                 {/* MODIFICATION: The entire <aside> block has been removed */}
 
@@ -86,18 +86,18 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                         placeholder="Search within this category..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full mb-6 p-3 rounded-md bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full mb-6 p-2 rounded-md bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <div className="overflow-x-auto bg-white rounded-xl shadow-md border border-slate-200">
                         <table className="min-w-full">
-                            <thead className="bg-slate-100">
+                            <thead className="bg-slate-300">
                                 <tr>
                                     {["Sr No.", "Topic", "Uploaded By", "Uploaded On", "File Type", "Action"].map(
                                         (h, i) => (
                                             <th 
                                                 key={i} 
                                                 // MODIFICATION: Updated classes for more readable headers
-                                                className="px-6 py-3 text-left text-sm font-bold text-slate-800"
+                                                className="px-6 py-3 text-left text-xl font-bold text-blue"
                                             >
                                                 {h}
                                             </th>
@@ -112,26 +112,26 @@ export default function CategoryPage({ categoryTitle, categorySlug, categoryCont
                                         className="transition hover:bg-slate-50 cursor-pointer"
                                         onClick={() => goToContentPage(c.slug)}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-md text-slate-500">
                                             {(currentPage - 1) * itemsPerPage + idx + 1}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-semibold text-indigo-700">{c.title}</div>
-                                            {c.subtitle && (<div className="text-sm text-slate-500 mt-1">{c.subtitle}</div>)}
+                                            <div className="font-semibold text-indigo-700 text-xl">{c.title}</div>
+                                            {c.subtitle && (<div className="text-lg text-slate-500 mt-1">{c.subtitle}</div>)}
                                             
                                             {/* MODIFICATION: Removed the time to read / live readers div */}
                                             
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{c.authorName || "Admin"}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                        <td className="px-6 py-4 whitespace-nowrap text-md text-slate-600">{c.authorName || "Admin"}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-md text-slate-600">
                                             {new Date(c.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">
+                                            <span className="px-2 inline-flex text-sm leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">
                                                 {(c.contentType || 'text').toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <td className="px-6 py-4 whitespace-nowrap text-md font-medium">
                                             <button
                                                 className="animated-view-button"
                                                 onClick={(e) => { e.stopPropagation(); goToContentPage(c.slug); }}

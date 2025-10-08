@@ -7,7 +7,7 @@ import "aos/dist/aos.css";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation"; // ✅ useRouter for Next.js App Router
 import { ShinyButton } from "@/components/magicui/shiny-button";
-
+import ChatbotWidget from "@/components/chatbotwidget";
 // Mentor Data
 const mentorsLeft = [
   { name: "CA Rohan Mehta", title: "Direct Tax Expert", image: "https://i.pravatar.cc/150?img=32", color: "bg-gradient-to-r from-indigo-700 to-indigo-900" },
@@ -205,6 +205,7 @@ export default function HomePage() {
           © {new Date().getFullYear()} MyProfession.CA. All rights reserved.
         </div>
       </footer>
+      <ChatbotWidget />
     </div>
   );
 }

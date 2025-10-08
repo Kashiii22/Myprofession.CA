@@ -136,18 +136,6 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* ✅ Social Icons with brand colors */}
-            <div className="flex items-center gap-4 text-2xl ml-4">
-              <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
-                <FaInstagram className="text-pink-500 hover:opacity-80 transition" />
-              </a>
-              <a href="https://youtube.com/yourchannel" target="_blank" rel="noopener noreferrer">
-                <FaYoutube className="text-red-600 hover:opacity-80 transition" />
-              </a>
-              <a href="mailto:yourmail@gmail.com">
-                <FaEnvelope className="text-gray-400 hover:text-white transition" />
-              </a>
-            </div>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
