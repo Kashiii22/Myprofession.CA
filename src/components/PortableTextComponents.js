@@ -6,15 +6,17 @@ import { urlFor } from '../lib/sanityClient';
 // --- Reusable Image Component ---
 const SanityImage = ({ value }) => {
   if (!value?.asset) return null;
+
   return (
-    <figure className="relative my-6 shadow-md rounded-lg overflow-hidden border border-slate-200">
+    // Add max-w-4xl and mx-auto here to constrain and center the container
+    <figure className="relative my-6 mx-auto max-w-4xl shadow-md rounded-lg overflow-hidden border border-slate-200">
       <Image
         src={urlFor(value).width(800).fit('max').auto('format').url()}
         alt={value.alt || ' '}
         loading="lazy"
-        width={800}
-        height={600}
-        className="w-full h-auto object-contain bg-slate-50"
+        width={800} // This is the intrinsic width for Next.js, layout is controlled by CSS
+        height={600} // This is the intrinsic height, used for aspect ratio
+        className="w-full h-auto object-contain bg-slate-50" // w-full now refers to the max-width of the figure
       />
       {value.caption && (
         <figcaption className="text-center text-sm text-slate-500 p-2 bg-slate-100">
@@ -142,9 +144,9 @@ export const ptComponents = {
       }
       return <p className="my-4 leading-relaxed text-slate-700">{children}</p>;
     },
-    h1: ({ children }) => <h1 className="text-slate-900 font-bold mt-8 mb-4">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-teal-700 font-semibold mt-8 mb-4 border-b border-slate-200 pb-2">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-slate-800 font-semibold mt-6 mb-3">{children}</h3>,
+    h1: ({ children }) => <h1 className="text-slate-900 font-bold mt-8 mb-4 text-xl">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-teal-700 font-semibold mt-8 mb-4 border-slate-200 pb-2 text-lg">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-slate-800 font-semibold mt-6 mb-3 text-sm">{children}</h3>,
     blockquote: ({ children }) => <blockquote className="border-l-4 border-slate-300 pl-4 italic my-4 text-slate-600 bg-slate-100 py-2">{children}</blockquote>,
     center: ({ children }) => {
       const content = Array.isArray(children) ? children.filter(child => child !== '' && child !== ' ') : [];

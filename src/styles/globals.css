@@ -214,3 +214,26 @@ body {
 .styled-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #718096;
 }
+/* In your globals.css file */
+@keyframes fadeInOut {
+  0%, 100% { 
+    opacity: 0; 
+    transform: translate(-50%, 10px); 
+  }
+  10%, 90% { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  }
+}
+
+.animate-fade-in-out {
+  animation: fadeInOut 3s ease-in-out forwards;
+}
+/* In your globals.css file */
+.toggle-checkbox {
+  @apply appearance-none w-12 h-6 bg-gray-600 rounded-full cursor-pointer relative transition-colors;
+  @apply checked:bg-blue-600 checked:before:translate-x-6;
+}
+.toggle-checkbox::before {
+  @apply content-[''] w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform;
+}

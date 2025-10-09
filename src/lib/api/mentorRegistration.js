@@ -8,7 +8,6 @@ import api from '../axios'; // Your pre-configured axios instance
  */
 export const getCloudinarySignature = async () => {
   try {
-    // This calls your new /api/uploads/generate-cloudinary-signature endpoint
     const response = await api.post('/uploads/generate-cloudinary-signature');
     return response.data;
   } catch (error) {
@@ -26,12 +25,9 @@ export const getCloudinarySignature = async () => {
  */
 export const registerMentor = async (mentorPayload) => {
   try {
-    // ✅ The header override is removed. Axios will now use its default 'Content-Type': 'application/json'.
-    // This sends the mentorPayload as a JSON object.
-    const response = await api.post('/mentors/register', mentorPayload);
+    const response = await api.post('/register', mentorPayload);
     return response.data;
   } catch (error) {
-    // Axios wraps errors, so we can extract the server's response message
     if (error.response && error.response.data) {
       throw new Error(error.response.data.message || 'An error occurred during registration.');
     }
@@ -39,11 +35,44 @@ export const registerMentor = async (mentorPayload) => {
   }
 };
 
+// --- NEW FUNCTION ---
+/**
+ * Sends a request to the backend to send an OTP to the mentor's phone.
+ * @param {string} phone - The mentor's 10-digit phone number.
+ * @returns {Promise<object>} The server response, including { success, message, phone, isProfileActive }.
+ */
+export const loginWithOTP = async (phone) => {
+    try {
+        const response = await api.post('/mentor/login/send-otp', { phone });
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        if (error.response?.data?.message) throw new Error(error.response.data.message);
+        throw error;
+    }
+};
+
+// --- NEW FUNCTION ---
+/**
+ * Verifies the OTP sent to the mentor's phone to complete the login.
+ * @param {{phone: string, otp: string}} credentials - The phone number and OTP code.
+ * @returns {Promise<object>} The server response, including the auth token on success.
+ */
+export const verifyLoginOTP = async ({ phone, otp }) => {
+    try {
+        const response = await api.post('/mentor/login/verify-otp', { phone, otp });
+        return response.data;
+    } catch (error) {
+        if (error.response?.data?.message) throw new Error(error.response.data.message);
+        throw error;
+    }
+};
+
+
 export const getNewMentorRegistrations = async () => {
   try {
-    // This calls your GET /api/v1/mentors/new-Registrations endpoint
     const response = await api.get('/new-Registrations');
-    return response.data; // The API returns { success, count, data }
+    return response.data;
   } catch (error) {
     if (error.response && error.response.data) {
       throw new Error(error.response.data.message || 'Could not fetch registrations.');
@@ -51,15 +80,9 @@ export const getNewMentorRegistrations = async () => {
     throw error;
   }
 };
- /**
- * Rejects (deletes) a mentor registration.
- * NOTE: You will need to create this endpoint on your backend.
- * @param {string} registrationId - The unique registration ID of the mentor.
- * @returns {Promise<object>} The server response.
- */
+
 export const rejectMentorRegistration = async (registrationId) => {
   try {
-    // This assumes you will create a DELETE endpoint for rejection.
     const response = await api.delete(`/mentor/reject/${registrationId}`);
     return response.data;
   } catch (error) {
@@ -67,14 +90,9 @@ export const rejectMentorRegistration = async (registrationId) => {
     throw error;
   }
 };
-/**
- * Approves (verifies) a mentor registration.
- * @param {string} registrationId - The unique registration ID of the mentor.
- * @returns {Promise<object>} The server response.
- */
+
 export const approveMentorRegistration = async (registrationId) => {
   try {
-    // This makes a PUT request to your /api/v1/mentors/mentor/verify/:registrationId endpoint
     const response = await api.put(`/mentor/verify/${registrationId}`);
     return response.data;
   } catch (error) {

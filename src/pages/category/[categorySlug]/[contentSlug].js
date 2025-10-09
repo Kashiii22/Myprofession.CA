@@ -7,7 +7,7 @@ import Footer from "../../../components/Footer";
 import { sanityClient } from "../../../lib/sanityClient";
 import { PortableText } from '@portabletext/react';
 import { ptComponents } from "../../../components/PortableTextComponents";
-import { FiClock, FiFileText } from "react-icons/fi";
+import { FiFileText } from "react-icons/fi";
 import { FaChevronRight } from "react-icons/fa";
 
 // --- DATA FETCHING ---
@@ -25,7 +25,6 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
     const { categorySlug, contentSlug } = params;
     
-    // ✅ CORRECTED QUERY: Simplified the table cell projection to fetch simple strings.
     const contentQuery = `*[_type == "content" && slug.current == $slug && category->slug.current == $categorySlug][0]{
         ..., 
         "slug": slug.current,
@@ -44,7 +43,7 @@ export async function getStaticProps({ params }) {
                     _type,
                     rows[]{
                         _key,
-                        cells // 🌟 FIX: Fetch the 'cells' field directly (it contains the string array).
+                        cells
                     }
                 },
 
@@ -60,8 +59,7 @@ export async function getStaticProps({ params }) {
     }`;
     
     const contentItem = await sanityClient.fetch(contentQuery, { slug: contentSlug, categorySlug });
-    // You should use util.inspect here to log deeply, but sticking to console.log:
-    // This will now correctly log the strings inside the cells array if the GROQ works.
+    
     console.log("Fetched contentItem:", contentItem); 
     
     if (!contentItem) {
@@ -77,7 +75,7 @@ export async function getStaticProps({ params }) {
 
 export default function CategoryPage({ contentItem }) {
     const router = useRouter(); 
-    const [openSections, setOpenSections] = useState({ documents: false, topic: false });
+    const [openSections, setOpenSections] = useState({ documents: false, topic: false }); // Default topic to open
     const [activeSection, setActiveSection] = useState('');
     
     const headerRef = useRef(null);
@@ -155,9 +153,9 @@ export default function CategoryPage({ contentItem }) {
             const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
             return (
                 <div key={sectionId} id={sectionId} className="mb-12 scroll-mt-32">
-                    <h2 className="text-3xl font-bold text-teal-700 mb-4 border-b border-slate-200 pb-2">{section.title}</h2>
+                    <h2 className="text-2xl font-bold text-teal-700 mb-4 border-b border-slate-200 pb-2">{section.title}</h2>
                     {section.description && (
-                        <div className="prose prose-xl max-w-none">
+                        <div className="prose prose-xl">
                             <PortableText value={section.description} components={ptComponents} />
                         </div>
                     )}
@@ -173,13 +171,12 @@ export default function CategoryPage({ contentItem }) {
             </div>
 
             <main className="flex flex-row items-start">
-                <aside className="w-80 flex-shrink-0 bg-slate-50 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
+                <aside className="w-80 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
                         <p className="text-xl text-slate-500">Summary Box</p>
                     </div>
                     <div className="flex-grow p-4 overflow-y-auto">
-
                         {documents.length > 0 && (
                             <div className="mb-4">
                                <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-slate-700 mb-2 flex justify-between items-center text-lg p-2 rounded-md hover:bg-slate-200">
@@ -193,7 +190,7 @@ export default function CategoryPage({ contentItem }) {
                                        ))}
                                    </ul>
                                )}
-                           </div>
+                            </div>
                         )}
                         {validSections.length > 0 && (
                             <div>
@@ -223,23 +220,28 @@ export default function CategoryPage({ contentItem }) {
                                 )}
                             </div>
                         )}
-                                                {contentItem.attachmentURL && (
-                            <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    Attachment
-                                </h3>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm text-slate-600 truncate" title={contentItem.attachmentFileName}>{contentItem.attachmentFileName || 'Download file'}</span>
-                                    <a href={contentItem.attachmentURL} download target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">Download</a>
+
+                        {/* ✅ UPDATED ATTACHMENT SECTION */}
+                        {contentItem.attachmentURL && (
+                            // This new div acts as a separator with a top margin and border
+                            <div className="mt-6 pt-6 border-t border-slate-200">
+                                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                    <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        Attachment
+                                    </h3>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-sm text-slate-600 truncate" title={contentItem.attachmentFileName}>{contentItem.attachmentFileName || 'Download file'}</span>
+                                        <a href={contentItem.attachmentURL} download target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">Download</a>
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
                 </aside>
                 
-                <section className="flex-1 min-w-0 py-8 pr-4 pl-8 bg-white shadow-inner-left">
-                    <div>
+                <section className="flex-1 min-w-0 py-8 pr-20  bg-white shadow-inner-left">
+                    <div className="max-w-5xl mx-auto">
                         {contentItem ? (
                             <>
                                 <div className="mb-10">

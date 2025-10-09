@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  FaUserCircle, FaBars, FaTimes, 
+import {
+  FaUserCircle, FaBars, FaTimes,
   FaInstagram, FaYoutube, FaEnvelope, FaSearch
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
@@ -30,9 +30,9 @@ const CATEGORIES = [
   { name: "GST", slug: "gst" },
   { name: "Accounting", slug: "accounting" },
   { name: "Audit", slug: "audit" },
-  { name: "Investment", slug: "investment" },
+  { name: "Investment", slug: "investment" }, // Corrected typo from "investement"
   { name: "Articleship", slug: "articleship" },
-  { name: "Law & MCA", slug: "law-mca" },
+  { name: "Law & MCA", slug: "law-and-mca" },
 ];
 
 // Dropdown options
@@ -93,6 +93,18 @@ export default function Header() {
     localStorage.removeItem("isLoggedIn");
     setLoggedIn(false);
     setProfileDropdownOpen(false);
+  };
+
+  // ✅ Helper function to determine the correct link path
+  const getLinkPath = (item, category) => {
+    switch (item) {
+      case "Mentorship":
+        return `/mentors?filter=${category.slug}`;
+      case "Contents & Files":
+        return `/category/${category.slug}`;
+      default:
+        return "/ComingSoon"; // For "Articles", "Courses", and "Queries"
+    }
   };
 
   return (
@@ -219,7 +231,7 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* ✅ Social Icons with brand colors */}
+            {/* Social Icons with brand colors */}
             <div className="flex items-center gap-4 text-2xl text-blue-400 mt-2">
               <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
                 <FaInstagram className="text-pink-500 hover:opacity-80 transition" />
@@ -285,7 +297,8 @@ export default function Header() {
                     {DROPDOWN_OPTIONS.map((item, idx) => (
                       <Link
                         key={idx}
-                        href={`/category/${category.slug}`}
+                        // ✅ Use the helper function to set the href dynamically
+                        href={getLinkPath(item, category)}
                         className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
                       >
                         {item}
