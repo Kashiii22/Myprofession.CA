@@ -142,7 +142,7 @@ export const ptComponents = {
       if (content.length === 1 && (content[0]?.props?.value?._type === 'image' || content[0]?.props?.value?._type === 'imageBlock')) {
         return <>{content}</>;
       }
-      return <p className="my-4 leading-relaxed text-slate-700">{children}</p>;
+      return <p className="my-4 leading-relaxed text-lg text-slate-700">{children}</p>;
     },
     h1: ({ children }) => <h1 className="text-slate-900 font-bold mt-8 mb-4 text-xl">{children}</h1>,
     h2: ({ children }) => <h2 className="text-teal-700 font-semibold mt-8 mb-4 border-slate-200 pb-2 text-lg">{children}</h2>,

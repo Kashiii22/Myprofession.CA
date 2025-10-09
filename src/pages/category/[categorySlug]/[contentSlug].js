@@ -153,9 +153,9 @@ export default function CategoryPage({ contentItem }) {
             const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
             return (
                 <div key={sectionId} id={sectionId} className="mb-12 scroll-mt-32">
-                    <h2 className="text-2xl font-bold text-teal-700 mb-4 border-b border-slate-200 pb-2">{section.title}</h2>
+                    <h2 className="text-2xl font-bold text-black mb-4 bg-gray-200 border-b border-slate-200 pb-2">{section.title}</h2>
                     {section.description && (
-                        <div className="prose prose-xl">
+                        <div className="prose prose-xl ">
                             <PortableText value={section.description} components={ptComponents} />
                         </div>
                     )}
@@ -171,7 +171,7 @@ export default function CategoryPage({ contentItem }) {
             </div>
 
             <main className="flex flex-row items-start">
-                <aside className="w-80 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
+                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
                         <p className="text-xl text-slate-500">Summary Box</p>
@@ -245,7 +245,7 @@ export default function CategoryPage({ contentItem }) {
                         {contentItem ? (
                             <>
                                 <div className="mb-10">
-                                    <h1 className="text-4xl md:text-5xl font-extrabold text-indigo-700 mb-4">{contentItem.title}</h1>
+                                    <h1 className="md:text-4xl font-extrabold text-black-700 mb-4">{contentItem.title}</h1>
                                     {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
                                 </div>
                                 {renderContent(validSections)}
