@@ -117,6 +117,7 @@ export default function AuthModal({ onClose }) {
     try {
       if (loginMethod === "otp") {
         const response = await requestLoginOTP({ phone: phoneWithPrefix });
+        console.log(response);
         if (response.success) {
           toast.success(response.message);
           dispatch(toggleOtpModal(true));

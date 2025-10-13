@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Get the API URL from your environment variables
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+console.log("API_URL:", API_URL); 
 
 // Create a new axios instance with a custom configuration
 const api = axios.create({

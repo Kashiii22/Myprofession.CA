@@ -109,7 +109,6 @@ const NestedOrderedList = ({ children, level }) => {
     };
     return (<ol className={`${getListStyle(level)} pl-6 my-4 space-y-2`}>{children}</ol>);
 };
-
 // --- Main Export: All Components ---
 export const ptComponents = {
   types: {
