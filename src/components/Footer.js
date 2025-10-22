@@ -1,4 +1,4 @@
-"use client";
+"use client"; // <--- ADD THIS LINE (Matches your working Header.js)
 
 import React from "react";
 import Link from "next/link";
@@ -32,10 +32,16 @@ const Footer = () => {
           <ul className="space-y-2 text-sm">
             {footerLinks.map((link, index) => (
               <li key={index}>
-                <Link href={link.href}>
-                  <span className="hover:text-white transition cursor-pointer">
-                    {link.name}
-                  </span>
+                {/* THIS IS THE FIX:
+                  - The <span> is removed.
+                  - The className is applied directly to the <Link>.
+                  - This syntax matches your working Header.js.
+                */}
+                <Link
+                  href={link.href}
+                  className="hover:text-white transition cursor-pointer"
+                >
+                  {link.name}
                 </Link>
               </li>
             ))}
@@ -54,7 +60,7 @@ const Footer = () => {
               support@myprofession.ca
             </a>
           </p>
-          <p className="text-sm">Phone: +91-9876543210</p>
+          <p className="text-sm">Phone: +91-95697-49095</p>
           <div className="mt-3 flex gap-4 text-xl">
             <a href="#" className="hover:text-white" aria-label="LinkedIn">
               🔗

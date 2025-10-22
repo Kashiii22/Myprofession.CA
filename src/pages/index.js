@@ -146,7 +146,7 @@ export default function HomePage() {
                 {
                   icon: "📰",
                   title: <>Stay updated & ahead by reading the recent <span className="font-bold underline">Articles</span></>,
-                  path: "/articles",
+                  path: "/ComingSoon",
                 },
               ].map(({ icon, title, path }, i) => (
                 <li

@@ -31,7 +31,7 @@ const CATEGORIES = [
   { name: "Accounting", slug: "accounting" },
   { name: "Audit", slug: "audit" },
   { name: "Investment", slug: "investment" }, // Corrected typo from "investement"
-  { name: "Articleship", slug: "articleship" },
+  { name: "Icai & Articleship", slug: "icai-and-articleship" },
   { name: "Law & MCA", slug: "law-and-mca" },
 ];
 
