@@ -12,12 +12,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const categories = ["IncomeTax", "GST", "Accounting", "Audit", "Investment", "Exam Oriented" ];
 
 const mentors = [
-  { name: "CA Rohan Mehta", title: "Direct Tax Expert", image: "https://i.pravatar.cc/150?img=12", specialization: "Direct Tax, Income Tax, Capital Gains", rating: 4.8 },
-  { name: "CA Sneha Verma", title: "Audit Mentor", image: "https://i.pravatar.cc/150?img=32", specialization: "Audit, Compliance, Risk Management", rating: 4.6 },
-  { name: "CA Karan Shah", title: "GST Specialist", image: "https://i.pravatar.cc/150?img=44", specialization: "GST, Indirect Tax, Business Structuring", rating: 4.7 },
-  { name: "CA Nidhi Sinha", title: "Finance & Investment", image: "https://i.pravatar.cc/150?img=47", specialization: "Wealth Management, Investment Planning", rating: 5.0 },
-  { name: "CA Manish Kapoor", title: "Accounts Guru", image: "https://i.pravatar.cc/150?img=51", specialization: "Accounting, MIS, Finalization", rating: 4.4 },
-  { name: "CA Sneha Goyal", title: "CMA & Costing Mentor", image: "https://i.pravatar.cc/150?img=57", specialization: "Costing, Budgeting, Management Accounting", rating: 4.9 },
 ];
 
 const RenderStars = memo(({ rating }) => (
