@@ -29,10 +29,12 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0e0e10] text-gray-200 font-sans relative">
+    // ✅ --- FIX: Added 'overflow-x-hidden' to clip the AOS animations ---
+    <div className="min-h-screen bg-[#0e0e10] text-gray-200 font-sans relative overflow-x-hidden">
       <Header />
 
       {/* HERO SECTION */}
+      {/* --- This 'overflow-hidden' on the section also helps --- */}
       <section className="relative z-10 px-4 md:px-10 py-20 overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
           {/* Left Marquee */}
@@ -54,7 +56,8 @@ export default function HomePage() {
               Connect with experienced <span className="text-blue-500"><br />CA Experts</span>
             </h3>
 
-            <div className="mt-6 bg-[#1a1a1e]/90 p-8 rounded-xl border border-blue-700 shadow-md-blue w-full max-w-5xl text-center">
+            {/* This div is now correct and will stay within its column */}
+            <div className="mt-6 bg-[#1a1a1e]/90 p-8 rounded-xl border border-blue-700 shadow-md-blue w-full text-center">
               <div className="text-white text-base md:text-lg leading-relaxed break-words">
                 If you are facing any issue in your CA journey whether related to <br />
                 <span className="text-cyan-400 font-medium">Study/ Articleship/ Guidance/ Job</span> <br />

@@ -165,7 +165,8 @@ export default function MentorListPage() {
   };
 
   return (
-    <div className="bg-black min-h-screen text-white font-['Outfit'] text-[17px] sm:text-[18px]">
+    // ✅ --- FIX: Removed 'font-['Outfit']' from this line ---
+    <div className="bg-black min-h-screen text-white text-[17px] sm:text-[18px]">
       <Header />
 
       <section className="px-5 sm:px-10 md:px-20 py-12 min-h-screen">

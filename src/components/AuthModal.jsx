@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+// ✅ 1. Import useEffect from React
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
@@ -11,7 +12,7 @@ import {
   toggleTab,
   setPhone,
   toggleOtpModal,
-  setClosing,
+  setClosing, // This is the action we need to dispatch
   setLoginMethod,
 } from "@/redux/authSlice";
 import {
@@ -81,7 +82,6 @@ const ITLawsPanel = () => (
 );
 
 // Main Modal
-// ✅ 1. Accept onLoginSuccess prop
 export default function AuthModal({ onClose, onLoginSuccess }) {
   const dispatch = useDispatch();
   const { isLogin, closing, showOtpModal, loginMethod } = useSelector(
@@ -96,6 +96,14 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   });
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+
+  // ✅ 2. THIS IS THE FIX:
+  // Reset the 'closing' state every time the modal mounts.
+  // This ensures that if the modal was closed previously (setting closing=true),
+  // it doesn't re-mount as invisible.
+  useEffect(() => {
+    dispatch(setClosing(false));
+  }, [dispatch]); // Add dispatch to dependency array
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -132,7 +140,6 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
-          // ✅ 3. Call handleSuccess on successful login
           handleSuccess();
         } else {
           toast.error(response.message);
@@ -182,7 +189,6 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
-          // ✅ 3. Call handleSuccess on successful login
           handleSuccess();
         } else {
           toast.error(response.message);
@@ -214,12 +220,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     setTimeout(() => onClose?.(), 300);
   };
 
-  // ✅ 2. Create a new handleSuccess function
   // This function is for SUCCESSFUL LOGIN
   const handleSuccess = () => {
     if (closing) return;
     dispatch(setClosing(true));
-    // Calls the onLoginSuccess prop from Header.jsx
     setTimeout(() => onLoginSuccess?.(), 300);
   };
 
@@ -229,7 +233,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         className={`fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 transition-opacity duration-300 ${
           closing ? "opacity-0" : "opacity-100"
         }`}
-        onClick={handleClose} // Background click calls handleClose (cancel)
+        onClick={handleClose}
       >
         {showOtpModal && (
           <VerifyOtpModal
@@ -311,7 +315,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-9NORMAL_TEXTtext-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
                     >
                       {loading
                         ? "Processing..."

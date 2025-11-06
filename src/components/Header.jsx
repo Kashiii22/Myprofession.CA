@@ -24,9 +24,7 @@ const getCookie = (name) => {
 };
 
 const NAV_LINKS = [
-  { label: "Home", path: "/" },
-  { label: "About Us", path: "/about" },
-  { label: "Contact Us", path: "/contact" },
+
 ];
 
 const CATEGORIES = [
@@ -47,10 +45,7 @@ const DROPDOWN_OPTIONS = [
   "Queries",
 ];
 
-// 🔽 --- IMPORTANT: UPDATE THIS --- 🔽
-// Set this to the exact name of your authentication cookie
 const AUTH_COOKIE_NAME = "token";
-// 🔼 --- IMPORTANT: UPDATE THIS --- 🔼
 
 export default function Header() {
   const pathname = usePathname();
@@ -61,18 +56,19 @@ export default function Header() {
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // ✅ State is now managed properly
-  const [loggedIn, setLoggedIn] = useState(false); // Default to logged out
+  const [loggedIn, setLoggedIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // --- NEW (1 of 4): State to remember where the user wanted to go ---
+  const [pendingRedirect, setPendingRedirect] = useState(null);
 
-  // ✅ Check for auth cookie on component mount (client-side only)
   useEffect(() => {
     const token = getCookie(AUTH_COOKIE_NAME);
     if (token) {
       setLoggedIn(true);
     }
-  }, []); // Empty array ensures this runs only once on mount
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -107,14 +103,8 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openCategoryIndex]);
 
-  // ✅ Corrected Logout Handler
   const handleLogout = () => {
-    // To delete the cookie, set its expiration to a past date.
-    // MUST match the 'path' and 'domain' (if any) used when the cookie was set.
-    // We assume the path is '/'. Update this if your cookie path is different.
     document.cookie = `${AUTH_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    
-    // Update UI state
     setLoggedIn(false);
     setProfileDropdownOpen(false);
   };
@@ -127,6 +117,18 @@ export default function Header() {
         return `/category/${category.slug}`;
       default:
         return "/ComingSoon";
+    }
+  };
+  
+  // --- NEW (2 of 4): Function to handle the "Become an Expert" click ---
+  const handleExpertRegistrationClick = () => {
+    if (loggedIn) {
+      // If user is logged in, send them directly to the register page
+      router.push('/register');
+    } else {
+      // If logged out, remember the redirect and show the login modal
+      setPendingRedirect('/register');
+      setShowLoginModal(true);
     }
   };
 
@@ -156,7 +158,7 @@ export default function Header() {
           </div>
 
           {/* Desktop Menu */}
-          <nav className="hidden md:flex gap-6 items-center text-lg">
+          <nav className="hidden md:flex gap-4 items-center text-lg">
             {NAV_LINKS.map(({ label, path }, i) => (
               <Link
                 key={i}
@@ -171,48 +173,46 @@ export default function Header() {
               </Link>
             ))}
 
+            {/* --- NEW (3 of 4): Changed from <Link> to <button> --- */}
+            <button
+              onClick={handleExpertRegistrationClick}
+              className="text-md font-medium px-4 py-2 bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
+            >
+              Become an Expert
+            </button>
 
-            {/* Profile Dropdown */}
-            <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-1 hover:text-blue-400 transition duration-200"
-              >
-                <FaUserCircle size={20} />
-                <IoMdArrowDropdown />
-              </button>
+            {/* --- Conditional Login/Profile Button --- */}
+            {loggedIn ? (
+              // LOGGED-IN: Show Profile Icon
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-1 hover:text-blue-400 transition duration-200"
+                >
+                  <FaUserCircle size={28} />
+                  <IoMdArrowDropdown />
+                </button>
 
-              {profileDropdownOpen && (
-                <div className="absolute right-0 mt-3 w-44 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
-                  {loggedIn ? (
+                {profileDropdownOpen && (
+                  <div className="absolute right-0 mt-3 w-44 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
                     >
                       Logout
                     </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setShowLoginModal(true);
-                          setProfileDropdownOpen(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
-                      >
-                        User Login
-                      </button>
-                      <Link
-                        href="/register"
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
-                      >
-                        Expert Profile
-                      </Link>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // LOGGED-OUT: Show Direct Button (Solid)
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-md font-medium px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              >
+                Login / Sign Up
+              </button>
+            )}
           </nav>
 
           {/* Mobile Hamburger */}
@@ -254,7 +254,7 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Social Icons with brand colors */}
+            {/* Social Icons */}
             <div className="flex items-center gap-4 text-2xl text-blue-400 mt-2">
               <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
                 <FaInstagram className="text-pink-500 hover:opacity-80 transition" />
@@ -267,36 +267,45 @@ export default function Header() {
               </a>
             </div>
 
-            {loggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="block text-left w-full text-gray-300 hover:text-red-500 mt-2"
-              >
-                Logout
-              </button>
-            ) : (
-              <>
+            {/* --- Professional Mobile Auth Section --- */}
+            <div className="space-y-3 pt-4 border-t border-gray-700/50">
+              {loggedIn ? (
+                // LOGGED-IN (MOBILE)
+                <button
+                  onClick={handleLogout}
+                  className="block text-center w-full px-4 py-2 bg-red-600/50 border border-red-500 text-red-300 hover:bg-red-500/50 rounded-lg transition"
+                >
+                  Logout
+                </button>
+              ) : (
+                // LOGGED-OUT (MOBILE) - Primary Action
                 <button
                   onClick={() => {
                     setShowLoginModal(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="block text-left w-full text-gray-300 hover:text-blue-400 mt-2"
+                  className="block text-center w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
                 >
-                  User Login
+                  Login / Sign Up
                 </button>
-                <Link
-                  href="/register"
-                  className="block text-gray-300 hover:text-blue-400 mt-2"
-                >
-                  Expert Profile
-                </Link>
-              </>
-            )}
+              )}
+
+              {/* --- NEW (3 of 4): Changed from <Link> to <button> --- */}
+              <button
+                onClick={() => {
+                  handleExpertRegistrationClick();
+                  setMobileMenuOpen(false);
+                }}
+                className="block text-center w-full px-4 py-2 bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
+              >
+                Become an Expert
+              </button>
+            </div>
+            
           </div>
         )}
 
-        {/* Subheader with categories and dropdown */}
+        {/* --- FULL SUBHEADER CODE --- */}
         <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
           <div className="flex flex-wrap justify-center gap-6">
             {CATEGORIES.map((category, i) => (
@@ -335,16 +344,22 @@ export default function Header() {
       </header>
 
       {/* Login Modal */}
- {showLoginModal && (
+      {showLoginModal && (
         <AuthModal
-          // This prop is for when the user clicks "X" or outside
           onClose={() => {
             setShowLoginModal(false);
+            setPendingRedirect(null); // Clear the redirect if they just close the modal
           }}
-          // This new prop is for when login is SUCCESSFUL
+          // --- NEW (4 of 4): Updated onLoginSuccess to handle the redirect ---
           onLoginSuccess={() => {
             setShowLoginModal(false);
             setLoggedIn(true);
+            
+            // Check if we have a pending redirect
+            if (pendingRedirect) {
+              router.push(pendingRedirect);
+              setPendingRedirect(null); // Clear the state
+            }
           }}
         />
       )}
