@@ -1,5 +1,6 @@
 "use client";
 
+// 1. Import new hooks and components
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
@@ -7,10 +8,11 @@ import Footer from "../../../components/Footer";
 import { sanityClient } from "../../../lib/sanityClient";
 import { PortableText } from '@portabletext/react';
 import { ptComponents } from "../../../components/PortableTextComponents";
-import { FiFileText } from "react-icons/fi";
+import { FiFileText, FiLock } from "react-icons/fi"; // Added FiLock
 import { FaChevronRight } from "react-icons/fa";
+import AuthModal from "../../../components/AuthModal"; // Added AuthModal
 
-// --- DATA FETCHING ---
+// --- DATA FETCHING (No Changes) ---
 export async function getStaticPaths() {
     const query = `*[_type == "content"]{ "slug": slug.current, "categorySlug": category->slug.current }`;
     const allContents = await sanityClient.fetch(query);
@@ -60,8 +62,6 @@ export async function getStaticProps({ params }) {
     
     const contentItem = await sanityClient.fetch(contentQuery, { slug: contentSlug, categorySlug });
     
-    console.log("Fetched contentItem:", contentItem); 
-    
     if (!contentItem) {
         return { notFound: true };
     }
@@ -73,9 +73,36 @@ export async function getStaticProps({ params }) {
 }
 // --- END OF DATA FETCHING ---
 
+// 2. Add Cookie helper functions
+const AUTH_COOKIE_NAME = "token";
+const getCookie = (name) => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop().split(';').shift();
+  }
+  return null;
+};
+
+// 3. Helper function to count words in Portable Text
+const getWordCount = (blocks) => {
+    if (!blocks) return 0;
+    return blocks
+        .filter(b => b._type === 'block' && b.children)
+        .flatMap(b => b.children.map(c => c.text || ''))
+        .join(' ')
+        .split(/\s+/)
+        .filter(Boolean).length;
+};
+// --- End of Cookie/WordCount helpers ---
+
+
 export default function CategoryPage({ contentItem }) {
     const router = useRouter(); 
-    const [openSections, setOpenSections] = useState({ documents: false, topic: false }); // Default topic to open
+    const [openSections, setOpenSections] = useState({ documents: false, topic: true }); // Default topic to open
     const [activeSection, setActiveSection] = useState('');
     
     const headerRef = useRef(null);
@@ -87,8 +114,32 @@ export default function CategoryPage({ contentItem }) {
     const topicRefs = useRef([]);
     const topicsListRef = useRef(null);
     
+    // 4. Add Auth State
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authLoading, setAuthLoading] = useState(true); // Prevents flicker
+    const [showLoginModal, setShowLoginModal] = useState(false);
+
+    // 5. Add Effect to check for login status on client
+    useEffect(() => {
+        const token = getCookie(AUTH_COOKIE_NAME);
+        if (token) {
+            setIsLoggedIn(true);
+        }
+        setAuthLoading(false);
+    }, []);
+
+    // ✅ 6. NEW: Check if content should be truncated based on word count
+    const isTruncated = useMemo(() => {
+        if (isLoggedIn || authLoading) return false; // Never truncate if logged in
+
+        const totalWords = validSections.reduce((acc, section) => acc + getWordCount(section.description), 0);
+        return totalWords > 150; // Set to true if content is long
+    }, [isLoggedIn, authLoading, validSections]);
+
+
     const toggleSection = (section) => setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
+    // Intersection Observer (No Change)
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -111,6 +162,7 @@ export default function CategoryPage({ contentItem }) {
         });
     }, [validSections]);
 
+    // Active Pill Effect (No Change)
     useEffect(() => {
         if (activeSection && topicsListRef.current) {
             const activeIndex = validSections.findIndex(s => s.title.toLowerCase().replace(/\s+/g, '-') === activeSection);
@@ -125,6 +177,7 @@ export default function CategoryPage({ contentItem }) {
         }
     }, [activeSection, validSections]);
 
+    // Section Click Handler (No Change)
     const handleSectionClick = (sectionId) => {
         const element = document.getElementById(sectionId);
         if (element && headerRef.current) {
@@ -139,6 +192,7 @@ export default function CategoryPage({ contentItem }) {
         }
     };
     
+    // Time to Read (No Change)
     const timeToRead = useMemo(() => {
         if (!validSections) return 1;
         const extractText = (blocks) => blocks.map(b => b.children?.map(c => c.text).join('')).join(' ');
@@ -147,6 +201,49 @@ export default function CategoryPage({ contentItem }) {
         return Math.ceil(wordCount / 200);
     }, [validSections]);
 
+    // 7. Create custom Portable Text components to block attachments
+    const customPtComponents = useMemo(() => ({
+        ...ptComponents, // Import all your default components
+        types: {
+            ...ptComponents.types, // Import default types (image, table, etc.)
+            
+            // Override the 'attachment' type
+            attachment: ({ value }) => {
+                if (isLoggedIn) {
+                    // Logged-in: Show download link
+                    return (
+                        <a 
+                            href={value.fileURL} 
+                            download 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-4 my-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold hover:bg-blue-100 transition"
+                        >
+                            <FiFileText className="text-xl" />
+                            Download: {value.fileName || 'Attached File'}
+                        </a>
+                    );
+                }
+                
+                // Logged-out: Show blocker
+                return (
+                    <div className="p-4 my-4 bg-slate-200 border border-slate-300 rounded-lg text-center">
+                        <FiLock className="mx-auto text-3xl text-slate-500 mb-2" />
+                        <p className="font-semibold text-lg text-slate-700">Attachment Locked</p>
+                        <button 
+                            onClick={() => setShowLoginModal(true)} 
+                            className="text-blue-600 font-semibold hover:underline"
+                        >
+                            Login to download this file
+                        </button>
+                    </div>
+                );
+            }
+        }
+    }), [isLoggedIn]); // Re-create components if login state changes
+
+    
+    // renderContent function (now uses customPtComponents)
     const renderContent = (sections) => {
         if (!sections) return null;
         return sections.map((section) => {
@@ -156,13 +253,33 @@ export default function CategoryPage({ contentItem }) {
                     <h2 className="text-2xl font-bold text-black mb-4 bg-gray-200 border-b border-slate-200 pb-2">{section.title}</h2>
                     {section.description && (
                         <div className="prose prose-xl ">
-                            <PortableText value={section.description} components={ptComponents} />
+                            <PortableText value={section.description} components={customPtComponents} />
                         </div>
                     )}
                 </div>
             );
         });
     };
+
+    // 8. Create click handler for sidebar attachment
+    const handleAttachmentClick = (e) => {
+        if (!isLoggedIn) {
+            e.preventDefault(); // Stop the link from working
+            setShowLoginModal(true); // Open login modal
+        }
+        // If logged in, do nothing, and the default link behavior (download) will proceed
+    };
+
+    // 9. Component for the loading state
+    const LoadingSpinner = () => (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+            <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-lg">Loading content...</p>
+        </div>
+    );
 
     return (
         <div className="bg-slate-100 text-slate-800 font-sans">
@@ -171,7 +288,8 @@ export default function CategoryPage({ contentItem }) {
             </div>
 
             <main className="flex flex-row items-start">
-                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
+                {/* --- SIDEBAR --- */}
+                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
                         <p className="text-xl text-slate-500">Summary Box</p>
@@ -180,8 +298,8 @@ export default function CategoryPage({ contentItem }) {
                         {documents.length > 0 && (
                             <div className="mb-4">
                                <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-slate-700 mb-2 flex justify-between items-center text-lg p-2 rounded-md hover:bg-slate-200">
-                                   <div className="flex items-center gap-3"><FiFileText />Documents Required</div>
-                                   <span className={`transition-transform text-slate-500 ${openSections.documents ? "rotate-180" : ""}`}>▾</span>
+                                  <div className="flex items-center gap-3"><FiFileText />Documents Required</div>
+                                  <span className={`transition-transform text-slate-500 ${openSections.documents ? "rotate-180" : ""}`}>▾</span>
                                </button>
                                {openSections.documents && (
                                    <ul className="flex flex-col gap-1 text-slate-600 pl-3 mt-2">
@@ -204,6 +322,7 @@ export default function CategoryPage({ contentItem }) {
                                 {openSections.topic && (
                                     <ul className="flex flex-col relative" ref={topicsListRef}>
                                         <div className="absolute left-0 w-full bg-indigo-600 rounded-md shadow-lg transition-all duration-300 ease-in-out" style={pillStyle}></div>
+                                        {/* Topics are shown regardless of login, but they won't scroll to blurred content */}
                                         {validSections.map((section, index) => {
                                             const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
                                             const isActive = activeSection === sectionId;
@@ -221,9 +340,8 @@ export default function CategoryPage({ contentItem }) {
                             </div>
                         )}
 
-                        {/* ✅ UPDATED ATTACHMENT SECTION */}
+                        {/* 10. UPDATED ATTACHMENT SECTION */}
                         {contentItem.attachmentURL && (
-                            // This new div acts as a separator with a top margin and border
                             <div className="mt-6 pt-6 border-t border-slate-200">
                                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                                     <h3 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -232,7 +350,16 @@ export default function CategoryPage({ contentItem }) {
                                     </h3>
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="text-sm text-slate-600 truncate" title={contentItem.attachmentFileName}>{contentItem.attachmentFileName || 'Download file'}</span>
-                                        <a href={contentItem.attachmentURL} download target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">Download</a>
+                                        <a 
+                                            href={contentItem.attachmentURL} 
+                                            download 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            onClick={handleAttachmentClick} // <-- This blocks the download
+                                            className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0"
+                                        >
+                                            Download
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -240,15 +367,47 @@ export default function CategoryPage({ contentItem }) {
                     </div>
                 </aside>
                 
-                <section className="flex-1 min-w-0 py-8 pr-20  bg-white shadow-inner-left">
+                {/* --- MAIN CONTENT --- */}
+                {/* ✅ 11. Add `relative` for the blocker to position itself */}
+                <section className="flex-1 min-w-0 py-8 pr-20 g-white shadow-inner-left relative">
                     <div className="max-w-5xl mx-auto">
                         {contentItem ? (
                             <>
                                 <div className="mb-10">
                                     <h1 className="md:text-4xl font-extrabold text-black-700 mb-4">{contentItem.title}</h1>
                                     {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
-                                </div>
-                                {renderContent(validSections)}
+                                This </div>
+                                
+                                {authLoading ? (
+                                    <LoadingSpinner />
+                                ) : (
+                                    // ✅ 12. New content wrapper
+                                    // This wrapper applies the blur/fade-out effect
+                                    <div className="relative">
+                                    
+                                        {/* This div renders all content, but clamps it if logged out */}
+                                        <div className={!isLoggedIn && isTruncated ? "max-h-[500px] overflow-hidden" : ""}>
+                                            {renderContent(validSections)}
+                                        </div>
+
+                                        {/* ✅ 13. This is the blocker with the gradient fade */}
+                                        {!isLoggedIn && isTruncated && (
+                                            <div className="absolute bottom-0 left-0 w-full h-80 flex flex-col justify-end" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0.7) 70%, transparent)' }}>
+                                                <div className="flex flex-col items-center justify-center p-10 text-center">
+                                                    <FiLock className="text-4xl text-slate-500 mb-4" />
+                                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Continue Reading</h3>
+                                                    <p className="text-lg text-slate-600 mb-6">Log in or sign up to unlock the full article.</p>
+                                                    <button
+                                                        onClick={() => setShowLoginModal(true)}
+                                                        className="text-md font-medium px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                                                    >
+                                                        Login to Continue
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </>
                         ) : (<p className="p-8">Loading Content...</p>)}
                     </div>
@@ -256,6 +415,19 @@ export default function CategoryPage({ contentItem }) {
             </main>
 
             <Footer />
+
+            {/* ✅ 14. Add the AuthModal component */}
+            {showLoginModal && (
+                <AuthModal
+                    onClose={() => {
+                        setShowLoginModal(false);
+                    }}
+                    onLoginSuccess={() => {
+                        setShowLoginModal(false);
+                        setIsLoggedIn(true); // Set logged in state to true, which triggers a re-render
+                    }}
+                />
+            )}
         </div>
     );
 }
