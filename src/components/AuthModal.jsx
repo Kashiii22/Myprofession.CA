@@ -22,7 +22,7 @@ import {
   verifyOtpAndCreateUser,
 } from "@/lib/api/auth";
 
-// Input Field
+// Input Field (No changes)
 const InputField = ({
   type = "text",
   placeholder,
@@ -46,7 +46,7 @@ const InputField = ({
   />
 );
 
-// Google Auth Button
+// Google Auth Button (No changes)
 const GoogleAuthButton = () => (
   <div className="mt-6">
     <div className="flex items-center my-4">
@@ -60,7 +60,7 @@ const GoogleAuthButton = () => (
   </div>
 );
 
-// IT Laws Description Panel
+// IT Laws Panel (No changes)
 const ITLawsPanel = () => (
   <div className="hidden md:flex md:w-1/2 flex-col justify-center items-start p-6 lg:p-10 text-left">
     <Image
@@ -81,7 +81,8 @@ const ITLawsPanel = () => (
 );
 
 // Main Modal
-export default function AuthModal({ onClose }) {
+// ✅ 1. Accept onLoginSuccess prop
+export default function AuthModal({ onClose, onLoginSuccess }) {
   const dispatch = useDispatch();
   const { isLogin, closing, showOtpModal, loginMethod } = useSelector(
     (state) => state.auth
@@ -107,7 +108,6 @@ export default function AuthModal({ onClose }) {
     }
   };
 
-  // ✅ HANDLES LOGIN API CALLS with new response logic
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -131,9 +131,9 @@ export default function AuthModal({ onClose }) {
         });
         if (response.success) {
           toast.success(response.message);
-          // You would typically handle token storage/user context here
           console.log("Logged in user:", response.user);
-          handleClose();
+          // ✅ 3. Call handleSuccess on successful login
+          handleSuccess();
         } else {
           toast.error(response.message);
         }
@@ -145,7 +145,6 @@ export default function AuthModal({ onClose }) {
     }
   };
 
-  // ✅ HANDLES SIGNUP API CALLS with new response logic
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     if (formState.password !== formState.confirmPassword) {
@@ -174,7 +173,6 @@ export default function AuthModal({ onClose }) {
     }
   };
 
-  // ✅ HANDLES OTP VERIFICATION API CALLS with new response logic
   const handleOtpVerification = async (otp) => {
     setLoading(true);
     const phoneWithPrefix = `+91${formState.phone}`;
@@ -184,7 +182,8 @@ export default function AuthModal({ onClose }) {
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
-          handleClose();
+          // ✅ 3. Call handleSuccess on successful login
+          handleSuccess();
         } else {
           toast.error(response.message);
         }
@@ -208,10 +207,20 @@ export default function AuthModal({ onClose }) {
     }
   };
 
+  // This function is for CANCEL / CLOSE
   const handleClose = () => {
     if (closing) return;
     dispatch(setClosing(true));
     setTimeout(() => onClose?.(), 300);
+  };
+
+  // ✅ 2. Create a new handleSuccess function
+  // This function is for SUCCESSFUL LOGIN
+  const handleSuccess = () => {
+    if (closing) return;
+    dispatch(setClosing(true));
+    // Calls the onLoginSuccess prop from Header.jsx
+    setTimeout(() => onLoginSuccess?.(), 300);
   };
 
   return (
@@ -220,7 +229,7 @@ export default function AuthModal({ onClose }) {
         className={`fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 transition-opacity duration-300 ${
           closing ? "opacity-0" : "opacity-100"
         }`}
-        onClick={handleClose}
+        onClick={handleClose} // Background click calls handleClose (cancel)
       >
         {showOtpModal && (
           <VerifyOtpModal

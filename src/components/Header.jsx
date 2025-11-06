@@ -10,12 +10,17 @@ import {
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
 
-// Simulate login state
-const isUserLoggedIn = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("isLoggedIn") === "true";
+// --- Helper function to get a cookie by name ---
+const getCookie = (name) => {
+  if (typeof window === "undefined") {
+    return null;
   }
-  return false;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop().split(';').shift();
+  }
+  return null;
 };
 
 const NAV_LINKS = [
@@ -24,18 +29,16 @@ const NAV_LINKS = [
   { label: "Contact Us", path: "/contact" },
 ];
 
-// Categories with slugs
 const CATEGORIES = [
   { name: "Income Tax", slug: "income-tax" },
   { name: "GST", slug: "gst" },
   { name: "Accounting", slug: "accounting" },
   { name: "Audit", slug: "audit" },
-  { name: "Investment", slug: "investment" }, // Corrected typo from "investement"
+  { name: "Investment", slug: "investment" },
   { name: "ICAI & Articleship", slug: "icai-and-articleship" },
   { name: "Law & MCA", slug: "law-and-mca" },
 ];
 
-// Dropdown options
 const DROPDOWN_OPTIONS = [
   "Mentorship",
   "Contents & Files",
@@ -43,6 +46,11 @@ const DROPDOWN_OPTIONS = [
   "Courses",
   "Queries",
 ];
+
+// 🔽 --- IMPORTANT: UPDATE THIS --- 🔽
+// Set this to the exact name of your authentication cookie
+const AUTH_COOKIE_NAME = "token";
+// 🔼 --- IMPORTANT: UPDATE THIS --- 🔼
 
 export default function Header() {
   const pathname = usePathname();
@@ -52,9 +60,19 @@ export default function Header() {
   const [openCategoryIndex, setOpenCategoryIndex] = useState(null);
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(isUserLoggedIn());
+  
+  // ✅ State is now managed properly
+  const [loggedIn, setLoggedIn] = useState(false); // Default to logged out
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // ✅ Check for auth cookie on component mount (client-side only)
+  useEffect(() => {
+    const token = getCookie(AUTH_COOKIE_NAME);
+    if (token) {
+      setLoggedIn(true);
+    }
+  }, []); // Empty array ensures this runs only once on mount
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -89,13 +107,18 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openCategoryIndex]);
 
+  // ✅ Corrected Logout Handler
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+    // To delete the cookie, set its expiration to a past date.
+    // MUST match the 'path' and 'domain' (if any) used when the cookie was set.
+    // We assume the path is '/'. Update this if your cookie path is different.
+    document.cookie = `${AUTH_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    
+    // Update UI state
     setLoggedIn(false);
     setProfileDropdownOpen(false);
   };
 
-  // ✅ Helper function to determine the correct link path
   const getLinkPath = (item, category) => {
     switch (item) {
       case "Mentorship":
@@ -103,7 +126,7 @@ export default function Header() {
       case "Contents & Files":
         return `/category/${category.slug}`;
       default:
-        return "/ComingSoon"; // For "Articles", "Courses", and "Queries"
+        return "/ComingSoon";
     }
   };
 
@@ -297,7 +320,6 @@ export default function Header() {
                     {DROPDOWN_OPTIONS.map((item, idx) => (
                       <Link
                         key={idx}
-                        // ✅ Use the helper function to set the href dynamically
                         href={getLinkPath(item, category)}
                         className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
                       >
@@ -313,12 +335,16 @@ export default function Header() {
       </header>
 
       {/* Login Modal */}
-      {showLoginModal && (
+ {showLoginModal && (
         <AuthModal
+          // This prop is for when the user clicks "X" or outside
           onClose={() => {
             setShowLoginModal(false);
+          }}
+          // This new prop is for when login is SUCCESSFUL
+          onLoginSuccess={() => {
+            setShowLoginModal(false);
             setLoggedIn(true);
-            localStorage.setItem("isLoggedIn", "true");
           }}
         />
       )}
