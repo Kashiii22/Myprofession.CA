@@ -65,7 +65,7 @@ const GoogleAuthButton = () => (
 const ITLawsPanel = () => (
   <div className="hidden md:flex md:w-1/2 flex-col justify-center items-start p-6 lg:p-10 text-left">
     <Image
-      src="/illustration2.png"
+      src="./Illustration2.png"
       alt="Illustration"
       width={320}
       height={320}
