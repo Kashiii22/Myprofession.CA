@@ -65,6 +65,12 @@ export default function HomePage() {
                 <span className="block mt-3 text-blue-400 font-semibold text-3xl">
                   1:1 Discussion
                 </span>
+
+                {/* --- ✅ 1. UPDATED OFFER TEXT --- */}
+                <span className="block mt-3 text-xl font-bold text-yellow-300 animate-pulse">
+                  Your First Chat is FREE!
+                </span>
+
               </div>
             </div>
 
@@ -72,12 +78,15 @@ export default function HomePage() {
             <div className="mt-10 relative max-w-lg mx-auto">
               {/* Explore Mentors Button */}
               <div className="mt-6 flex justify-center">
+                
+                {/* --- ✅ 2. UPDATED BUTTON COLORS --- */}
                 <ShinyButton
                   onClick={() => router.push("/mentors")}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
-                  Explore Mentors →
+                  Claim Your Free Chat →
                 </ShinyButton>
+
               </div>
             </div>
           </div>

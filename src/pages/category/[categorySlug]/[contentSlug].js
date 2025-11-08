@@ -12,6 +12,11 @@ import { FiFileText, FiLock } from "react-icons/fi"; // Added FiLock
 import { FaChevronRight } from "react-icons/fa";
 import AuthModal from "../../../components/AuthModal"; // Added AuthModal
 
+// ✅ 1. Import Redux hooks and actions
+import { useSelector, useDispatch } from "react-redux";
+// Make sure this path is correct for your project
+import { setLoginSuccess } from "../../../redux/authSlice"; 
+
 // --- DATA FETCHING (No Changes) ---
 export async function getStaticPaths() {
     const query = `*[_type == "content"]{ "slug": slug.current, "categorySlug": category->slug.current }`;
@@ -114,27 +119,23 @@ export default function CategoryPage({ contentItem }) {
     const topicRefs = useRef([]);
     const topicsListRef = useRef(null);
     
-    // 4. Add Auth State
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [authLoading, setAuthLoading] = useState(true); // Prevents flicker
+    // ✅ 4. Use Redux state instead of local state
+    const dispatch = useDispatch();
+    const { isLoggedIn, authLoading } = useSelector((state) => state.auth);
+    
+    // This local state is still fine
     const [showLoginModal, setShowLoginModal] = useState(false);
 
-    // 5. Add Effect to check for login status on client
-    useEffect(() => {
-        const token = getCookie(AUTH_COOKIE_NAME);
-        if (token) {
-            setIsLoggedIn(true);
-        }
-        setAuthLoading(false);
-    }, []);
+    // ✅ 5. REMOVED the local useEffect that checked the cookie.
+    // Your Header.jsx now handles this globally.
 
-    // ✅ 6. NEW: Check if content should be truncated based on word count
+    // ✅ 6. This memo now reads from the global Redux state
     const isTruncated = useMemo(() => {
         if (isLoggedIn || authLoading) return false; // Never truncate if logged in
 
         const totalWords = validSections.reduce((acc, section) => acc + getWordCount(section.description), 0);
         return totalWords > 150; // Set to true if content is long
-    }, [isLoggedIn, authLoading, validSections]);
+    }, [isLoggedIn, authLoading, validSections]); // Depends on global state
 
 
     const toggleSection = (section) => setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -201,7 +202,7 @@ export default function CategoryPage({ contentItem }) {
         return Math.ceil(wordCount / 200);
     }, [validSections]);
 
-    // 7. Create custom Portable Text components to block attachments
+    // ✅ 7. This memo now reads from the global Redux state
     const customPtComponents = useMemo(() => ({
         ...ptComponents, // Import all your default components
         types: {
@@ -209,7 +210,7 @@ export default function CategoryPage({ contentItem }) {
             
             // Override the 'attachment' type
             attachment: ({ value }) => {
-                if (isLoggedIn) {
+                if (isLoggedIn) { // ✅ Reads from global state
                     // Logged-in: Show download link
                     return (
                         <a 
@@ -240,7 +241,7 @@ export default function CategoryPage({ contentItem }) {
                 );
             }
         }
-    }), [isLoggedIn]); // Re-create components if login state changes
+    }), [isLoggedIn]); // ✅ Depends on global state
 
     
     // renderContent function (now uses customPtComponents)
@@ -261,7 +262,7 @@ export default function CategoryPage({ contentItem }) {
         });
     };
 
-    // 8. Create click handler for sidebar attachment
+    // ✅ 8. This handler now reads from the global Redux state
     const handleAttachmentClick = (e) => {
         if (!isLoggedIn) {
             e.preventDefault(); // Stop the link from working
@@ -270,7 +271,7 @@ export default function CategoryPage({ contentItem }) {
         // If logged in, do nothing, and the default link behavior (download) will proceed
     };
 
-    // 9. Component for the loading state
+    // 9. Component for the loading state (No Change)
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center h-64 text-slate-500">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -322,7 +323,7 @@ export default function CategoryPage({ contentItem }) {
                                 {openSections.topic && (
                                     <ul className="flex flex-col relative" ref={topicsListRef}>
                                         <div className="absolute left-0 w-full bg-indigo-600 rounded-md shadow-lg transition-all duration-300 ease-in-out" style={pillStyle}></div>
-                                        {/* Topics are shown regardless of login, but they won't scroll to blurred content */}
+                                        {/* Topics are shown regardless of login */}
                                         {validSections.map((section, index) => {
                                             const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
                                             const isActive = activeSection === sectionId;
@@ -340,7 +341,7 @@ export default function CategoryPage({ contentItem }) {
                             </div>
                         )}
 
-                        {/* 10. UPDATED ATTACHMENT SECTION */}
+                        {/* ✅ 10. UPDATED ATTACHMENT SECTION (Handler now reads global state) */}
                         {contentItem.attachmentURL && (
                             <div className="mt-6 pt-6 border-t border-slate-200">
                                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -368,7 +369,6 @@ export default function CategoryPage({ contentItem }) {
                 </aside>
                 
                 {/* --- MAIN CONTENT --- */}
-                {/* ✅ 11. Add `relative` for the blocker to position itself */}
                 <section className="flex-1 min-w-0 py-8 pr-20 g-white shadow-inner-left relative">
                     <div className="max-w-5xl mx-auto">
                         {contentItem ? (
@@ -376,21 +376,20 @@ export default function CategoryPage({ contentItem }) {
                                 <div className="mb-10">
                                     <h1 className="md:text-4xl font-extrabold text-black-700 mb-4">{contentItem.title}</h1>
                                     {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
-                                This </div>
+                                </div>
                                 
+                                {/* ✅ 11. Auth checking now uses global Redux state */}
                                 {authLoading ? (
                                     <LoadingSpinner />
                                 ) : (
-                                    // ✅ 12. New content wrapper
-                                    // This wrapper applies the blur/fade-out effect
                                     <div className="relative">
                                     
-                                        {/* This div renders all content, but clamps it if logged out */}
+                                        {/* This div reads from global state */}
                                         <div className={!isLoggedIn && isTruncated ? "max-h-[500px] overflow-hidden" : ""}>
                                             {renderContent(validSections)}
                                         </div>
 
-                                        {/* ✅ 13. This is the blocker with the gradient fade */}
+                                        {/* This div reads from global state */}
                                         {!isLoggedIn && isTruncated && (
                                             <div className="absolute bottom-0 left-0 w-full h-80 flex flex-col justify-end" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0.7) 70%, transparent)' }}>
                                                 <div className="flex flex-col items-center justify-center p-10 text-center">
@@ -416,7 +415,7 @@ export default function CategoryPage({ contentItem }) {
 
             <Footer />
 
-            {/* ✅ 14. Add the AuthModal component */}
+            {/* ✅ 12. AuthModal now dispatches the global action on success */}
             {showLoginModal && (
                 <AuthModal
                     onClose={() => {
@@ -424,7 +423,7 @@ export default function CategoryPage({ contentItem }) {
                     }}
                     onLoginSuccess={() => {
                         setShowLoginModal(false);
-                        setIsLoggedIn(true); // Set logged in state to true, which triggers a re-render
+                        dispatch(setLoginSuccess()); // Set global state to true
                     }}
                 />
             )}

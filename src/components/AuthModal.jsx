@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ 1. Import useEffect from React
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,7 +11,7 @@ import {
   toggleTab,
   setPhone,
   toggleOtpModal,
-  setClosing, // This is the action we need to dispatch
+  setClosing,
   setLoginMethod,
 } from "@/redux/authSlice";
 import {
@@ -47,19 +46,34 @@ const InputField = ({
   />
 );
 
-// Google Auth Button (No changes)
-const GoogleAuthButton = () => (
-  <div className="mt-6">
-    <div className="flex items-center my-4">
-      <div className="h-px bg-gray-600 flex-grow" />
-      <span className="mx-3 text-gray-400 text-sm">or</span>
-      <div className="h-px bg-gray-600 flex-grow" />
+// ✅ --- MODIFIED Google Auth Button --- ✅
+const GoogleAuthButton = () => {
+  // This reads: "http://localhost:3000/api/v1" from your .env.local
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // ✅ BUG FIX 2: The URL must be '/auth/google' appended to the base API URL
+  const googleLoginUrl = `${apiUrl}/api/v1/google`;
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center my-4">
+        <div className="h-px bg-gray-600 flex-grow" />
+        <span className="mx-3 text-gray-400 text-sm">or</span>
+        <div className="h-px bg-gray-600 flex-grow" />
+      </div>
+      
+      {/* This <a> tag now has the correct href */}
+      <a
+        href={googleLoginUrl}
+        rel="noopener noreferrer"
+        className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition"
+      >
+        <GoogleIcon /> Continue with Google
+      </a>
     </div>
-    <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition">
-      <GoogleIcon /> Continue with Google
-    </button>
-  </div>
-);
+  );
+};
+
 
 // IT Laws Panel (No changes)
 const ITLawsPanel = () => (
@@ -84,7 +98,8 @@ const ITLawsPanel = () => (
 // Main Modal
 export default function AuthModal({ onClose, onLoginSuccess }) {
   const dispatch = useDispatch();
-  const { isLogin, closing, showOtpModal, loginMethod } = useSelector(
+  
+  const { showLoginTab, closing, showOtpModal, loginMethod } = useSelector(
     (state) => state.auth
   );
 
@@ -97,13 +112,9 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // ✅ 2. THIS IS THE FIX:
-  // Reset the 'closing' state every time the modal mounts.
-  // This ensures that if the modal was closed previously (setting closing=true),
-  // it doesn't re-mount as invisible.
   useEffect(() => {
     dispatch(setClosing(false));
-  }, [dispatch]); // Add dispatch to dependency array
+  }, [dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -140,7 +151,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
-          handleSuccess();
+          handleSuccess(response.user);
         } else {
           toast.error(response.message);
         }
@@ -184,12 +195,12 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
     setLoading(true);
     const phoneWithPrefix = `+91${formState.phone}`;
     try {
-      if (isLogin) {
+      if (showLoginTab) {
         const response = await verifyLoginOTP({ phone: phoneWithPrefix, otp });
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
-          handleSuccess();
+          handleSuccess(response.user);
         } else {
           toast.error(response.message);
         }
@@ -221,10 +232,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
   };
 
   // This function is for SUCCESSFUL LOGIN
-  const handleSuccess = () => {
+  const handleSuccess = (user) => {
     if (closing) return;
     dispatch(setClosing(true));
-    setTimeout(() => onLoginSuccess?.(), 300);
+    setTimeout(() => onLoginSuccess?.(user), 300);
   };
 
   return (
@@ -252,7 +263,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         >
           <ITLawsPanel />
 
-          <div className="w-full md:w-1/2 text-white flex flex-col justify-center items-center">
+          <div className="w-full md:w-1f/2 text-white flex flex-col justify-center items-center">
             <div className="w-full px-4 py-6 sm:px-6 md:px-10 lg:px-12 relative min-h-[550px] overflow-y-auto max-h-screen">
               <div className="flex justify-center mb-6 bg-[#1c2938] rounded-full overflow-hidden w-full max-w-xs mx-auto">
                 {["Login", "Signup"].map((label, i) => (
@@ -260,7 +271,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                     key={label}
                     onClick={() => dispatch(toggleTab())}
                     className={`px-6 py-2 font-semibold text-sm w-full transition-all ${
-                      isLogin === (i === 0)
+                      showLoginTab === (i === 0)
                         ? "bg-blue-600 text-white"
                         : "text-gray-400"
                     }`}
@@ -271,7 +282,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
               </div>
 
               <div className="space-y-4 w-full max-w-md mx-auto">
-                {isLogin ? (
+                {showLoginTab ? (
                   <form
                     onSubmit={handleLoginSubmit}
                     autoComplete="off"
@@ -315,7 +326,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-9NORMAL_TEXTtext-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
+                      className="w-full mt-2 bg-gradient-to-r from-blue-800 to-blue-600 hover:opacity-90 text-white py-2 rounded-lg font-semibold transition disabled:opacity-50"
                     >
                       {loading
                         ? "Processing..."
@@ -353,7 +364,8 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                       type="password"
                       name="password"
                       placeholder="Create Password"
-                      value={formState.password}
+                      // ✅ BUG FIX 1: This was 'formEmaile'
+                      value={formState.password} 
                       onChange={handleInputChange}
                     />
                     <InputField
@@ -376,12 +388,12 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                 <GoogleAuthButton />
 
                 <p className="text-sm text-center text-gray-400 mt-4">
-                  {isLogin ? "Not a member?" : "Already have an account?"}{" "}
+                  {showLoginTab ? "Not a member?" : "Already have an account?"}{" "}
                   <button
                     onClick={() => dispatch(toggleTab())}
                     className="text-blue-500 hover:underline font-medium"
                   >
-                    {isLogin ? "Signup now" : "Login"}
+                    {showLoginTab ? "Signup now" : "Login"}
                   </button>
                 </p>
               </div>

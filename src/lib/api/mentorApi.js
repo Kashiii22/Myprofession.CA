@@ -11,6 +11,16 @@ export const getActiveMentors = async () => {
 };
 
 /**
+ * Fetches a single mentor by their ID.
+ * @param {string} mentorId - The ID of the mentor to fetch.
+ * @returns {Promise<object>} The server response with mentor data.
+ */
+export const getMentorById = async (mentorId) => {
+  const response = await api.get(`/mentor/${mentorId}`);
+  return response.data;
+};
+
+/**
  * Submits the mentor application form.
  * (This route requires authentication)
  * @param {object} applicationData - The mentor registration form data.

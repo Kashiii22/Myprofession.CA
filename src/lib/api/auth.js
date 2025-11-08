@@ -8,28 +8,27 @@ import api from '../axios'; // Import the configured axios instance
  */
 const handleApiCall = async (apiCall) => {
   try {
-    // Await the API call
     const response = await apiCall;
-    // Return the successful data
     return response.data;
   } catch (error) {
-    // Log the error for debugging
-    console.error('API Call Failed:', error);
+    
+    // ✅ THIS IS THE CHANGE:
+    // Only log the error if it's *not* a 401.
+    // A 401 is an expected failure, not a bug.
+    if (error.response?.status !== 401) {
+      console.error('API Call Failed:', error);
+    }
+    // ✅ END OF CHANGE
 
-    // Check if it's an error from the backend (e.g., 400, 401, 404)
     if (error.response && error.response.data) {
-      // Return the backend's specific error message
       return error.response.data;
     }
-
-    // Handle network errors, 502s, or other crashes
     return {
       success: false,
       message: error.message || 'A network or server error occurred.',
     };
   }
 };
-
 // --- All your API functions now use the helper ---
 
 /**
@@ -102,4 +101,21 @@ export const requestLoginOTP = (loginData) => {
  */
 export const verifyLoginOTP = (otpData) => {
   return handleApiCall(api.post('/login/verify-otp', otpData));
+};
+
+/**
+ * ✅ --- THIS IS THE UPDATED FUNCTION ---
+ * Gets the current logged-in user's profile from the server.
+ * It relies on the 'token' cookie being sent.
+ * @returns {Promise<object>} The server response.
+ */
+export const getMyProfile = () => {
+  // This calls GET /api/v1/auth/me
+  // It is now wrapped in the handleApiCall helper for
+  // consistent success and error handling (e.g., 401 errors).
+  return handleApiCall(api.get('/me'));
+};
+export const logout = () => {
+  // This calls POST /api/v1/auth/logout
+  return handleApiCall(api.post('/logout'));
 };

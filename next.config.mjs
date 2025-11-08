@@ -11,6 +11,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com', // <-- ADDED THIS
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**', // Allows all image paths from this host
+      },
     ]
   },
   "paths": {

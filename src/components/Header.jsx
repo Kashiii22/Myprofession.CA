@@ -3,14 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+// ✅ 1. Import 'Image' from Next.js
+import Image from "next/image"; 
 import {
   FaUserCircle, FaBars, FaTimes,
-  FaInstagram, FaYoutube, FaEnvelope, FaSearch
+  FaInstagram, FaYoutube, FaEnvelope, FaSearch,
+  FaWallet, FaUser, FaSignOutAlt, FaTachometerAlt // Added Dashboard Icon
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
+import RechargeModal from "@/components/RechargeModal"; 
+
+// Import Redux hooks and actions
+import { useSelector, useDispatch } from "react-redux";
+// Make sure this path is correct for your project structure
+import { setLoginSuccess, setLogout } from "@/redux/authSlice"; 
+
+// ✅ Import your 'getMe' and new 'logout' functions
+import { getMyProfile, logout } from "@/lib/api/auth";
 
 // --- Helper function to get a cookie by name ---
+// We DO NOT use this for the auth check, but it's fine to keep
 const getCookie = (name) => {
   if (typeof window === "undefined") {
     return null;
@@ -23,8 +36,9 @@ const getCookie = (name) => {
   return null;
 };
 
+// --- (Constants) ---
 const NAV_LINKS = [
-
+  // Add your nav links here if any
 ];
 
 const CATEGORIES = [
@@ -46,6 +60,8 @@ const DROPDOWN_OPTIONS = [
 ];
 
 const AUTH_COOKIE_NAME = "token";
+// --- (End of Constants) ---
+
 
 export default function Header() {
   const pathname = usePathname();
@@ -56,20 +72,52 @@ export default function Header() {
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  const [loggedIn, setLoggedIn] = useState(false);
+  // State for the new Recharge Modal
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  
+  // Use Redux state - GET THE FULL USER OBJECT
+  const dispatch = useDispatch();
+  // We need 'user' to get name, email, and walletBalance
+  const { isLoggedIn, user } = useSelector((state) => state.auth);
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // --- NEW (1 of 4): State to remember where the user wanted to go ---
+  // State to remember where the user wanted to go
   const [pendingRedirect, setPendingRedirect] = useState(null);
 
+  // This runs ONCE when the app loads to check for a valid session.
   useEffect(() => {
-    const token = getCookie(AUTH_COOKIE_NAME);
-    if (token) {
-      setLoggedIn(true);
-    }
-  }, []);
+    const checkUserSession = async () => {
+      // If user is already in Redux, we are good.
+      if (user) {
+        return;
+      }
+      
+      try {
+        // Always try to get the user profile.
+        // axios (with withCredentials: true) will automatically
+        // send the 'token' cookie if it exists.
+        const data = await getMyProfile(); 
+        
+        if (data.success) {
+          // If it succeeds, log the user in.
+          dispatch(setLoginSuccess(data.user)); 
+        } else {
+          // If it returns { success: false } (e.g., token invalid)
+          dispatch(setLogout());
+        }
+      } catch (error) {
+        // If it throws an error (e.g., 401 Unauthorized)
+        // this is a normal, expected failure. Just log out.
+        dispatch(setLogout()); 
+      }
+    };
 
+    checkUserSession();
+  }, [dispatch, user]); // Run when dispatch or user changes
+
+  // Search submit handler
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -79,6 +127,7 @@ export default function Header() {
     }
   };
 
+  // Click outside handler for Profile Dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -89,6 +138,7 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Click outside handler for Category Dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -103,12 +153,28 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openCategoryIndex]);
 
-  const handleLogout = () => {
+  // UPDATED LOGOUT HANDLER
+  const handleLogout = async () => {
+    try {
+      // 1. Call the backend to destroy the httpOnly cookie
+      await logout(); 
+    } catch (error) {
+      console.error("Logout API failed, but logging out client-side anyway:", error);
+    }
+    
+    // 2. Clear the Redux state
+    dispatch(setLogout()); 
+    
+    // 3. Clear any fallback/non-httpOnly cookie (good practice)
     document.cookie = `${AUTH_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    setLoggedIn(false);
+    
+    // 4. Close menus and redirect
     setProfileDropdownOpen(false);
+    setMobileMenuOpen(false); 
+    router.push('/'); // Redirect to homepage
   };
 
+  // Category link generator
   const getLinkPath = (item, category) => {
     switch (item) {
       case "Mentorship":
@@ -120,22 +186,67 @@ export default function Header() {
     }
   };
   
-  // --- NEW (2 of 4): Function to handle the "Become an Expert" click ---
+  // "Become an Expert" button handler
   const handleExpertRegistrationClick = () => {
-    if (loggedIn) {
-      // If user is logged in, send them directly to the register page
-      router.push('/register');
-    } else {
-      // If logged out, remember the redirect and show the login modal
-      setPendingRedirect('/register');
-      setShowLoginModal(true);
+    router.push('/register');
+  };
+  
+  // Helper function to close menus on navigation
+  const handleLinkClick = () => {
+    setProfileDropdownOpen(false);
+    setMobileMenuOpen(false);
+  };
+
+  // Helper component for the role-specific button
+  const RoleAwareButton = ({ isMobile = false }) => {
+    if (!isLoggedIn || !user) return null;
+
+    const baseClass = isMobile
+      ? "block text-center w-full px-4 py-2 rounded-lg transition"
+      : "text-md font-medium px-4 py-2 rounded-lg transition";
+
+    switch (user.role) {
+      case 'SUPERADMIN':
+        return (
+          <Link
+            href="/superadmin"
+            onClick={isMobile ? handleLinkClick : undefined}
+            className={`${baseClass} bg-red-600 hover:bg-red-700 text-white`}
+          >
+            Superadmin
+          </Link>
+        );
+      case 'MENTOR':
+        return (
+          <Link
+            href="/mentor/dashboard"
+            onClick={isMobile ? handleLinkClick : undefined}
+            className={`${baseClass} bg-green-600 hover:bg-green-700 text-white`}
+          >
+            Mentor
+          </Link>
+        );
+      case 'USER':
+      default:
+        return (
+          <button
+            onClick={isMobile ? () => {
+              handleExpertRegistrationClick();
+              setMobileMenuOpen(false);
+            } : handleExpertRegistrationClick}
+            className={`${baseClass} bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50`}
+          >
+            Become an Expert
+          </button>
+        );
     }
   };
 
   return (
     <>
       <header className="backdrop-blur-lg bg-black/80 text-white font-sans shadow-2xl rounded-b-2xl z-50 relative">
-        {/* Top Bar */}
+        
+        {/* --- Top Bar --- */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800 bg-black">
           <Link href="/" className="text-3xl font-extrabold tracking-wide">
             MyProfession.CA
@@ -173,34 +284,116 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* --- NEW (3 of 4): Changed from <Link> to <button> --- */}
-            <button
-              onClick={handleExpertRegistrationClick}
-              className="text-md font-medium px-4 py-2 bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
-            >
-              Become an Expert
-            </button>
+            {/* Role-aware button is rendered here */}
+            <RoleAwareButton />
 
-            {/* --- Conditional Login/Profile Button --- */}
-            {loggedIn ? (
+            {/* --- UPDATED Conditional Login/Profile Button --- */}
+            {isLoggedIn && user ? ( // Check for 'isLoggedIn' AND 'user' object
               // LOGGED-IN: Show Profile Icon
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileDropdownOpen((prev) => !prev)}
                   className="flex items-center gap-1 hover:text-blue-400 transition duration-200"
                 >
-                  <FaUserCircle size={28} />
+                  
+                  {/* ✅ 2. THIS IS THE CHANGE */}
+                  {user.avatar ? (
+                    <Image
+                      src={user.avatar}
+                      alt={user.name || 'User Avatar'}
+                      width={28}
+                      height={28}
+                      className="rounded-full" // This makes it a circle
+                    />
+                  ) : (
+                    <FaUserCircle size={28} /> // Fallback if no avatar
+                  )}
+                  {/* ✅ END OF CHANGE */}
+
                   <IoMdArrowDropdown />
                 </button>
 
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-3 w-44 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition duration-200 rounded-lg"
-                    >
-                      Logout
-                    </button>
+                  // Increased width for wallet
+                  <div className="absolute right-0 mt-3 w-64 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
+                    
+                    {/* --- User Info Header (No Change) --- */}
+                    <div className="px-4 py-3 border-b border-gray-700">
+                      <p className="text-sm font-medium text-white truncate">
+                        {user?.name || "Valued User"}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {user?.email || user?.phone}
+                      </p>
+                    </div>
+
+                    {/* --- Wallet Section (No Change) --- */}
+                    <div className="px-4 py-3 border-b border-gray-700">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-xs text-gray-400 flex items-center">
+                            <FaWallet className="mr-2" /> Wallet Balance
+                          </p>
+                          <p className="text-lg font-semibold text-white">
+                            ₹{user?.walletBalance ? user.walletBalance.toFixed(2) : '0.00'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowRechargeModal(true);
+                            setProfileDropdownOpen(false);
+                          }}
+                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition"
+                        >
+                          Add Money
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* --- Navigation Links (No Change) --- */}
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        onClick={handleLinkClick}
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition duration-200 rounded-lg"
+                      >
+                        <FaUser className="mr-3 w-4" /> My Profile
+                      </Link>
+
+                      {/* Show Mentor Dashboard ONLY if role is MENTOR */}
+                      {user.role === 'MENTOR' && (
+                        <Link
+                          href="/mentor/dashboard"
+                          onClick={handleLinkClick}
+                          className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition duration-200 rounded-lg"
+                        >
+                          <FaTachometerAlt className="mr-3 w-4" />
+                          Mentor Dashboard
+                        </Link>
+                      )}
+
+                      {/* Show Superadmin Panel ONLY if role is SUPERADMIN */}
+                      {user.role === 'SUPERADMIN' && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={handleLinkClick}
+                          className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition duration-200 rounded-lg"
+                        >
+                          <FaTachometerAlt className="mr-3 w-4" />
+                          Superadmin Panel
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* --- Logout Button (No Change) --- */}
+                    <div className="py-1 border-t border-gray-700">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition duration-200 rounded-lg"
+                      >
+                        <FaSignOutAlt className="mr-3 w-4" /> Logout
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -224,7 +417,7 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* --- Mobile Menu --- */}
         {mobileMenuOpen && (
           <div className="md:hidden px-6 pb-4 space-y-4">
             <form onSubmit={handleSearchSubmit} className="relative w-full pt-2">
@@ -267,16 +460,66 @@ export default function Header() {
               </a>
             </div>
 
-            {/* --- Professional Mobile Auth Section --- */}
+            {/* --- UPDATED Professional Mobile Auth Section --- */}
             <div className="space-y-3 pt-4 border-t border-gray-700/50">
-              {loggedIn ? (
+              {isLoggedIn && user ? (
                 // LOGGED-IN (MOBILE)
-                <button
-                  onClick={handleLogout}
-                  className="block text-center w-full px-4 py-2 bg-red-600/50 border border-red-500 text-red-300 hover:bg-red-500/50 rounded-lg transition"
-                >
-                  Logout
-                </button>
+                <>
+                  {/* --- Mobile Wallet (No Change) --- */}
+                  <div className="p-4 bg-gray-900 rounded-lg">
+                    <p className="text-xs text-gray-400">Wallet Balance</p>
+                    <p className="text-xl font-semibold text-white">
+                      ₹{user?.walletBalance ? user.walletBalance.toFixed(2) : '0.00'}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowRechargeModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full mt-2 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                    >
+                      Add Money
+                    </button>
+                  </div>
+                  
+                  {/* --- Mobile Links (No Change) --- */}
+                  <Link
+                    href="/profile"
+                    onClick={handleLinkClick}
+                    className="block text-center w-full px-4 py-2 bg-gray-700 text-white rounded-lg transition"
+                  >
+                    My Profile
+                  </Link>
+                  
+                  {/* Show Mentor Dashboard ONLY if role is MENTOR */}
+                  {user.role === 'MENTOR' && (
+                    <Link
+                      href="/mentor/dashboard"
+                      onClick={handleLinkClick}
+                      className="block text-center w-full px-4 py-2 bg-gray-700 text-white rounded-lg transition"
+                    >
+                      Mentor Dashboard
+                    </Link>
+                  )}
+
+                  {/* Show Superadmin Panel ONLY if role is SUPERADMIN */}
+                  {user.role === 'SUPERADMIN' && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={handleLinkClick}
+                      className="block text-center w-full px-4 py-2 bg-gray-700 text-white rounded-lg transition"
+                    >
+                      Superadmin Panel
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    className="block text-center w-full px-4 py-2 bg-red-600/50 border border-red-500 text-red-300 hover:bg-red-500/50 rounded-lg transition"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 // LOGGED-OUT (MOBILE) - Primary Action
                 <button
@@ -290,22 +533,14 @@ export default function Header() {
                 </button>
               )}
 
-              {/* --- NEW (3 of 4): Changed from <Link> to <button> --- */}
-              <button
-                onClick={() => {
-                  handleExpertRegistrationClick();
-                  setMobileMenuOpen(false);
-                }}
-                className="block text-center w-full px-4 py-2 bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
-              >
-                Become an Expert
-              </button>
+              {/* Role-aware button is rendered here for mobile */}
+              <RoleAwareButton isMobile={true} />
             </div>
             
           </div>
         )}
 
-        {/* --- FULL SUBHEADER CODE --- */}
+        {/* --- FULL SUBHEADER CODE (No Change) --- */}
         <div className="px-4 md:px-10 py-3 border-t border-b border-gray-700 bg-gradient-to-r from-gray-950 via-gray-900 to-black">
           <div className="flex flex-wrap justify-center gap-6">
             {CATEGORIES.map((category, i) => (
@@ -330,6 +565,7 @@ export default function Header() {
                       <Link
                         key={idx}
                         href={getLinkPath(item, category)}
+                        onClick={() => setOpenCategoryIndex(null)} // Close dropdown on click
                         className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition rounded-lg"
                       >
                         {item}
@@ -343,23 +579,34 @@ export default function Header() {
         </div>
       </header>
 
+      {/* --- MODALS (No Change) --- */}
+
       {/* Login Modal */}
       {showLoginModal && (
         <AuthModal
           onClose={() => {
             setShowLoginModal(false);
-            setPendingRedirect(null); // Clear the redirect if they just close the modal
+            setPendingRedirect(null); 
           }}
-          // --- NEW (4 of 4): Updated onLoginSuccess to handle the redirect ---
-          onLoginSuccess={() => {
+          onLoginSuccess={(userData) => { 
             setShowLoginModal(false);
-            setLoggedIn(true);
+            dispatch(setLoginSuccess(userData)); 
             
-            // Check if we have a pending redirect
             if (pendingRedirect) {
               router.push(pendingRedirect);
-              setPendingRedirect(null); // Clear the state
+              setPendingRedirect(null); 
             }
+          }}
+        />
+      )}
+      
+      {/* Render the new Recharge Modal */}
+      {showRechargeModal && (
+        <RechargeModal 
+          onClose={() => setShowRechargeModal(false)} 
+          onRechargeSuccess={(updatedUser) => {
+             dispatch(setLoginSuccess(updatedUser));
+             setShowRechargeModal(false);
           }}
         />
       )}
