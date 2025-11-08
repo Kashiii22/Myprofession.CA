@@ -32,7 +32,7 @@ const MentorCard = ({ mentor }) => {
   const handleViewProfile = (e) => {
     e.stopPropagation(); // Prevent card click from firing
     // TODO: Update this to use the mentor's ID or slug
-    router.push("/mentorProfile"); 
+    router.push(`/mentor/${mentor.id}`); 
   };
 
   return (
