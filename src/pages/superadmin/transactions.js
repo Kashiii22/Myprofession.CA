@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Provider } from 'react-redux';
-import { store } from '@/store'; //  assumptive path to your redux store
+import { store } from '@/redux/store'; //  assumptive path to your redux store
 import { SuperAdminSidebar } from '@/components/SuperAdminSidebar';
 import { SuperAdminMobileHeader } from '@/components/SuperAdminMobileHeader';
 import DashboardHeader from '@/components/DashboardHeader';
