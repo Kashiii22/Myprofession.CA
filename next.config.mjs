@@ -18,9 +18,6 @@ const nextConfig = {
         pathname: '/**', // Allows all image paths from this host
       },
     ]
-  },
-  "paths": {
-  "@magiclabs/ui/*": ["libs/ui/src/*"]
-}
+  }
 };
 export default nextConfig;

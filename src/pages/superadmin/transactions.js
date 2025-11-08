@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store'; //  assumptive path to your redux store
-import { SuperAdminSidebar } from '@/components/SuperAdminSidebar';
-import { SuperAdminMobileHeader } from '@/components/SuperAdminMobileHeader';
+import SuperAdminSidebar from '@/components/SuperAdminSidebar';
+import SuperAdminMobileHeader from '@/components/SuperAdminMobileHeader';
 import DashboardHeader from '@/components/DashboardHeader';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { getNewMentorRegistrations, approveMentorRegistration, rejectMentorRegistration } from '@/lib/api/mentorRegistration';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaArrowLeft, FaHandHoldingUsd } from 'react-icons/fa'; // Added FaHandHoldingUsd
