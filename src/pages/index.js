@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"; // ✅ useRouter for Next.js App Ro
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import ChatbotWidget from "@/components/chatbotwidget";
 import Footer from "@/components/Footer";
+
 // Mentor Data
 const mentorsLeft = [
   { name: "CA Rohan Mehta", title: "Direct Tax Expert", image: "https://i.pravatar.cc/150?img=32", color: "bg-gradient-to-r from-indigo-700 to-indigo-900" },
@@ -67,10 +68,7 @@ export default function HomePage() {
                 </span>
 
                 {/* --- ✅ 1. UPDATED OFFER TEXT --- */}
-                <span className="block mt-3 text-xl font-bold text-yellow-300 animate-pulse">
-                  Your First Chat is FREE!
-                </span>
-
+                
               </div>
             </div>
 
@@ -82,9 +80,9 @@ export default function HomePage() {
                 {/* --- ✅ 2. UPDATED BUTTON COLORS --- */}
                 <ShinyButton
                   onClick={() => router.push("/mentors")}
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
-                  Claim Your Free Chat →
+                  Explore Our Mentors
                 </ShinyButton>
 
               </div>
