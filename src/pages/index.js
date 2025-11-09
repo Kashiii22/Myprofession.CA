@@ -8,7 +8,7 @@ import {
   FaBuilding,
   FaChartLine,
   FaBookOpen,
-  FaArrowRight,
+  FaArrowRight, // This is now used by CategoryCard
   FaCalculator,
   FaBriefcase,
   FaBalanceScale
@@ -34,15 +34,15 @@ const mentorsRight = [
   { name: "CA Sneha Goyal", title: "CMA & Costing Mentor", image: "https://i.pravatar.cc/150?img=33", color: "bg-gradient-to-r from-rose-600 to-rose-800" },
 ];
 
-// --- Content Categories ---
+// --- Content Categories (Descriptions Removed) ---
 const contentCategories = [
-  { name: "Income Tax", path: "/category/income-tax", icon: <FaFileInvoiceDollar />, description: "Master direct tax, filings, and explore the latest case law." },
-  { name: "GST", path: "/category/gst", icon: <FaScroll />, description: "Stay updated with GST amendments, guides, and real-world case studies." },
-  { name: "Accounting", path: "/category/accounting", icon: <FaCalculator />, description: "Explore accounting standards (Ind AS), and practical bookkeeping templates." },
-  { name: "Audit", path: "/category/audit", icon: <FaClipboardCheck />, description: "Access checklists, standards, and practical audit program templates." },
-  { name: "Investment", path: "/category/investment", icon: <FaChartLine />, description: "Dive into financial modeling, project reports, and investment analysis." },
-  { name: "ICAI & Articleship", path: "/category/icai-and-articleship", icon: <FaBriefcase />, description: "Guides for CA students, articleship resources, and ICAI announcements." },
-  { name: "Law & MCA", path: "/category/law-and-mca", icon: <FaBalanceScale />, description: "Find templates for resolutions, minutes, and company law compliance." },
+  { name: "Income Tax", path: "/category/income-tax", icon: <FaFileInvoiceDollar /> },
+  { name: "GST", path: "/category/gst", icon: <FaScroll /> },
+  { name: "Accounting", path: "/category/accounting", icon: <FaCalculator /> },
+  { name: "Audit", path: "/category/audit", icon: <FaClipboardCheck /> },
+  { name: "Investment", path: "/category/investment", icon: <FaChartLine /> },
+  { name: "ICAI & Articleship", path: "/category/icai-and-articleship", icon: <FaBriefcase /> },
+  { name: "Law & MCA", path: "/category/law-and-mca", icon: <FaBalanceScale /> },
 ];
 
 // --- Placeholder Course Data ---
@@ -203,7 +203,6 @@ export default function HomePage() {
                   key={category.name}
                   icon={category.icon}
                   title={category.name}
-                  description={category.description}
                   onClick={() => router.push(category.path)}
                 />
               ))}
@@ -212,7 +211,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- ✅ MODIFIED: COURSES SECTION --- */}
+      {/* --- COURSES SECTION --- */}
       <section className="py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
         <div className="container mx-auto max-w-7xl text-center">
           
@@ -277,7 +276,7 @@ export default function HomePage() {
           
         </div>
         
-        {/* 6. NEW "Glow" Animation CSS */}
+        {/* 6. "Glow" Animation CSS */}
         <style jsx>{`
           @keyframes glow-green {
             0%, 100% {
@@ -319,17 +318,44 @@ function MentorCard({ mentor }) {
 }
 
 
-// "Glow & Lift" CategoryCard Component
-function CategoryCard({ icon, title, description, onClick }) {
+// --- ✅ MODIFIED: "CategoryCard" Component (with exciting arrow) ---
+function CategoryCard({ icon, title, onClick }) {
   return (
-    <div onClick={onClick} className="group cursor-pointer">
-      <div className="relative h-full rounded-xl bg-[#1a1a1e] p-6 overflow-hidden border border-gray-700/80 transition-all duration-300 ease-in-out hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-2">
-        <div className="text-blue-400 text-3xl mb-4">{icon}</div>
-        <h3 className="text-xl font-semibold text-white mb-2 text-left">{title}</h3>
-        <p className="text-sm text-gray-400 mb-6 text-left min-h-[40px]">{description}</p>
-        <div className="flex items-center gap-2 text-blue-400 font-semibold opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          Explore <FaArrowRight />
+    <div 
+      onClick={onClick} 
+      className="group cursor-pointer rounded-xl bg-[#1a1a1e] p-5 text-left
+                 border border-gray-700/80
+                 transition-all duration-300
+                 hover:border-blue-500/80 hover:bg-[#202024] 
+                 hover:shadow-xl hover:-translate-y-1" // Subtle lift effect
+    >
+      {/* This flex container pushes the arrow to the right */}
+      <div className="flex items-center justify-between gap-4">
+        
+        {/* Left side (Icon + Title) */}
+        <div className="flex items-center gap-4">
+          {/* Icon */}
+          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center 
+                          rounded-lg bg-gray-800/50 
+                          text-blue-400 text-2xl 
+                          transition-all duration-300 group-hover:bg-blue-700/20 group-hover:text-blue-300">
+            {icon}
+          </div>
+          {/* Title */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-200 transition-colors duration-300 group-hover:text-white">
+              {title}
+            </h3>
+          </div>
         </div>
+
+        {/* Right side (Arrow) - Hides and shows on hover */}
+        <div className="text-blue-400 text-xl
+                        opacity-0 transition-all duration-300 
+                        group-hover:opacity-100 group-hover:translate-x-1"> {/* Animates on hover */}
+          <FaArrowRight />
+        </div>
+
       </div>
     </div>
   );

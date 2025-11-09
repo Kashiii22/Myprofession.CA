@@ -262,7 +262,7 @@ export default function ExpertProfile() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white">Become a Mentor</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white">Become a Consultant</h1>
             <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">Share your expertise, guide professionals, and make a lasting impact in your field.</p>
           </div>
 
