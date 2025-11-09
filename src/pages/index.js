@@ -41,8 +41,8 @@ const contentCategories = [
   { name: "Accounting", path: "/category/accounting", icon: <FaCalculator />, description: "Explore accounting standards (Ind AS), and practical bookkeeping templates." },
   { name: "Audit", path: "/category/audit", icon: <FaClipboardCheck />, description: "Access checklists, standards, and practical audit program templates." },
   { name: "Investment", path: "/category/investment", icon: <FaChartLine />, description: "Dive into financial modeling, project reports, and investment analysis." },
-  { name: "ICAI & Articleship", path: "/category/icai-articleship", icon: <FaBriefcase />, description: "Guides for CA students, articleship resources, and ICAI announcements." },
-  { name: "Law & MCA", path: "/category/law-mca", icon: <FaBalanceScale />, description: "Find templates for resolutions, minutes, and company law compliance." },
+  { name: "ICAI & Articleship", path: "/category/icai-and-articleship", icon: <FaBriefcase />, description: "Guides for CA students, articleship resources, and ICAI announcements." },
+  { name: "Law & MCA", path: "/category/law-and-mca", icon: <FaBalanceScale />, description: "Find templates for resolutions, minutes, and company law compliance." },
 ];
 
 // --- Placeholder Course Data ---
