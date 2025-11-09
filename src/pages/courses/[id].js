@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/router"; // Correct import for Pages Router
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ChatbotWidget from "@/components/chatbotwidget";
@@ -19,10 +17,9 @@ import {
   FaVideo,
   FaFileAlt,
   FaAward,
-} from "react-icons/fa"; // Removed FaShieldAlt
+} from "react-icons/fa";
 
-// --- Dummy Data (Expanded for all 6 courses) ---
-// In a real app, you'd fetch this data based on the ID.
+// --- Dummy Data ---
 const coursesData = [
   // --- Course 1 (Full Details) ---
   {
@@ -123,7 +120,6 @@ const coursesData = [
   {
     id: 3,
     title: "Audit & Assurance: A Practical Approach",
-    /* ... (add skeleton data like course 2) ... */
     tagline: "Learn practical audit techniques from an expert.",
     instructorName: "CA Anjali Verma",
     instructorImage: "https://i.pravatar.cc/150?img=47",
@@ -148,7 +144,6 @@ const coursesData = [
   {
     id: 4,
     title: "Financial Modeling & Investment Analysis",
-    /* ... (add skeleton data like course 2) ... */
     tagline: "Build financial models from scratch.",
     instructorName: "CA Nidhi Sinha",
     instructorImage: "https://i.pravatar.cc/150?img=58",
@@ -160,8 +155,7 @@ const coursesData = [
     reviews: 150,
     thumbnail:
       "https://via.placeholder.com/600x340/1a1a1e/ffffff?text=Financial+Modeling",
-    whatYoullLearn: ["Excel modeling", "Valuation techniques (DCF,)"
-    ],
+    whatYoullLearn: ["Excel modeling", "Valuation techniques (DCF,)"],
     curriculum: [
       {
         title: "Module 1: Excel Basics",
@@ -174,7 +168,6 @@ const coursesData = [
   {
     id: 5,
     title: "Beginner's Guide to Accounting Standards (AS/Ind AS)",
-    /* ... (add skeleton data like course 2) ... */
     tagline: "Understand the core principles of AS & Ind AS.",
     instructorName: "CA Manish Kapoor",
     instructorImage: "https://i.pravatar.cc/150?img=60",
@@ -199,7 +192,6 @@ const coursesData = [
   {
     id: 6,
     title: "Costing & CMA Techniques for Professionals",
-    /* ... (add skeleton data like course 2) ... */
     tagline: "Master costing techniques for business decisions.",
     instructorName: "CA Sneha Goyal",
     instructorImage: "https://i.pravatar.cc/150?img=33",
@@ -223,11 +215,40 @@ const coursesData = [
   },
 ];
 
-// --- A. Course Content Accordion Component (Unchanged) ---
+// --- Runs at build time ---
+export async function getStaticPaths() {
+  const paths = coursesData.map((course) => ({
+    params: { id: course.id.toString() },
+  }));
+
+  return {
+    paths,
+    fallback: false, 
+  };
+}
+
+// --- Runs at build time for each path ---
+export async function getStaticProps({ params }) {
+  const { id } = params;
+  const course = coursesData.find((c) => c.id.toString() === id);
+
+  if (!course) {
+    return {
+      notFound: true,
+    };
+  }
+
+  return {
+    props: {
+      course,
+    },
+  };
+}
+
+// --- Course Content Accordion Component ---
 function CourseAccordion({ section }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Default to first section open
   useEffect(() => {
     if (section.title.includes("Module 1")) {
       setIsOpen(true);
@@ -274,42 +295,14 @@ function CourseAccordion({ section }) {
   );
 }
 
-// --- B. The Main Page Component ---
-export default function CourseDetailPage() {
+// --- The Main Page Component ---
+export default function CourseDetailPage({ course }) {
   const router = useRouter();
-  const params = useParams();
-  const { id } = params;
-
-  // --- Data Fetching ---
-  const course = coursesData.find((c) => c.id.toString() === id);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 50 });
   }, []);
 
-  // --- Handle Course Not Found ---
-  if (!course) {
-    return (
-      <div className="min-h-screen bg-[#0e0e10] text-gray-200">
-        <Header />
-        <div className="py-40 text-center">
-          <h1 className="text-3xl font-bold text-white">Course Not Found</h1>
-          <p className="text-gray-400 mt-4">
-            Sorry, we couldn't find the course you're looking for.
-          </p>
-          <button
-            onClick={() => router.push("/courses")}
-            className="mt-8 bg-blue-600 text-white font-semibold py-3 px-6 rounded-full"
-          >
-            Back to All Courses
-          </button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // --- Main Page Render ---
   return (
     <div className="min-h-screen bg-[#0e0e10] text-gray-200 font-sans relative">
       <Header />
@@ -354,14 +347,12 @@ export default function CourseDetailPage() {
         </div>
       </section>
 
-      {/* --- 2. Main Content (NEW 2-Column Layout) --- */}
+      {/* --- 2. Main Content (2-Column Layout) --- */}
       <section className="py-16 px-6 md:px-20">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
-          
           {/* --- LEFT COLUMN (Details) --- */}
-          {/* ✅ CHANGED: Now contains the main course details */}
           <div className="lg:col-span-2 space-y-12 lg:order-1">
-            {/* What You'll Learn (Moved to top) */}
+            {/* What You'll Learn */}
             <div
               className="bg-[#1a1a1e] p-8 rounded-xl border border-gray-700"
               data-aos="fade-up"
@@ -403,9 +394,9 @@ export default function CourseDetailPage() {
                 ))}
               </ul>
             </div>
-            
+
             {/* Who this course is for */}
-             <div data-aos="fade-up">
+            <div data-aos="fade-up">
               <h2 className="text-3xl font-bold text-white mb-6">
                 Who this course is for
               </h2>
@@ -446,7 +437,6 @@ export default function CourseDetailPage() {
           </div>
 
           {/* --- RIGHT COLUMN (Buy Box) --- */}
-          {/* ✅ CHANGED: No longer sticky. Placed on right with lg:order-2 */}
           <div
             className="lg:col-span-1 lg:order-2 h-fit lg:sticky top-28"
             data-aos="fade-left"
@@ -467,9 +457,6 @@ export default function CourseDetailPage() {
                 <button className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-3 px-6 rounded-lg text-lg hover:scale-105 transition-transform duration-300">
                   Buy Now
                 </button>
-                
-                {/* --- ❌ REMOVED "Add to Cart" button --- */}
-                {/* --- ❌ REMOVED "Money-Back Guarantee" --- */}
 
                 <div className="pt-4 border-t border-gray-700">
                   <h4 className="font-semibold text-white mb-3">
@@ -484,7 +471,9 @@ export default function CourseDetailPage() {
                     </li>
                     <li className="flex items-center gap-3">
                       <FaFileAlt className="text-blue-400" />
-                      <span className="text-gray-300">12 Downloadable resources</span>
+                      <span className="text-gray-300">
+                        12 Downloadable resources
+                      </span>
                     </li>
                     <li className="flex items-center gap-3">
                       <FaAward className="text-blue-400" />
@@ -497,7 +486,6 @@ export default function CourseDetailPage() {
               </div>
             </div>
           </div>
-          
         </div>
       </section>
 

@@ -1,11 +1,23 @@
 "use client";
-import { FaSearch } from "react-icons/fa";
+import { useState, useEffect } from "react"; 
+import {
+  FaSearch,
+  FaFileInvoiceDollar,
+  FaClipboardCheck,
+  FaScroll,
+  FaBuilding,
+  FaChartLine,
+  FaBookOpen,
+  FaArrowRight,
+  FaCalculator,
+  FaBriefcase,
+  FaBalanceScale
+} from "react-icons/fa";
 import Image from "next/image";
 import Header from "@/components/Header";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation"; // ✅ useRouter for Next.js App Router
+import { useRouter } from "next/navigation";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import ChatbotWidget from "@/components/chatbotwidget";
 import Footer from "@/components/Footer";
@@ -22,21 +34,84 @@ const mentorsRight = [
   { name: "CA Sneha Goyal", title: "CMA & Costing Mentor", image: "https://i.pravatar.cc/150?img=33", color: "bg-gradient-to-r from-rose-600 to-rose-800" },
 ];
 
+// --- Content Categories ---
+const contentCategories = [
+  { name: "Income Tax", path: "/category/income-tax", icon: <FaFileInvoiceDollar />, description: "Master direct tax, filings, and explore the latest case law." },
+  { name: "GST", path: "/category/gst", icon: <FaScroll />, description: "Stay updated with GST amendments, guides, and real-world case studies." },
+  { name: "Accounting", path: "/category/accounting", icon: <FaCalculator />, description: "Explore accounting standards (Ind AS), and practical bookkeeping templates." },
+  { name: "Audit", path: "/category/audit", icon: <FaClipboardCheck />, description: "Access checklists, standards, and practical audit program templates." },
+  { name: "Investment", path: "/category/investment", icon: <FaChartLine />, description: "Dive into financial modeling, project reports, and investment analysis." },
+  { name: "ICAI & Articleship", path: "/category/icai-articleship", icon: <FaBriefcase />, description: "Guides for CA students, articleship resources, and ICAI announcements." },
+  { name: "Law & MCA", path: "/category/law-mca", icon: <FaBalanceScale />, description: "Find templates for resolutions, minutes, and company law compliance." },
+];
+
+// --- Placeholder Course Data ---
+const coursesData = [
+  {
+    id: 1,
+    title: "Advanced GST Practice & Compliance",
+    category: "GST",
+    description: "A deep dive into GST returns, audits, and litigation with real-world case studies.",
+    image: "https://images.unsplash.com/photo-1554224155-169543018d40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHxhY2NvdW50aW5nJTIwZmluYW5jZXxlbnwwfHx8fDE3MzExNzk4NTN8MA&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+  {
+    id: 2,
+    title: "Practical Income Tax Filing (ITR 1-7)",
+    category: "Income Tax",
+    description: "Learn to file all major ITR forms for individuals and businesses.",
+    image: "https://images.unsplash.com/photo-1579621970795-87f51f47f2f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHx0YXglMjBpbmRpYXxlbnwwfHx8fDE3MzExNzk4ODN8MA&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+  {
+    id: 3,
+    title: "Statutory Audit Masterclass",
+    category: "Audit",
+    description: "From planning to execution and reporting, master the audit process.",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHxjaGVja2xpc3QlMjBhdWRpdHxlbnwwfHx8fDE3MzExNzk5MDd8MA&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+  {
+    id: 4,
+    title: "Mastering Ind AS (Accounting)",
+    category: "Accounting",
+    description: "A practical guide to implementing Indian Accounting Standards.",
+    image: "https://images.unsplash.com/photo-1542744095-291d1f67b221?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHxwcmVzZW50YXRpb24lMjBib2FyZHJvb218ZW58MHx8fHwxNzMxMTc5OTMxfDA&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+  {
+    id: 5,
+    title: "Stock Market & Investment Analysis",
+    category: "Investment",
+    description: "Learn fundamental and technical analysis for smart investing.",
+    image: "https://images.unsplash.com/photo-1611974780784-907f763c3283?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHxzdG9jayUyMG1hcmtldCUyMGNoYXJ0fGVufDB8fHx8MTczMTE3OTk1M3ww&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+  {
+    id: 6,
+    title: "Articleship Success Guide",
+    category: "ICAI & Articleship",
+    description: "Navigate your articleship, manage time, and maximize learning.",
+    image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNTU5MTR8MHwxfHNlYXJjaHwxfHxtZWV0aW5nJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3MzExNzk5NzR8MA&ixlib=rb-4.0.3&q=80&w=1080"
+  },
+];
+
+
 export default function HomePage() {
   const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
   }, []);
 
+  const filterCategories = ["All", ...contentCategories.map(c => c.name)];
+  const filteredCourses = coursesData.filter(course => 
+    selectedCategory === "All" || course.category === selectedCategory
+  );
+
   return (
-    // ✅ --- FIX: Added 'overflow-x-hidden' to clip the AOS animations ---
     <div className="min-h-screen bg-[#0e0e10] text-gray-200 font-sans relative overflow-x-hidden">
       <Header />
 
       {/* HERO SECTION */}
-      {/* --- This 'overflow-hidden' on the section also helps --- */}
       <section className="relative z-10 px-4 md:px-10 py-20 overflow-hidden">
+        {/* ... (Hero section code is unchanged) ... */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
           {/* Left Marquee */}
           <div className="hidden md:block h-[400px] overflow-hidden relative group">
@@ -56,8 +131,6 @@ export default function HomePage() {
             <h3 className="text-2xl md:text-3xl font-extrabold leading-snug">
               Connect with experienced <span className="text-blue-500"><br />CA Experts</span>
             </h3>
-
-            {/* This div is now correct and will stay within its column */}
             <div className="mt-6 bg-[#1a1a1e]/90 p-8 rounded-xl border border-blue-700 shadow-md-blue w-full text-center">
               <div className="text-white text-base md:text-lg leading-relaxed break-words">
                 If you are facing any issue in your CA journey whether related to <br />
@@ -66,25 +139,16 @@ export default function HomePage() {
                 <span className="block mt-3 text-blue-400 font-semibold text-3xl">
                   1:1 Discussion
                 </span>
-
-                {/* --- ✅ 1. UPDATED OFFER TEXT --- */}
-                
               </div>
             </div>
-
-            {/* Search and CTA */}
             <div className="mt-10 relative max-w-lg mx-auto">
-              {/* Explore Mentors Button */}
               <div className="mt-6 flex justify-center">
-                
-                {/* --- ✅ 2. UPDATED BUTTON COLORS --- */}
                 <ShinyButton
                   onClick={() => router.push("/mentors")}
-                  className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-1all duration-300"
                 >
                   Explore Our Consultants
                 </ShinyButton>
-
               </div>
             </div>
           </div>
@@ -102,81 +166,135 @@ export default function HomePage() {
             <div className="absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t from-[#0e0e10] via-[#0e0e10]/60 to-transparent z-20 pointer-events-none" />
           </div>
         </div>
-
-        {/* Keyframe Styles */}
         <style jsx>{`
-          .marquee-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-          }
-          .animate-scroll-up {
-            animation: scrollUp 30s linear infinite;
-          }
-          .animate-scroll-down {
-            animation: scrollDown 30s linear infinite;
-          }
-          @keyframes scrollUp {
-            0% { transform: translateY(0%); }
-            100% { transform: translateY(-50%); }
-          }
-          @keyframes scrollDown {
-            0% { transform: translateY(-50%); }
-            100% { transform: translateY(0%); }
-          }
+          .marquee-container { display: flex; flex-direction: column; gap: 1.5rem; }
+          .animate-scroll-up { animation: scrollUp 30s linear infinite; }
+          .animate-scroll-down { animation: scrollDown 30s linear infinite; }
+          @keyframes scrollUp { 0% { transform: translateY(0%); } 100% { transform: translateY(-50%); } }
+          @keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0%); } }
         `}</style>
       </section>
 
-      {/* FEATURES SECTION */}
+      {/* --- CONTENT SECTION --- */}
       <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="flex justify-center" data-aos="fade-right">
-            <img
-              src="/unnamed.png"
-              alt="Why Choose MyProfession.CA"
-              className="max-w-md w-full drop-shadow-2xl rounded-2xl"
-            />
-          </div>
-          <div data-aos="fade-left">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 text-white">
-              Why Choose <span className="text-blue-400">MyProfession.CA?</span>
+        <div className="container mx-auto max-w-7xl text-center">
+          <div data-aos="fade-up">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 inline-block">
+              <span className="bg-yellow-400 text-gray-900 font-bold px-4 py-2 rounded-lg">
+                Content and files
+              </span>
             </h2>
-
-            <ul className="space-y-6">
-              {[
-                {
-                  icon: "💬",
-                  title: <>Reach out to <span className="font-bold underline" >Mentors</span> to get solution for your any doubt</>,
-                  path: "/mentors",
-                },
-                {
-                  icon: "📚",
-                  title: <>Enhance your practical knowledge with our <span className="font-bold underline">Content and Files</span></>,
-                  path: "/category/income-tax",
-                },
-                {
-                  icon: "📰",
-                  title: <>Stay updated & ahead by reading the recent <span className="font-bold underline">Articles</span></>,
-                  path: "/ComingSoon",
-                },
-              ].map(({ icon, title, path }, i) => (
-                <li
-                  key={i}
-                  onClick={() => router.push(path)}
-                  className="cursor-pointer flex items-start space-x-4 bg-[#1f1f23]/70 hover:bg-[#24242a]/80 transition rounded-xl p-5 border border-gray-700 shadow-xl hover:shadow-2xl"
-                  data-aos="zoom-in"
-                  data-aos-delay={i * 150}
-                >
-                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-2xl rounded-full text-white bg-gradient-to-br from-blue-700 to-indigo-800 shadow-lg">
-                    {icon}
-                  </div>
-                  <p className="text-white text-xl leading-relaxed">{title}</p>
-                </li>
+            <p className="text-lg md:text-xl font-semibold text-blue-400 tracking-wider mb-6">
+              Read – Watch – Download – Follow
+            </p>
+            <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-8 max-w-3xl mx-auto">
+              Empower your professional journey with ready-to-use content, templates. Everything a CA needs — from Income Tax to Audit — to work smarter every day
+            </p>
+            <p className="text-lg text-gray-400 mb-12 max-w-3xl mx-auto">
+              Here you can access practical files, step-by-step guides, and real-life case studies created by experienced professionals related to following categories:
+            </p>
+            <div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+              data-aos="fade-up"
+              data-aos-delay="200"
+            >
+              {contentCategories.map((category) => (
+                <CategoryCard
+                  key={category.name}
+                  icon={category.icon}
+                  title={category.name}
+                  description={category.description}
+                  onClick={() => router.push(category.path)}
+                />
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* --- ✅ MODIFIED: COURSES SECTION --- */}
+      <section className="py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
+        <div className="container mx-auto max-w-7xl text-center">
+          
+          {/* 1. Main Title */}
+          <h2 
+            className="text-4xl md:text-5xl font-bold mb-4 text-white" 
+            data-aos="fade-up"
+          >
+            Our Courses
+          </h2>
+          
+          {/* 2. Blinking Sub-Title (with new glow animation) */}
+          <h3 
+            className="text-2xl md:text-3xl font-semibold mb-6 text-green-400 animate-glow-green" 
+            data-aos="fade-up" 
+            data-aos-delay="100"
+          >
+            CA Practical Courses Now Available!
+          </h3>
+
+          {/* 3. Subtitle (Description) */}
+          <p 
+            className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-12 max-w-3xl mx-auto" 
+            data-aos="fade-up" 
+            data-aos-delay="200"
+          >
+            Take your professional skills to the next level with our industry-focused online courses designed especially for CA students and professionals.
+          </p>
+
+          {/* 4. Category Filters */}
+          <div 
+            className="flex flex-wrap justify-center gap-3 mb-12" 
+            data-aos="fade-up" 
+            data-aos-delay="300"
+          >
+            {filterCategories.map(category => (
+              <FilterPill
+                key={category}
+                text={category}
+                isActive={selectedCategory === category}
+                onClick={() => setSelectedCategory(category)}
+              />
+            ))}
+          </div>
+
+          {/* 5. Course Cards Grid */}
+          <div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            data-aos="fade-up"
+            data-aos-delay="400"
+          >
+            {filteredCourses.map(course => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+            {/* Handle empty state */}
+            {filteredCourses.length === 0 && (
+              <p className="text-gray-400 text-lg sm:col-span-2 lg:col-span-3">
+                No courses found for this category. Stay tuned!
+              </p>
+            )}
+          </div>
+          
+        </div>
+        
+        {/* 6. NEW "Glow" Animation CSS */}
+        <style jsx>{`
+          @keyframes glow-green {
+            0%, 100% {
+              /* Using green-400 */
+              text-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+            }
+            50% {
+              text-shadow: 0 0 20px rgba(52, 211, 153, 1), 0 0 30px rgba(52, 211, 153, 0.6);
+            }
+          }
+          .animate-glow-green {
+            animation: glow-green 1.8s ease-in-out infinite;
+          }
+        `}</style>
+      </section>
+      {/* --- END OF NEW SECTION --- */}
+
 
       {/* FOOTER */}
       <Footer />
@@ -200,11 +318,90 @@ function MentorCard({ mentor }) {
   );
 }
 
-// Category Button
-function CategoryButton({ text, color }) {
+
+// "Glow & Lift" CategoryCard Component
+function CategoryCard({ icon, title, description, onClick }) {
+  return (
+    <div onClick={onClick} className="group cursor-pointer">
+      <div className="relative h-full rounded-xl bg-[#1a1a1e] p-6 overflow-hidden border border-gray-700/80 transition-all duration-300 ease-in-out hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-2">
+        <div className="text-blue-400 text-3xl mb-4">{icon}</div>
+        <h3 className="text-xl font-semibold text-white mb-2 text-left">{title}</h3>
+        <p className="text-sm text-gray-400 mb-6 text-left min-h-[40px]">{description}</p>
+        <div className="flex items-center gap-2 text-blue-400 font-semibold opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          Explore <FaArrowRight />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// FilterPill Component
+function FilterPill({ text, isActive, onClick }) {
   return (
     <button
-      className={`bg-gradient-to-r ${color} text-white font-semibold py-2 px-5 rounded-full shadow-md hover:scale-105 hover:shadow-xl transition duration-300 ease-in-out whitespace-nowrap`}
+      onClick={onClick}
+      className={`py-2 px-5 rounded-full font-semibold text-sm transition-all duration-300
+        ${isActive 
+          ? 'bg-blue-600 text-white shadow-md' 
+          : 'bg-[#1a1a1e] text-gray-400 border border-gray-700 hover:bg-[#2a2a2e] hover:text-white'
+        }
+      `}
+    >
+      {text}
+    </button>
+  );
+}
+
+// CourseCard Component
+function CourseCard({ course }) {
+  const router = useRouter();
+  return (
+    <div className="group relative flex flex-col rounded-xl bg-[#1a1a1e] border border-gray-700/80
+                   overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-2">
+      
+      {/* Image */}
+      <div className="relative w-full h-48">
+        <Image 
+          src={course.image} 
+          alt={course.title} 
+          fill 
+          className="object-cover" 
+        />
+        {/* Category Badge */}
+        <span className="absolute top-3 right-3 bg-blue-600/90 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm">
+          {course.category}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="text-xl font-semibold text-white mb-2 text-left">
+          {course.title}
+        </h3>
+        <p className="text-sm text-gray-400 mb-6 text-left flex-grow min-h-[40px]">
+          {course.description}
+        </p>
+        
+        {/* Enroll Button */}
+        <button 
+          onClick={() => router.push(`/courses/${course.id}`)} // Example path
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md
+                     hover:shadow-xl hover:scale-105 transition-all duration-300"
+        >
+          Enroll Now
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+// (Unused CategoryButton component)
+function CategoryButton({ text, color, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`bg-gradient-to-r ${color} text-white font-semibold py-3 px-6 rounded-full shadow-md hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out whitespace-nowrap`}
     >
       {text}
     </button>
