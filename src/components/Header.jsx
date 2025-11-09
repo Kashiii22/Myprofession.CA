@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-// ✅ 1. Import 'Image' from Next.js
-import Image from "next/image"; 
+import Image from "next/image"; // No change
 import {
   FaUserCircle, FaBars, FaTimes,
   FaInstagram, FaYoutube, FaEnvelope, FaSearch,
-  FaWallet, FaUser, FaSignOutAlt, FaTachometerAlt // Added Dashboard Icon
+  FaWallet, FaUser, FaSignOutAlt, FaTachometerAlt
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
@@ -16,14 +15,12 @@ import RechargeModal from "@/components/RechargeModal";
 
 // Import Redux hooks and actions
 import { useSelector, useDispatch } from "react-redux";
-// Make sure this path is correct for your project structure
 import { setLoginSuccess, setLogout } from "@/redux/authSlice"; 
 
-// ✅ Import your 'getMe' and new 'logout' functions
+// Import your 'getMe' and new 'logout' functions
 import { getMyProfile, logout } from "@/lib/api/auth";
 
-// --- Helper function to get a cookie by name ---
-// We DO NOT use this for the auth check, but it's fine to keep
+// --- Helper function (No change) ---
 const getCookie = (name) => {
   if (typeof window === "undefined") {
     return null;
@@ -36,7 +33,7 @@ const getCookie = (name) => {
   return null;
 };
 
-// --- (Constants) ---
+// --- (Constants) (No Change) ---
 const NAV_LINKS = [
   // Add your nav links here if any
 ];
@@ -72,52 +69,38 @@ export default function Header() {
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // State for the new Recharge Modal
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   
-  // Use Redux state - GET THE FULL USER OBJECT
   const dispatch = useDispatch();
-  // We need 'user' to get name, email, and walletBalance
   const { isLoggedIn, user } = useSelector((state) => state.auth);
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // State to remember where the user wanted to go
+  // ✅ State to remember where the user wanted to go
   const [pendingRedirect, setPendingRedirect] = useState(null);
 
-  // This runs ONCE when the app loads to check for a valid session.
+  // Session check (No change)
   useEffect(() => {
     const checkUserSession = async () => {
-      // If user is already in Redux, we are good.
       if (user) {
         return;
       }
-      
       try {
-        // Always try to get the user profile.
-        // axios (with withCredentials: true) will automatically
-        // send the 'token' cookie if it exists.
         const data = await getMyProfile(); 
-        
         if (data.success) {
-          // If it succeeds, log the user in.
           dispatch(setLoginSuccess(data.user)); 
         } else {
-          // If it returns { success: false } (e.g., token invalid)
           dispatch(setLogout());
         }
       } catch (error) {
-        // If it throws an error (e.g., 401 Unauthorized)
-        // this is a normal, expected failure. Just log out.
         dispatch(setLogout()); 
       }
     };
-
     checkUserSession();
-  }, [dispatch, user]); // Run when dispatch or user changes
+  }, [dispatch, user]);
 
-  // Search submit handler
+  // Search submit handler (No change)
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -127,7 +110,7 @@ export default function Header() {
     }
   };
 
-  // Click outside handler for Profile Dropdown
+  // Click outside handlers (No change)
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -138,7 +121,6 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Click outside handler for Category Dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -153,28 +135,21 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openCategoryIndex]);
 
-  // UPDATED LOGOUT HANDLER
+  // Logout handler (No change)
   const handleLogout = async () => {
     try {
-      // 1. Call the backend to destroy the httpOnly cookie
       await logout(); 
     } catch (error) {
       console.error("Logout API failed, but logging out client-side anyway:", error);
     }
-    
-    // 2. Clear the Redux state
     dispatch(setLogout()); 
-    
-    // 3. Clear any fallback/non-httpOnly cookie (good practice)
     document.cookie = `${AUTH_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    
-    // 4. Close menus and redirect
     setProfileDropdownOpen(false);
     setMobileMenuOpen(false); 
-    router.push('/'); // Redirect to homepage
+    router.push('/'); 
   };
 
-  // Category link generator
+  // Category link generator (No change)
   const getLinkPath = (item, category) => {
     switch (item) {
       case "Mentorship":
@@ -186,73 +161,42 @@ export default function Header() {
     }
   };
   
-  // "Become an Expert" button handler
-  const handleExpertRegistrationClick = () => {
-    router.push('/register');
+  // ✅ --- NEW CLICK HANDLER ---
+  // This handles the "Join As Consultant" button click
+  const handleJoinClick = (isMobile = false) => {
+    if (isLoggedIn) {
+        // If user is already logged in (as a USER), send to register
+        router.push('/expert-profile');
+    } else {
+        // If user is logged out, set redirect and show login modal
+        setPendingRedirect('/register');
+        setShowLoginModal(true);
+    }
+    // Close mobile menu if open
+    if (isMobile) {
+        setMobileMenuOpen(false);
+    }
   };
   
-  // Helper function to close menus on navigation
+  // Helper function to close menus on navigation (No change)
   const handleLinkClick = () => {
     setProfileDropdownOpen(false);
     setMobileMenuOpen(false);
   };
 
-  // Helper component for the role-specific button
-  const RoleAwareButton = ({ isMobile = false }) => {
-    if (!isLoggedIn || !user) return null;
-
-    const baseClass = isMobile
-      ? "block text-center w-full px-4 py-2 rounded-lg transition"
-      : "text-md font-medium px-4 py-2 rounded-lg transition";
-
-    switch (user.role) {
-      case 'SUPERADMIN':
-        return (
-          <Link
-            href="/superadmin"
-            onClick={isMobile ? handleLinkClick : undefined}
-            className={`${baseClass} bg-red-600 hover:bg-red-700 text-white`}
-          >
-            Superadmin
-          </Link>
-        );
-      case 'MENTOR':
-        return (
-          <Link
-            href="/mentor/dashboard"
-            onClick={isMobile ? handleLinkClick : undefined}
-            className={`${baseClass} bg-green-600 hover:bg-green-700 text-white`}
-          >
-            Mentor
-          </Link>
-        );
-      case 'USER':
-      default:
-        return (
-          <button
-            onClick={isMobile ? () => {
-              handleExpertRegistrationClick();
-              setMobileMenuOpen(false);
-            } : handleExpertRegistrationClick}
-            className={`${baseClass} bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50`}
-          >
-            Become an Expert
-          </button>
-        );
-    }
-  };
+  // ❌ RoleAwareButton component is REMOVED
 
   return (
     <>
       <header className="backdrop-blur-lg bg-black/80 text-white font-sans shadow-2xl rounded-b-2xl z-50 relative">
         
-        {/* --- Top Bar --- */}
+        {/* --- Top Bar (No Change) --- */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-800 bg-black">
           <Link href="/" className="text-3xl font-extrabold tracking-wide">
             MyProfession.CA
           </Link>
 
-          {/* Center: Search Bar (Desktop) */}
+          {/* Center: Search Bar (Desktop) (No Change) */}
           <div className="hidden md:flex flex-1 justify-center px-8">
             <form onSubmit={handleSearchSubmit} className="relative w-full max-w-lg">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -268,7 +212,7 @@ export default function Header() {
             </form>
           </div>
 
-          {/* Desktop Menu */}
+          {/* ✅ --- UPDATED Desktop Menu --- */}
           <nav className="hidden md:flex gap-4 items-center text-lg">
             {NAV_LINKS.map(({ label, path }, i) => (
               <Link
@@ -284,40 +228,55 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Role-aware button is rendered here */}
-            <RoleAwareButton />
+            {/* ✅ "Join As Consultant" button 
+                Visible if NOT logged in, or logged in as a 'USER' */}
+            {(!user || user.role === 'USER') && (
+              <button
+                onClick={() => handleJoinClick(false)}
+                className="text-sm font-medium px-3 py-1.5 rounded-lg transition bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50"
+              >
+                Join As Consultant
+              </button>
+            )}
+
+            {/* ✅ Role-specific Admin/Mentor buttons */}
+            {isLoggedIn && user?.role === 'MENTOR' && (
+              <Link href="/mentor/dashboard" className="text-sm font-medium px-3 py-1.5 rounded-lg transition bg-green-600 hover:bg-green-700 text-white">
+                Mentor
+              </Link>
+            )}
+            {isLoggedIn && user?.role === 'SUPERADMIN' && (
+              <Link href="/superadmin" className="text-sm font-medium px-3 py-1.5 rounded-lg transition bg-red-600 hover:bg-red-700 text-white">
+                Superadmin
+              </Link>
+            )}
 
             {/* --- UPDATED Conditional Login/Profile Button --- */}
-            {isLoggedIn && user ? ( // Check for 'isLoggedIn' AND 'user' object
-              // LOGGED-IN: Show Profile Icon
+            {isLoggedIn && user ? ( 
+              // LOGGED-IN: Show Profile Icon (No change)
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileDropdownOpen((prev) => !prev)}
                   className="flex items-center gap-1 hover:text-blue-400 transition duration-200"
                 >
                   
-                  {/* ✅ 2. THIS IS THE CHANGE */}
                   {user.avatar ? (
                     <Image
                       src={user.avatar}
                       alt={user.name || 'User Avatar'}
                       width={28}
                       height={28}
-                      className="rounded-full" // This makes it a circle
+                      className="rounded-full" 
                     />
                   ) : (
-                    <FaUserCircle size={28} /> // Fallback if no avatar
+                    <FaUserCircle size={28} /> // Fallback
                   )}
-                  {/* ✅ END OF CHANGE */}
-
                   <IoMdArrowDropdown />
                 </button>
 
                 {profileDropdownOpen && (
-                  // Increased width for wallet
+                  // Dropdown menu (No change)
                   <div className="absolute right-0 mt-3 w-64 bg-gray-900/90 backdrop-blur-md shadow-xl border border-gray-700 rounded-xl z-50">
-                    
-                    {/* --- User Info Header (No Change) --- */}
                     <div className="px-4 py-3 border-b border-gray-700">
                       <p className="text-sm font-medium text-white truncate">
                         {user?.name || "Valued User"}
@@ -327,7 +286,6 @@ export default function Header() {
                       </p>
                     </div>
 
-                    {/* --- Wallet Section (No Change) --- */}
                     <div className="px-4 py-3 border-b border-gray-700">
                       <div className="flex justify-between items-center">
                         <div>
@@ -350,7 +308,6 @@ export default function Header() {
                       </div>
                     </div>
 
-                    {/* --- Navigation Links (No Change) --- */}
                     <div className="py-1">
                       <Link
                         href="/profile"
@@ -360,7 +317,6 @@ export default function Header() {
                         <FaUser className="mr-3 w-4" /> My Profile
                       </Link>
 
-                      {/* Show Mentor Dashboard ONLY if role is MENTOR */}
                       {user.role === 'MENTOR' && (
                         <Link
                           href="/mentor/dashboard"
@@ -371,8 +327,7 @@ export default function Header() {
                           Mentor Dashboard
                         </Link>
                       )}
-
-                      {/* Show Superadmin Panel ONLY if role is SUPERADMIN */}
+                      
                       {user.role === 'SUPERADMIN' && (
                         <Link
                           href="/admin/dashboard"
@@ -385,7 +340,6 @@ export default function Header() {
                       )}
                     </div>
 
-                    {/* --- Logout Button (No Change) --- */}
                     <div className="py-1 border-t border-gray-700">
                       <button
                         onClick={handleLogout}
@@ -398,17 +352,17 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              // LOGGED-OUT: Show Direct Button (Solid)
+              // ✅ LOGGED-OUT: Show SMALLER Button
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="text-md font-medium px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                className="text-sm font-medium px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
               >
                 Login / Sign Up
               </button>
             )}
           </nav>
 
-          {/* Mobile Hamburger */}
+          {/* Mobile Hamburger (No Change) */}
           <button
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             className="md:hidden text-white text-2xl"
@@ -420,6 +374,7 @@ export default function Header() {
         {/* --- Mobile Menu --- */}
         {mobileMenuOpen && (
           <div className="md:hidden px-6 pb-4 space-y-4">
+            {/* Search (No Change) */}
             <form onSubmit={handleSearchSubmit} className="relative w-full pt-2">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pt-2">
                 <FaSearch className="h-5 w-5 text-gray-500" />
@@ -433,6 +388,7 @@ export default function Header() {
               />
             </form>
 
+            {/* Nav Links (No Change) */}
             {NAV_LINKS.map(({ label, path }, i) => (
               <Link
                 key={i}
@@ -447,7 +403,7 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Social Icons */}
+            {/* Social Icons (No Change) */}
             <div className="flex items-center gap-4 text-2xl text-blue-400 mt-2">
               <a href="https://instagram.com/yourprofile" target="_blank" rel="noopener noreferrer">
                 <FaInstagram className="text-pink-500 hover:opacity-80 transition" />
@@ -460,12 +416,11 @@ export default function Header() {
               </a>
             </div>
 
-            {/* --- UPDATED Professional Mobile Auth Section --- */}
+            {/* ✅ --- UPDATED Professional Mobile Auth Section --- */}
             <div className="space-y-3 pt-4 border-t border-gray-700/50">
               {isLoggedIn && user ? (
                 // LOGGED-IN (MOBILE)
                 <>
-                  {/* --- Mobile Wallet (No Change) --- */}
                   <div className="p-4 bg-gray-900 rounded-lg">
                     <p className="text-xs text-gray-400">Wallet Balance</p>
                     <p className="text-xl font-semibold text-white">
@@ -482,7 +437,6 @@ export default function Header() {
                     </button>
                   </div>
                   
-                  {/* --- Mobile Links (No Change) --- */}
                   <Link
                     href="/profile"
                     onClick={handleLinkClick}
@@ -491,7 +445,6 @@ export default function Header() {
                     My Profile
                   </Link>
                   
-                  {/* Show Mentor Dashboard ONLY if role is MENTOR */}
                   {user.role === 'MENTOR' && (
                     <Link
                       href="/mentor/dashboard"
@@ -502,7 +455,6 @@ export default function Header() {
                     </Link>
                   )}
 
-                  {/* Show Superadmin Panel ONLY if role is SUPERADMIN */}
                   {user.role === 'SUPERADMIN' && (
                     <Link
                       href="/admin/dashboard"
@@ -521,7 +473,7 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                // LOGGED-OUT (MOBILE) - Primary Action
+                // LOGGED-OUT (MOBILE)
                 <button
                   onClick={() => {
                     setShowLoginModal(true);
@@ -533,8 +485,16 @@ export default function Header() {
                 </button>
               )}
 
-              {/* Role-aware button is rendered here for mobile */}
-              <RoleAwareButton isMobile={true} />
+              {/* ✅ "Join As Consultant" button 
+                  Visible if NOT logged in, or logged in as a 'USER' */}
+              {(!user || user.role === 'USER') && (
+                  <button
+                    onClick={() => handleJoinClick(true)}
+                    className="block text-center w-full px-4 py-2 rounded-lg transition bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50"
+                  >
+                    Join As Consultant
+                  </button>
+              )}
             </div>
             
           </div>
@@ -579,28 +539,29 @@ export default function Header() {
         </div>
       </header>
 
-      {/* --- MODALS (No Change) --- */}
+      {/* --- MODALS --- */}
 
-      {/* Login Modal */}
+      {/* ✅ UPDATED Login Modal - now handles pendingRedirect */}
       {showLoginModal && (
         <AuthModal
           onClose={() => {
             setShowLoginModal(false);
-            setPendingRedirect(null); 
+            setPendingRedirect(null); // Clear redirect if modal is closed
           }}
           onLoginSuccess={(userData) => { 
             setShowLoginModal(false);
             dispatch(setLoginSuccess(userData)); 
             
+            // This is the new logic
             if (pendingRedirect) {
               router.push(pendingRedirect);
-              setPendingRedirect(null); 
+              setPendingRedirect(null); // Clear redirect after using it
             }
           }}
         />
       )}
       
-      {/* Render the new Recharge Modal */}
+      {/* Recharge Modal (No Change) */}
       {showRechargeModal && (
         <RechargeModal 
           onClose={() => setShowRechargeModal(false)} 

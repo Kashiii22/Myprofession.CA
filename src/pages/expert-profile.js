@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { Toaster, toast } from 'react-hot-toast'; 
 import api from '@/lib/axios'; 
 
-// ✅ --- RE-IMPORTING HEADER AND FOOTER ---
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -18,7 +17,6 @@ const languages = ['English', 'Hindi', 'Punjabi', 'Gujarati', 'Bengali', 'Tamil'
 const genders = ['Male', 'Female', 'Other'];
 const kycProofTypes = ['Aadhar', 'PAN', 'ICAI', 'DrivingLicense', 'Passport'];
 
-// ✅ --- UPDATED STEP TITLES ---
 const stepTitles = ['Basic', 'Profile', 'Qualifications', 'Experience', 'Verify', 'Complete'];
 
 // --- Reusable Components (No changes) ---
@@ -148,12 +146,18 @@ export default function ExpertProfile() {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // ... (Your existing handleSubmit logic is perfect and unchanged)
+    
     const file = verificationDetails.kycProofDocument;
-    if (!acknowledged || !file) {
-      toast.error("Please select a file and acknowledge the terms.");
+    // Final check on submit
+    if (!verificationDetails.kycProofType || !verificationDetails.kycProofNumber || !file) {
+      toast.error("Please fill in all KYC details and upload a document.");
       return;
     }
+    if (!acknowledged) {
+      toast.error("Please acknowledge the terms to submit.");
+      return;
+    }
+
     setLoading(true);
     try {
       const sigResponse = await api.post('/uploads/generate-cloudinary-signature');
@@ -175,14 +179,21 @@ export default function ExpertProfile() {
         throw new Error(cloudinaryData.error.message || 'Cloudinary upload failed.');
       }
       const kycPublicId = cloudinaryData.public_id;
+
+      // ✅ --- THE PAYLOAD IS CREATED HERE ---
       const mentorPayload = {
-        ...personalDetails,
+        ...personalDetails,     // mobileNumber IS IN THIS OBJECT
         ...professionalDetails,
         kycProofType: verificationDetails.kycProofType,
         kycProofNumber: verificationDetails.kycProofNumber,
         kycProofDocument: kycPublicId,
       };
+      
+      console.log("SENDING THIS TO BACKEND:", mentorPayload); // Check your browser console
+
+      // ✅ --- THE PAYLOAD IS SENT HERE ---
       const registrationResponse = await api.post('/register', mentorPayload);
+      
       toast.success(registrationResponse.data.message);
       setStep(6); // Set step to 6 (Complete)
     } catch (error) {
@@ -192,18 +203,63 @@ export default function ExpertProfile() {
       setLoading(false);
     }
   };
+  
+  // ✅ --- START: ALL VALIDATION FUNCTIONS (THE FIX) ---
 
+  const handleStep1to2 = () => {
+    // THIS CHECK FIXES YOUR MOBILE NUMBER PROBLEM
+    if (!personalDetails.name || !personalDetails.mobileNumber || !personalDetails.gender || !personalDetails.dob) {
+        toast.error("Please fill in all required basic fields.");
+        return; 
+    }
+    if (personalDetails.languages.length === 0) {
+        toast.error("Please select at least one language.");
+        return;
+    }
+    setStep(2);
+  };
+  
+  const handleStep2to3 = () => {
+    if (!professionalDetails.yearsOfExperience) {
+        toast.error("Please enter your years of experience.");
+        return;
+    }
+    if (professionalDetails.expertise.length === 0) {
+        toast.error("Please select at least one area of expertise.");
+        return;
+    }
+    setStep(3);
+  };
+  
+  const handleStep3to4 = () => {
+    if (professionalDetails.qualification.length === 0 || !professionalDetails.qualification[0]) {
+        toast.error("Please add at least one qualification.");
+        return;
+    }
+    setStep(4);
+  };
+  
+  const handleStep4to5 = () => {
+    if (!professionalDetails.experienceInfo) {
+        toast.error("Please describe your experience.");
+        return;
+    }
+    setStep(5);
+  };
+
+  // ✅ --- END: ALL VALIDATION FUNCTIONS ---
+
+  
+  // --- Styling classes (no change) ---
   const inputClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-2 w-full text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed';
   const selectClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-2 w-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
   const textAreaClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-3 w-full text-gray-200 placeholder-gray-500 resize-none min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
 
   return (
-    // ✅ --- Main layout with Header and Footer ---
     <div className="bg-black text-gray-200 min-h-screen" ref={pageTopRef}>
       <Toaster position="top-center" reverseOrder={false} />
       <Header />
 
-      {/* Centered, single-column layout */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white">Become a Mentor</h1>
@@ -215,8 +271,8 @@ export default function ExpertProfile() {
             {/* Confetti (no change) */}
             {step === 6 && (
               <Confetti
-                width={window.innerWidth}
-                height={window.innerHeight}
+                width={window.innerWidth || 0}
+                height={window.innerHeight || 0}
                 recycle={false}
                 numberOfPieces={500}
                 tweenDuration={10000}
@@ -248,13 +304,16 @@ export default function ExpertProfile() {
             {/* This wrapper provides the fade-in animation */}
             <div key={step} style={{ animation: 'fadeIn 0.5s ease-out' }}>
               
-              {/* Step 1: Basic Details (no change) */}
+              {/* Step 1: Basic Details */}
               {step === 1 && (
                 <section>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       <h3 className="md:col-span-2 text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-4">Basic Information</h3>
                       <LabeledInput label="Full Name" name="name" type="text" value={personalDetails.name} onChange={handleDetailsChange(setPersonalDetails)} placeholder="Your full name" className={inputClass} required disabled={true} />
+                      
+                      {/* ✅ --- THIS IS YOUR MOBILE NUMBER INPUT --- */}
                       <LabeledInput label="Mobile Number" name="mobileNumber" type="tel" value={personalDetails.mobileNumber} onChange={handleDetailsChange(setPersonalDetails)} placeholder="10-digit mobile number" className={inputClass} required disabled={!!user?.phone} />
+                      
                       <LabeledInput label="Email Address" name="email" type="email" value={personalDetails.email} onChange={handleDetailsChange(setPersonalDetails)} placeholder="your.email@example.com" className={inputClass} disabled={!!user?.email} />
                       <LabeledSelect label="Gender" name="gender" value={personalDetails.gender} onChange={handleDetailsChange(setPersonalDetails)} className={selectClass} required>
                           <option value="">Select gender</option>
@@ -262,7 +321,7 @@ export default function ExpertProfile() {
                       </LabeledSelect>
                       <LabeledInput label="Date of Birth" name="dob" type="date" value={personalDetails.dob} onChange={handleDetailsChange(setPersonalDetails)} className={inputClass} required />
                       <div className="md:col-span-2">
-                          <label className="text-sm font-medium text-gray-400 mb-2 block">Languages Spoken</label>
+                          <label className="text-sm font-medium text-gray-400 mb-2 block">Languages Spoken <span className="text-red-500 ml-1">*</span></label>
                           <div className="flex flex-wrap gap-3">
                               {languages.map(lang => (
                                   <button type="button" key={lang} onClick={() => toggleSelection(setPersonalDetails, 'languages', lang)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${ personalDetails.languages.includes(lang) ? 'bg-blue-600 border-blue-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'}`}>
@@ -273,14 +332,15 @@ export default function ExpertProfile() {
                       </div>
                   </div>
                   <div className="mt-12 text-right">
-                      <button type="button" onClick={() => setStep(2)} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">
+                      {/* ✅ --- THIS BUTTON RUNS THE VALIDATION --- */}
+                      <button type="button" onClick={handleStep1to2} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">
                           Save & Continue
                       </button>
                   </div>
                 </section>
               )}
 
-              {/* Step 2: Professional Intro (no change) */}
+              {/* Step 2: Professional Intro */}
               {step === 2 && (
                   <section>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -300,24 +360,26 @@ export default function ExpertProfile() {
                   </div>
                   <div className="mt-12 flex justify-between">
                       <button type="button" onClick={() => setStep(1)} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
-                      <button type="button" onClick={() => setStep(3)} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
+                      {/* ✅ --- UPDATED THIS onClick --- */}
+                      <button type="button" onClick={handleStep2to3} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                   </section>
               )}
 
-              {/* Step 3: Qualifications (no change) */}
+              {/* Step 3: Qualifications */}
               {step === 3 && (
                 <section>
                   <h3 className="text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-6">Your Qualifications</h3>
                   <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} />
                   <div className="mt-12 flex justify-between">
                       <button type="button" onClick={() => setStep(2)} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
-                      <button type="button" onClick={() => setStep(4)} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
+                      {/* ✅ --- UPDATED THIS onClick --- */}
+                      <button type="button" onClick={handleStep3to4} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                 </section>
               )}
               
-              {/* Step 4: Experience & Work (no change) */}
+              {/* Step 4: Experience & Work */}
               {step === 4 && (
                 <section>
                   <h3 className="text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-6">Your Experience & Work</h3>
@@ -330,7 +392,8 @@ export default function ExpertProfile() {
                   </div>
                   <div className="mt-12 flex justify-between">
                       <button type="button" onClick={() => setStep(3)} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
-                      <button type="button" onClick={() => setStep(5)} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
+                      {/* ✅ --- UPDATED THIS onClick --- */}
+                      <button type="button" onClick={handleStep4to5} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                 </section>
               )}
@@ -406,7 +469,6 @@ export default function ExpertProfile() {
           </form>
       </main>
       
-      {/* ✅ Re-added the standard Footer */}
       <Footer />
     </div>
   );

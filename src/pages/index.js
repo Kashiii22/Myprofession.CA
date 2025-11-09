@@ -82,7 +82,7 @@ export default function HomePage() {
                   onClick={() => router.push("/mentors")}
                   className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300"
                 >
-                  Explore Our Mentors
+                  Explore Our Consultants
                 </ShinyButton>
 
               </div>

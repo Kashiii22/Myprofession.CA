@@ -1,6 +1,5 @@
 "use client";
 
-// 1. Import new hooks and components
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../components/Header";
@@ -8,14 +7,8 @@ import Footer from "../../../components/Footer";
 import { sanityClient } from "../../../lib/sanityClient";
 import { PortableText } from '@portabletext/react';
 import { ptComponents } from "../../../components/PortableTextComponents";
-import { FiFileText, FiLock } from "react-icons/fi"; // Added FiLock
+import { FiFileText } from "react-icons/fi";
 import { FaChevronRight } from "react-icons/fa";
-import AuthModal from "../../../components/AuthModal"; // Added AuthModal
-
-// ✅ 1. Import Redux hooks and actions
-import { useSelector, useDispatch } from "react-redux";
-// Make sure this path is correct for your project
-import { setLoginSuccess } from "../../../redux/authSlice"; 
 
 // --- DATA FETCHING (No Changes) ---
 export async function getStaticPaths() {
@@ -78,21 +71,7 @@ export async function getStaticProps({ params }) {
 }
 // --- END OF DATA FETCHING ---
 
-// 2. Add Cookie helper functions
-const AUTH_COOKIE_NAME = "token";
-const getCookie = (name) => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop().split(';').shift();
-  }
-  return null;
-};
-
-// 3. Helper function to count words in Portable Text
+// Helper function (no longer used for truncation, but good to keep for word counts)
 const getWordCount = (blocks) => {
     if (!blocks) return 0;
     return blocks
@@ -102,12 +81,12 @@ const getWordCount = (blocks) => {
         .split(/\s+/)
         .filter(Boolean).length;
 };
-// --- End of Cookie/WordCount helpers ---
+// --- End of helper ---
 
 
 export default function CategoryPage({ contentItem }) {
     const router = useRouter(); 
-    const [openSections, setOpenSections] = useState({ documents: false, topic: true }); // Default topic to open
+    const [openSections, setOpenSections] = useState({ documents: false, topic: false });
     const [activeSection, setActiveSection] = useState('');
     
     const headerRef = useRef(null);
@@ -119,25 +98,6 @@ export default function CategoryPage({ contentItem }) {
     const topicRefs = useRef([]);
     const topicsListRef = useRef(null);
     
-    // ✅ 4. Use Redux state instead of local state
-    const dispatch = useDispatch();
-    const { isLoggedIn, authLoading } = useSelector((state) => state.auth);
-    
-    // This local state is still fine
-    const [showLoginModal, setShowLoginModal] = useState(false);
-
-    // ✅ 5. REMOVED the local useEffect that checked the cookie.
-    // Your Header.jsx now handles this globally.
-
-    // ✅ 6. This memo now reads from the global Redux state
-    const isTruncated = useMemo(() => {
-        if (isLoggedIn || authLoading) return false; // Never truncate if logged in
-
-        const totalWords = validSections.reduce((acc, section) => acc + getWordCount(section.description), 0);
-        return totalWords > 150; // Set to true if content is long
-    }, [isLoggedIn, authLoading, validSections]); // Depends on global state
-
-
     const toggleSection = (section) => setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
     // Intersection Observer (No Change)
@@ -202,49 +162,30 @@ export default function CategoryPage({ contentItem }) {
         return Math.ceil(wordCount / 200);
     }, [validSections]);
 
-    // ✅ 7. This memo now reads from the global Redux state
+    // Portable Text components (always shows download)
     const customPtComponents = useMemo(() => ({
-        ...ptComponents, // Import all your default components
+        ...ptComponents, 
         types: {
-            ...ptComponents.types, // Import default types (image, table, etc.)
-            
-            // Override the 'attachment' type
+            ...ptComponents.types,
             attachment: ({ value }) => {
-                if (isLoggedIn) { // ✅ Reads from global state
-                    // Logged-in: Show download link
-                    return (
-                        <a 
-                            href={value.fileURL} 
-                            download 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-4 my-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold hover:bg-blue-100 transition"
-                        >
-                            <FiFileText className="text-xl" />
-                            Download: {value.fileName || 'Attached File'}
-                        </a>
-                    );
-                }
-                
-                // Logged-out: Show blocker
                 return (
-                    <div className="p-4 my-4 bg-slate-200 border border-slate-300 rounded-lg text-center">
-                        <FiLock className="mx-auto text-3xl text-slate-500 mb-2" />
-                        <p className="font-semibold text-lg text-slate-700">Attachment Locked</p>
-                        <button 
-                            onClick={() => setShowLoginModal(true)} 
-                            className="text-blue-600 font-semibold hover:underline"
-                        >
-                            Login to download this file
-                        </button>
-                    </div>
+                    <a 
+                        href={value.fileURL} 
+                        download 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 p-4 my-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 font-semibold hover:bg-blue-100 transition"
+                    >
+                        <FiFileText className="text-xl" />
+                        Download: {value.fileName || 'Attached File'}
+                    </a>
                 );
             }
         }
-    }), [isLoggedIn]); // ✅ Depends on global state
+    }), []); 
 
     
-    // renderContent function (now uses customPtComponents)
+    // renderContent function (No Change)
     const renderContent = (sections) => {
         if (!sections) return null;
         return sections.map((section) => {
@@ -262,21 +203,17 @@ export default function CategoryPage({ contentItem }) {
         });
     };
 
-    // ✅ 8. This handler now reads from the global Redux state
+    // Attachment click handler (empty)
     const handleAttachmentClick = (e) => {
-        if (!isLoggedIn) {
-            e.preventDefault(); // Stop the link from working
-            setShowLoginModal(true); // Open login modal
-        }
-        // If logged in, do nothing, and the default link behavior (download) will proceed
+        // Do nothing, allow default download
     };
 
-    // 9. Component for the loading state (No Change)
+    // Loading component (No Change)
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center h-64 text-slate-500">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <p className="text-lg">Loading content...</p>
         </div>
@@ -290,7 +227,7 @@ export default function CategoryPage({ contentItem }) {
 
             <main className="flex flex-row items-start">
                 {/* --- SIDEBAR --- */}
-                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
+                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
                         <p className="text-xl text-slate-500">Summary Box</p>
@@ -299,15 +236,15 @@ export default function CategoryPage({ contentItem }) {
                         {documents.length > 0 && (
                             <div className="mb-4">
                                <button onClick={() => toggleSection("documents")} className="w-full text-left font-semibold text-slate-700 mb-2 flex justify-between items-center text-lg p-2 rounded-md hover:bg-slate-200">
-                                  <div className="flex items-center gap-3"><FiFileText />Documents Required</div>
-                                  <span className={`transition-transform text-slate-500 ${openSections.documents ? "rotate-180" : ""}`}>▾</span>
+                                    <div className="flex items-center gap-3"><FiFileText />Documents Required</div>
+                                    <span className={`transition-transform text-slate-500 ${openSections.documents ? "rotate-180" : ""}`}>▾</span>
                                </button>
                                {openSections.documents && (
-                                   <ul className="flex flex-col gap-1 text-slate-600 pl-3 mt-2">
-                                       {documents.map((docName, idx) => (
-                                           <li key={idx} className="pl-4 text-base flex items-center gap-3 py-1.5 border-l border-slate-200"><span className="text-indigo-500">▪</span> {docName}</li>
-                                       ))}
-                                   </ul>
+                                    <ul className="flex flex-col gap-1 text-slate-600 pl-3 mt-2">
+                                        {documents.map((docName, idx) => (
+                                            <li key={idx} className="pl-4 text-base flex items-center gap-3 py-1.5 border-l border-slate-200"><span className="text-indigo-500">▪</span> {docName}</li>
+                                        ))}
+                                    </ul>
                                )}
                             </div>
                         )}
@@ -323,7 +260,6 @@ export default function CategoryPage({ contentItem }) {
                                 {openSections.topic && (
                                     <ul className="flex flex-col relative" ref={topicsListRef}>
                                         <div className="absolute left-0 w-full bg-indigo-600 rounded-md shadow-lg transition-all duration-300 ease-in-out" style={pillStyle}></div>
-                                        {/* Topics are shown regardless of login */}
                                         {validSections.map((section, index) => {
                                             const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
                                             const isActive = activeSection === sectionId;
@@ -340,8 +276,6 @@ export default function CategoryPage({ contentItem }) {
                                 )}
                             </div>
                         )}
-
-                        {/* ✅ 10. UPDATED ATTACHMENT SECTION (Handler now reads global state) */}
                         {contentItem.attachmentURL && (
                             <div className="mt-6 pt-6 border-t border-slate-200">
                                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -356,12 +290,15 @@ export default function CategoryPage({ contentItem }) {
                                             download 
                                             target="_blank" 
                                             rel="noopener noreferrer" 
-                                            onClick={handleAttachmentClick} // <-- This blocks the download
+                                            onClick={handleAttachmentClick}
                                             className="px-3 py-1 bg-indigo-600 text-white font-semibold text-sm rounded-md hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0"
                                         >
                                             Download
                                         </a>
                                     </div>
+                                Setting `isTruncated` to always be `false` means the `isTruncated &&` check in the fade-out block is also `false`, so it will never render.
+
+This code is now clean and has no login logic.
                                 </div>
                             </div>
                         )}
@@ -378,35 +315,13 @@ export default function CategoryPage({ contentItem }) {
                                     {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
                                 </div>
                                 
-                                {/* ✅ 11. Auth checking now uses global Redux state */}
-                                {authLoading ? (
-                                    <LoadingSpinner />
-                                ) : (
-                                    <div className="relative">
-                                    
-                                        {/* This div reads from global state */}
-                                        <div className={!isLoggedIn && isTruncated ? "max-h-[500px] overflow-hidden" : ""}>
-                                            {renderContent(validSections)}
-                                        </div>
-
-                                        {/* This div reads from global state */}
-                                        {!isLoggedIn && isTruncated && (
-                                            <div className="absolute bottom-0 left-0 w-full h-80 flex flex-col justify-end" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0.7) 70%, transparent)' }}>
-                                                <div className="flex flex-col items-center justify-center p-10 text-center">
-                                                    <FiLock className="text-4xl text-slate-500 mb-4" />
-                                                    <h3 className="text-2xl font-bold text-slate-800 mb-2">Continue Reading</h3>
-                                                    <p className="text-lg text-slate-600 mb-6">Log in or sign up to unlock the full article.</p>
-                                                    <button
-                                                        onClick={() => setShowLoginModal(true)}
-                                                        className="text-md font-medium px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
-                                                    >
-                                                        Login to Continue
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                {/* ✅ --- FIX: Removed all conditional logic --- */}
+                                <div className="relative">
+                                    <div>
+                                        {renderContent(validSections)}
                                     </div>
-                                )}
+                                    {/* The fade-out block is now gone */}
+                                </div>
                             </>
                         ) : (<p className="p-8">Loading Content...</p>)}
                     </div>
@@ -415,18 +330,7 @@ export default function CategoryPage({ contentItem }) {
 
             <Footer />
 
-            {/* ✅ 12. AuthModal now dispatches the global action on success */}
-            {showLoginModal && (
-                <AuthModal
-                    onClose={() => {
-                        setShowLoginModal(false);
-                    }}
-                    onLoginSuccess={() => {
-                        setShowLoginModal(false);
-                        dispatch(setLoginSuccess()); // Set global state to true
-                    }}
-                />
-            )}
+            {/* AuthModal is fully removed */}
         </div>
     );
 }

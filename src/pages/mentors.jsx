@@ -171,7 +171,7 @@ export default function MentorListPage() {
 
       <section className="px-5 sm:px-10 md:px-20 py-12 min-h-screen">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-10">
-          <span className="text-blue-500">Meet</span> <i>Our Mentors</i>
+          <span className="text-blue-500">Meet</span> <i>Our Consultants</i>
         </h1>
 
         {/* Search & Filter (Unchanged) */}
