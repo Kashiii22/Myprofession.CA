@@ -2,8 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 // Import icons for social media
 import { FaLinkedin, FaYoutube, FaInstagram, FaFacebook } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
+import ConsultantJoinModal from "./ConsultantJoinModal";
+import { setLoginSuccess } from "@/redux/authSlice";
 
 // Helper component for footer links to keep code clean
 const FooterLink = ({ href, children }) => (
@@ -15,6 +19,20 @@ const FooterLink = ({ href, children }) => (
 );
 
 const Footer = () => {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { isLoggedIn, user } = useSelector((state) => state.auth);
+  const [showConsultantModal, setShowConsultantModal] = React.useState(false);
+
+  const handleJoinAsConsultantClick = () => {
+    if (isLoggedIn) {
+      // If user is logged in, navigate directly to expert profile
+      router.push('/expert-profile');
+    } else {
+      // If user is not logged in, show the consultant modal
+      setShowConsultantModal(true);
+    }
+  };
   return (
     <footer className="bg-[#0e0e10] text-gray-400 px-6 md:px-20 py-16 border-t border-gray-800">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -34,10 +52,17 @@ const Footer = () => {
         <div className="flex-1">
           <h4 className="text-white font-semibold mb-4 text-lg">Platform</h4>
           <ul className="space-y-3">
-            <FooterLink href="/mentors">Mentors</FooterLink>
+            <FooterLink href="/mentors">Consultants</FooterLink>
             <FooterLink href="/category/income-tax">Content & Files</FooterLink>
             <FooterLink href="/ComingSoon">Courses</FooterLink>
-            <FooterLink href="/register">Become an Expert</FooterLink>
+            <li>
+  <button 
+    onClick={handleJoinAsConsultantClick}
+    className="text-sm hover:text-white transition cursor-pointer text-left"
+  >
+    Join As a Consultant
+  </button>
+</li>  
           </ul>
         </div>
 
@@ -115,6 +140,17 @@ const Footer = () => {
       <div className="mt-16 border-t border-gray-700 pt-8 text-center text-sm">
         © {new Date().getFullYear()} MyProfession.CA. All rights reserved.
       </div>
+
+      {/* Consultant Join Modal */}
+      {showConsultantModal && (
+        <ConsultantJoinModal
+          onClose={() => setShowConsultantModal(false)}
+          onLoginSuccess={(userData) => {
+            setShowConsultantModal(false);
+            dispatch(setLoginSuccess(userData));
+          }}
+        />
+      )}
     </footer>
   );
 };

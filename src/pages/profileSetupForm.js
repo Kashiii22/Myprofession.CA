@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header"; // Your site's Header
 import Footer from "@/components/Footer"; // Your site's Footer
 
@@ -20,6 +21,7 @@ const CameraIcon = () => <svg className="w-12 h-12 text-gray-500" fill="none" vi
 
 // --- MAIN WIZARD PAGE COMPONENT ---
 export default function CompleteProfileWizard() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [profileData, setProfileData] = useState({
     profilePicture: null, 
@@ -30,6 +32,26 @@ export default function CompleteProfileWizard() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [token, setToken] = useState(null);
+  const [tokenValid, setTokenValid] = useState(false);
+
+  // Extract and validate token from URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+      console.log('Extracted token from URL:', tokenFromUrl);
+      
+      if (!tokenFromUrl) {
+        // No token in URL, redirect to unauthorized page
+        router.push('/unauthorized');
+        return;
+      }
+      
+      setToken(tokenFromUrl);
+      setTokenValid(true);
+    }
+  }, [router]);
 
   const stepsConfig = ["Welcome", "Upload Photo", "Set Schedule", "Define Services", "Launch Profile"];
   const progress = ((step - 1) / (stepsConfig.length - 1)) * 100;
@@ -59,8 +81,8 @@ export default function CompleteProfileWizard() {
     formData.append('minSessionDuration', finalData.minSessionDuration);
 
     try {
-      // 2. Call your Axios API service
-      const result = await completeMentorProfile(formData);
+      // 2. Call your Axios API service with token
+      const result = await completeMentorProfile(formData, token);
 
       if (!result.success) {
         throw new Error(result.message || 'Failed to complete profile.');
@@ -78,6 +100,23 @@ export default function CompleteProfileWizard() {
       setError(err.response?.data?.message || err.message);
     }
   };
+
+  // Show loading state while checking token
+  if (!tokenValid) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-4 sm:p-8 flex flex-col items-center justify-center font-sans">
+          <div className="w-full max-w-md text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold text-white mb-2">Validating Access...</h2>
+            <p className="text-gray-400">Please wait while we verify your access token.</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

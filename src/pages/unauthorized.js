@@ -2,49 +2,71 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { FaExclamationTriangle, FaHome, FaArrowLeft } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaLock } from 'react-icons/fa';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function UnauthorizedPage() {
   const router = useRouter();
 
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center p-4">
       <div className="text-center max-w-md">
-        {/* Error Icon */}
+        {/* Branding */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">
+            MyProfession.<span className="text-blue-500">CA</span>
+          </h2>
+          <p className="text-xs text-gray-500">Unauthorized Access</p>
+        </div>
+
+        {/* Status Code */}
+        <div className="text-6xl md:text-8xl font-bold text-red-500 mb-4">401</div>
+        
+        {/* Lock Icon */}
         <div className="flex justify-center mb-6">
           <div className="bg-red-600/20 rounded-full p-6">
-            <FaExclamationTriangle className="text-red-400 text-4xl" />
+            <FaLock className="text-red-400 text-4xl" />
           </div>
         </div>
 
-        {/* Error Message */}
-        <h1 className="text-3xl font-bold text-white mb-4">Access Denied</h1>
-        <p className="text-gray-400 mb-8">
-          You don't have permission to access this page. This area is restricted to SUPERADMIN users only.
-        </p>
+        {/* Title */}
+        <h1 className="text-3xl font-bold text-white mb-4">Unauthorized</h1>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={() => router.back()}
+            onClick={handleGoBack}
             className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
-            <FaArrowLeft />
             Go Back
           </button>
           
-          <button
-            onClick={() => router.push('/')}
+          <Link
+            href="/"
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
-            <FaHome />
-            Go to Homepage
-          </button>
+            Homepage
+          </Link>
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-8 text-sm text-gray-500">
-          <p>If you think this is an error, please contact your system administrator.</p>
+        {/* Footer Branding */}
+        <div className="mt-12 pt-6 border-t border-gray-800">
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+            <span>© {new Date().getFullYear()}</span>
+            <span className="text-white">MyProfession.CA</span>
+            <span>•</span>
+            <span>Access Denied</span>
+          </div>
         </div>
       </div>
     </div>

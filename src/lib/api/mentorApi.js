@@ -28,14 +28,18 @@ export const getMentorById = async (mentorId) => {
  */
 /**
  * Submits the mentor's completed profile (availability, pricing, etc.).
- * (This route requires authentication)
+ * (This route requires token authentication)
  * @param {FormData} profileData - A FormData object containing the file and JSON strings.
+ * @param {string} token - The access token from URL query parameter.
  * @returns {Promise<object>} The server response.
  */
-export const completeMentorProfile = async (profileData) => {
+export const completeMentorProfile = async (profileData, token) => {
   const response = await api.post('/mentor/complete-profile', profileData, {
     // Axios will automatically set the 'Content-Type: multipart/form-data'
     // header for you when you pass a FormData object.
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
   });
   return response.data;
 };

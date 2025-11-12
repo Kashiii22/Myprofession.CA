@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import Confetti from 'react-confetti';
-import { FaFileUpload, FaTimes, FaCheck, FaPlus, FaBook, FaTrophy, FaPaperPlane, FaCheckCircle } from 'react-icons/fa';
+import { FaFileUpload, FaTimes, FaCheck, FaPlus, FaBook, FaTrophy, FaPaperPlane, FaCheckCircle, FaLock, FaUserSecret } from 'react-icons/fa';
 import Link from 'next/link'; 
 import { Toaster, toast } from 'react-hot-toast'; 
 import api from '@/lib/axios'; 
@@ -81,13 +82,25 @@ const DynamicFieldArray = ({ title, fieldKey, icon, values, placeholder, onUpdat
 
 // --- Main Registration Page Component ---
 export default function ExpertProfile() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [kycPreview, setKycPreview] = useState(null);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   
   const pageTopRef = useRef(null); 
-  const { user } = useSelector((state) => state.auth);
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
+
+  // Check authentication status
+  useEffect(() => {
+    if (!isLoggedIn) {
+      // Redirect to unauthorized page if not logged in
+      router.push('/unauthorized');
+      return;
+    }
+    setIsAuthorized(true);
+  }, [isLoggedIn, router]);
 
   const [personalDetails, setPersonalDetails] = useState({
     name: '', mobileNumber: '', email: '', languages: [], gender: '', dob: '',
@@ -254,6 +267,97 @@ export default function ExpertProfile() {
   const inputClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-2 w-full text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-700 disabled:opacity-70 disabled:cursor-not-allowed';
   const selectClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-2 w-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
   const textAreaClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-3 w-full text-gray-200 placeholder-gray-500 resize-none min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+
+  // Show loading state while checking authentication
+  if (!isAuthorized) {
+    return (
+      <div className="bg-black text-gray-200 min-h-screen" ref={pageTopRef}>
+        <Toaster position="top-center" reverseOrder={false} />
+        <Header />
+        
+        <main className="min-h-[calc(100vh-120px)] flex items-center justify-center px-4 py-20">
+          <div className="relative w-full max-w-4xl mx-auto">
+            {/* Section number badge */}
+            <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
+              restricted
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md rounded-2xl border border-gray-800 shadow-[0_0_60px_#1e3a8acc] overflow-hidden">
+              {/* Header Section */}
+              <div className="relative p-8 md:p-12 text-center border-b border-gray-800/50 bg-gradient-to-r from-amber-900/20 to-orange-900/20">
+                {/* Icon Container */}
+                <div className="relative mb-8">
+                  <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-amber-600 to-orange-600 rounded-3xl shadow-2xl shadow-amber-500/30 border-2 border-amber-500/20 transition-transform duration-300 hover:scale-105">
+                    <FaLock className="text-white text-5xl" />
+                  </div>
+                  
+                  {/* Security Icons */}
+                  <div className="absolute -top-4 -right-4">
+                    <div className="bg-gray-800 rounded-full p-3 border-2 border-gray-700/50">
+                      <FaUserSecret className="text-amber-400 text-lg" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Title */}
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                  Authentication <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Required</span>
+                </h1>
+                
+                {/* Subtitle */}
+                <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-4">
+                  You must be logged in to access the expert profile setup
+                </p>
+              </div>
+              
+              {/* Content Section */}
+              <div className="p-8 md:p-12 space-y-8">
+                <div className="max-w-3xl mx-auto">
+                  <div className="bg-[#1a1a1e]/50 rounded-xl p-6 border border-gray-700/50">
+                    <h2 className="text-2xl font-bold text-white mb-4">What This Means</h2>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      The expert profile setup page is restricted to registered users only. Please log in to your account to proceed with your consultant registration.
+                    </p>
+                    <div className="space-y-2 text-sm text-gray-400">
+                      <p>• Sign up or log in to access this page</p>
+                      <p>• Complete your expert profile registration</p>
+                      <p>• Join our community of experienced consultants</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <FaUserSecret className="group-hover:translate-y-1 transition-transform" />
+                    <span>Sign In / Register</span>
+                  </button>
+                </div>
+                
+                {/* Alternative option */}
+                <div className="text-center space-y-2">
+                  <p className="text-gray-400 text-sm">
+                    Already have an account?
+                  </p>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                  >
+                    Return to Homepage
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black text-gray-200 min-h-screen" ref={pageTopRef}>

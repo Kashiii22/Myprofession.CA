@@ -111,7 +111,10 @@ export default function HomePage() {
 
       {/* HERO SECTION */}
       <section className="relative z-10 px-4 md:px-10 py-20 overflow-hidden">
-        {/* ... (Hero section code is unchanged) ... */}
+        {/* Section number in top-left corner */}
+        <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
+          section-1
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
           {/* Left Marquee */}
           <div className="hidden md:block h-[400px] overflow-hidden relative group">
@@ -176,7 +179,11 @@ export default function HomePage() {
       </section>
 
       {/* --- CONTENT SECTION --- */}
-      <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
+      <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32] relative">
+        {/* Section number in top-left corner */}
+        <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
+          section-2
+        </div>
         <div className="container mx-auto max-w-7xl text-center">
           <div data-aos="fade-up">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 inline-block">
@@ -184,15 +191,19 @@ export default function HomePage() {
                 Content and files
               </span>
             </h2>
-            <p className="text-lg md:text-xl font-semibold text-blue-400 tracking-wider mb-6">
+            <p className="text-base md:text-lg font-semibold text-blue-400 tracking-wider mb-4">
               Read – Watch – Download – Follow
             </p>
-            <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-8 max-w-3xl mx-auto">
-              Empower your professional journey with ready-to-use content, templates. Everything a CA needs — from Income Tax to Audit — to work smarter every day
-            </p>
-            <p className="text-lg text-gray-400 mb-12 max-w-3xl mx-auto">
-              Here you can access practical files, step-by-step guides, and real-life case studies created by experienced professionals related to following categories:
-            </p>
+            <div className="text-left max-w-full" data-aos="fade-up" data-aos-delay="100">
+              <div className="pl-5 pr-5 pb-8">
+                <p className="text-base text-gray-300 leading-relaxed mb-4">
+                  Empower your professional journey with ready-to-use content, templates. Everything a CA needs — from Income Tax to Audit — to work smarter every day
+                </p>
+                <p className="text-sm text-gray-400">
+                  Here you can access practical files, step-by-step guides, and real-life case studies created by experienced professionals related to following categories:
+                </p>
+              </div>
+            </div>
             <div 
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
               data-aos="fade-up"
@@ -212,7 +223,11 @@ export default function HomePage() {
       </section>
 
       {/* --- COURSES SECTION --- */}
-      <section className="py-20 px-6 md:px-20 text-white border-t border-[#2c2c32]">
+      <section className="py-20 px-6 md:px-20 text-white border-t border-[#2c2c32] relative">
+        {/* Section number in top-left corner */}
+        <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
+          section-3
+        </div>
         <div className="container mx-auto max-w-7xl text-center">
           
           {/* 1. Main Title */}

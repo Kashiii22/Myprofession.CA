@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
+import ConsultantJoinModal from "@/components/ConsultantJoinModal";
 import RechargeModal from "@/components/RechargeModal"; 
 
 // Import Redux hooks and actions
@@ -79,6 +80,7 @@ export default function Header() {
   
   // ✅ State to remember where the user wanted to go
   const [pendingRedirect, setPendingRedirect] = useState(null);
+  const [showConsultantModal, setShowConsultantModal] = useState(false);
 
   // Session check (No change)
   useEffect(() => {
@@ -165,16 +167,19 @@ export default function Header() {
   // This handles the "Join As Consultant" button click
   const handleJoinClick = (isMobile = false) => {
     if (isLoggedIn) {
-        // If user is already logged in (as a USER), send to register
+        // If user is already logged in, send directly to expert profile
         router.push('/expert-profile');
+        // Close mobile menu if open
+        if (isMobile) {
+            setMobileMenuOpen(false);
+        }
     } else {
-        // If user is logged out, set redirect and show login modal
-        setPendingRedirect('/register');
-        setShowLoginModal(true);
-    }
-    // Close mobile menu if open
-    if (isMobile) {
-        setMobileMenuOpen(false);
+        // If user is logged out, show the specialized consultant modal
+        setShowConsultantModal(true);
+        // Close mobile menu if open
+        if (isMobile) {
+            setMobileMenuOpen(false);
+        }
     }
   };
   
@@ -235,7 +240,7 @@ export default function Header() {
                 onClick={() => handleJoinClick(false)}
                 className="text-sm font-medium px-3 py-1.5 rounded-lg transition bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-900/50"
               >
-                Join As Consultant
+                Join As a Consultant
               </button>
             )}
 
@@ -557,6 +562,17 @@ export default function Header() {
               router.push(pendingRedirect);
               setPendingRedirect(null); // Clear redirect after using it
             }
+          }}
+        />
+      )}
+
+      {/* ✅ NEW Consultant Join Modal */}
+      {showConsultantModal && (
+        <ConsultantJoinModal
+          onClose={() => setShowConsultantModal(false)}
+          onLoginSuccess={(userData) => {
+            setShowConsultantModal(false);
+            dispatch(setLoginSuccess(userData));
           }}
         />
       )}
