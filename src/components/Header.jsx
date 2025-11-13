@@ -82,16 +82,29 @@ export default function Header() {
   const [pendingRedirect, setPendingRedirect] = useState(null);
   const [showConsultantModal, setShowConsultantModal] = useState(false);
 
-  // Session check (No change)
+  // Session check with consultant flow redirect handling
   useEffect(() => {
     const checkUserSession = async () => {
       if (user) {
+        // Check if user completed Google auth from consultant join flow
+        const consultantFlow = sessionStorage.getItem('consultantJoinFlow');
+        if (consultantFlow === 'true') {
+          sessionStorage.removeItem('consultantJoinFlow');
+          router.push('/expert-profile');
+        }
         return;
       }
       try {
         const data = await getMyProfile(); 
         if (data.success) {
           dispatch(setLoginSuccess(data.user)); 
+          
+          // Check for consultant flow after getting user data
+          const consultantFlow = sessionStorage.getItem('consultantJoinFlow');
+          if (consultantFlow === 'true') {
+            sessionStorage.removeItem('consultantJoinFlow');
+            router.push('/expert-profile');
+          }
         } else {
           dispatch(setLogout());
         }
@@ -100,7 +113,7 @@ export default function Header() {
       }
     };
     checkUserSession();
-  }, [dispatch, user]);
+  }, [dispatch, user, router]);
 
   // Search submit handler (No change)
   const handleSearchSubmit = (e) => {

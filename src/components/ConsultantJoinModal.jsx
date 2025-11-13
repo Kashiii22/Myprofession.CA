@@ -47,7 +47,12 @@ const InputField = ({
 
 const GoogleAuthButton = () => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const googleLoginUrl = `${apiUrl}/api/v1/google`;
+  // Store that we're coming from consultant join flow for post-auth redirect
+  const handleGoogleLogin = () => {
+    // Set a flag in sessionStorage to check after Google auth completes
+    sessionStorage.setItem('consultantJoinFlow', 'true');
+    window.location.href = `${apiUrl}/api/v1/google`;
+  };
 
   return (
     <div className="mt-6">
@@ -57,13 +62,12 @@ const GoogleAuthButton = () => {
         <div className="h-px bg-gray-600 flex-grow" />
       </div>
       
-      <a
-        href={googleLoginUrl}
-        rel="noopener noreferrer"
+      <button
+        onClick={handleGoogleLogin}
         className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 font-medium px-4 py-2 rounded shadow hover:opacity-90 transition"
       >
         <GoogleIcon /> Sign up with Google
-      </a>
+      </button>
     </div>
   );
 };

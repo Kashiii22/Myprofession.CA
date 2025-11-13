@@ -113,7 +113,7 @@ export default function HomePage() {
       <section className="relative z-10 px-4 md:px-10 py-20 overflow-hidden">
         {/* Section number in top-left corner */}
         <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
-          section-1
+          Section 1
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
           {/* Left Marquee */}
@@ -179,10 +179,10 @@ export default function HomePage() {
       </section>
 
       {/* --- CONTENT SECTION --- */}
-      <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-20 px-6 md:px-20 text-white border-t border-[#2c2c32] relative">
+      <section className="bg-gradient-to-br from-[#111216] to-[#1b1f25] backdrop-blur-md py-12 px-6 md:px-20 text-white border-t border-[#2c2c32] relative">
         {/* Section number in top-left corner */}
         <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
-          section-2
+          Section 2
         </div>
         <div className="container mx-auto max-w-7xl text-center">
           <div data-aos="fade-up">
@@ -194,10 +194,10 @@ export default function HomePage() {
             <p className="text-base md:text-lg font-semibold text-blue-400 tracking-wider mb-4">
               Read – Watch – Download – Follow
             </p>
-            <div className="text-left max-w-full" data-aos="fade-up" data-aos-delay="100">
+            <div className="text-center max-w-full" data-aos="fade-up" data-aos-delay="100">
               <div className="pl-5 pr-5 pb-8">
-                <p className="text-base text-gray-300 leading-relaxed mb-4">
-                  Empower your professional journey with ready-to-use content, templates. Everything a CA needs — from Income Tax to Audit — to work smarter every day
+                <p className="text-base text-white leading-relaxed mb-4 text-lg">
+                  Empower your professional journey with ready-to-use content, templates, everything a CA needs <br/> — from Income Tax to Audit — to work smarter every day
                 </p>
                 <p className="text-sm text-gray-400">
                   Here you can access practical files, step-by-step guides, and real-life case studies created by experienced professionals related to following categories:
@@ -226,7 +226,7 @@ export default function HomePage() {
       <section className="py-20 px-6 md:px-20 text-white border-t border-[#2c2c32] relative">
         {/* Section number in top-left corner */}
         <div className="absolute top-4 left-4 px-2 py-1 bg-gray-800/50 text-gray-600 text-xs font-medium rounded-lg z-10 pointer-events-none border border-gray-700/30">
-          section-3
+          Section 3
         </div>
         <div className="container mx-auto max-w-7xl text-center">
           
@@ -338,7 +338,7 @@ function CategoryCard({ icon, title, onClick }) {
   return (
     <div 
       onClick={onClick} 
-      className="group cursor-pointer rounded-xl bg-[#1a1a1e] p-5 text-left
+      className="group cursor-pointer rounded-xl bg-[#1a1a1e] p-6 text-left
                  border border-gray-700/80
                  transition-all duration-300
                  hover:border-blue-500/80 hover:bg-[#202024] 
