@@ -105,7 +105,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
 
   const [formState, setFormState] = useState({
     name: "",
-    phone: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -118,24 +118,17 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "phone") {
-      if (/^\d{0,10}$/.test(value)) {
-        setFormState((prev) => ({ ...prev, [name]: value }));
-      }
-    } else {
-      setFormState((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    dispatch(setPhone(formState.phone));
-    const phoneWithPrefix = `+91${formState.phone}`;
+    dispatch(setPhone(formState.email));
 
     try {
       if (loginMethod === "otp") {
-        const response = await requestLoginOTP({ phone: phoneWithPrefix });
+        const response = await requestLoginOTP({ email: formState.email });
         console.log(response);
         if (response.success) {
           toast.success(response.message);
@@ -145,7 +138,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         }
       } else {
         const response = await login({
-          phone: phoneWithPrefix,
+          email: formState.email,
           password: formState.password,
         });
         if (response.success) {
@@ -169,12 +162,11 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       return toast.error("Passwords do not match.");
     }
     setLoading(true);
-    dispatch(setPhone(formState.phone));
-    const phoneWithPrefix = `+91${formState.phone}`;
+    dispatch(setPhone(formState.email));
     try {
       const response = await signup({
         name: formState.name,
-        phone: phoneWithPrefix,
+        email: formState.email,
         password: formState.password,
       });
 
@@ -193,10 +185,9 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
 
   const handleOtpVerification = async (otp) => {
     setLoading(true);
-    const phoneWithPrefix = `+91${formState.phone}`;
     try {
       if (showLoginTab) {
-        const response = await verifyLoginOTP({ phone: phoneWithPrefix, otp });
+        const response = await verifyLoginOTP({ email: formState.email, otp });
         if (response.success) {
           toast.success(response.message);
           console.log("Logged in user:", response.user);
@@ -206,7 +197,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
         }
       } else {
         const response = await verifyOtpAndCreateUser({
-          phone: phoneWithPrefix,
+          email: formState.email,
           otp,
         });
         if (response.success) {
@@ -248,7 +239,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       >
         {showOtpModal && (
           <VerifyOtpModal
-            phone={formState.phone}
+            phone={formState.email}
             onClose={() => dispatch(toggleOtpModal(false))}
             onVerify={handleOtpVerification}
             loading={loading}
@@ -306,10 +297,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                     </div>
 
                     <InputField
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formState.phone}
+                      type="email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={formState.email}
                       onChange={handleInputChange}
                     />
 
@@ -354,10 +345,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                       onChange={handleInputChange}
                     />
                     <InputField
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formState.phone}
+                      type="email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={formState.email}
                       onChange={handleInputChange}
                     />
                     <InputField

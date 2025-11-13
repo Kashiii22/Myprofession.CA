@@ -33,12 +33,9 @@ const InputField = ({
   <input
     type={type}
     name={name}
-    inputMode={type === "tel" ? "numeric" : undefined}
-    pattern={type === "tel" ? "[0-9]*" : undefined}
     placeholder={placeholder}
     value={value}
     onChange={onChange}
-    maxLength={type === "tel" ? 10 : undefined}
     disabled={disabled}
     className="w-full px-4 py-2 bg-[#1a2535] border border-blue-700 rounded focus:outline-none focus:ring focus:ring-blue-400 disabled:opacity-50"
     autoComplete="off"
@@ -120,7 +117,7 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
 
   const [formState, setFormState] = useState({
     name: "",
-    phone: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -133,24 +130,17 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "phone") {
-      if (/^\d{0,10}$/.test(value)) {
-        setFormState((prev) => ({ ...prev, [name]: value }));
-      }
-    } else {
-      setFormState((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    dispatch(setPhone(formState.phone));
-    const phoneWithPrefix = `+91${formState.phone}`;
+    dispatch(setPhone(formState.email));
 
     try {
       if (loginMethod === "otp") {
-        const response = await requestLoginOTP({ phone: phoneWithPrefix });
+        const response = await requestLoginOTP({ email: formState.email });
         if (response.success) {
           toast.success(response.message);
           dispatch(toggleOtpModal(true));
@@ -159,7 +149,7 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
         }
       } else {
         const response = await login({
-          phone: phoneWithPrefix,
+          email: formState.email,
           password: formState.password,
         });
         if (response.success) {
@@ -182,12 +172,11 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
       return toast.error("Passwords do not match.");
     }
     setLoading(true);
-    dispatch(setPhone(formState.phone));
-    const phoneWithPrefix = `+91${formState.phone}`;
+    dispatch(setPhone(formState.email));
     try {
       const response = await signup({
         name: formState.name,
-        phone: phoneWithPrefix,
+        email: formState.email,
         password: formState.password,
       });
 
@@ -206,10 +195,9 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
 
   const handleOtpVerification = async (otp) => {
     setLoading(true);
-    const phoneWithPrefix = `+91${formState.phone}`;
     try {
       if (showLoginTab) {
-        const response = await verifyLoginOTP({ phone: phoneWithPrefix, otp });
+        const response = await verifyLoginOTP({ email: formState.email, otp });
         if (response.success) {
           toast.success(response.message);
           handleSuccess(response.user);
@@ -218,7 +206,7 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
         }
       } else {
         const response = await verifyOtpAndCreateUser({
-          phone: phoneWithPrefix,
+          email: formState.email,
           otp,
         });
         if (response.success) {
@@ -276,7 +264,7 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
       >
         {showOtpModal && (
           <VerifyOtpModal
-            phone={formState.phone}
+            phone={formState.email}
             onClose={() => dispatch(toggleOtpModal(false))}
             onVerify={handleOtpVerification}
             loading={loading}
@@ -348,10 +336,10 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
                     </div>
 
                     <InputField
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formState.phone}
+                      type="email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={formState.email}
                       onChange={handleInputChange}
                     />
 
@@ -393,10 +381,10 @@ export default function ConsultantJoinModal({ onClose, onLoginSuccess }) {
                       onChange={handleInputChange}
                     />
                     <InputField
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formState.phone}
+                      type="email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={formState.email}
                       onChange={handleInputChange}
                     />
                     <InputField
