@@ -1,0 +1,314 @@
+"use client";
+
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import Sidebar from "@/components/Sidebar";
+import { toast } from "react-hot-toast";
+import { 
+  FaCalendarDay, 
+  FaUserTie, 
+  FaUserGraduate, 
+  FaChartLine, 
+  FaClock,
+  FaMoneyBillWave,
+  FaStar,
+  FaTrophy,
+  FaChartBar,
+  FaUsers,
+  FaVideo
+} from "react-icons/fa";
+
+export default function Dashboard() {
+  const stats = useSelector((state) => state.dashboard.stats);
+  const meetings = useSelector((state) => state.dashboard.meetings);
+  const user = useSelector((state) => state.auth.user);
+  const isAuthenticated = useSelector((state) => state.auth.isLoggedIn);
+  const router = useRouter();
+
+  useEffect(() => {
+    AOS.init({ duration: 800 });
+  }, []);
+
+  useEffect(() => {
+    // Check if user is authenticated and is a mentor
+    console.log("Auth State:", { isAuthenticated, user });
+    console.log("User Role:", user?.role);
+    
+    // Add better null checking and loading state check
+    if (isAuthenticated === false && (!user || !user.role)) {
+      toast.error("Please login to access mentor dashboard.");
+      router.push("/");
+      return;
+    }
+    
+    if (isAuthenticated && user && user.role !== "MENTOR") {
+      toast.error("Access denied. Mentor access required.");
+      router.push("/");
+      return;
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Return loading state while checking authentication
+  if (isAuthenticated === false && (!user || !user.role || user.role !== "MENTOR")) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Return loading if auth is still being determined
+  if (isAuthenticated !== true || !user) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Professional stats display
+  const mentorStats = {
+    totalEarnings: stats?.earnings || 45750,
+    studentsMentored: stats?.students || 127,
+    sessionsCompleted: stats?.sessions || 342,
+    avgRating: 4.8,
+    thisMonthEarnings: 12500,
+    pendingSessions: meetings?.length || 8
+  };
+
+  return (
+    <div className="relative bg-black text-white font-sans min-h-screen flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <main className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 w-full overflow-x-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-gradient-to-r from-blue-900/40 via-blue-800/30 to-purple-900/40 border border-blue-700/50 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+          <div className="mb-4 sm:mb-0 text-center sm:text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-400">
+                Myprofession<span className="text-white">.CA</span>
+              </div>
+              <div className="h-8 w-px bg-gray-600"></div>
+              <FaUserTie className="text-blue-400 text-2xl" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-blue-300">
+              Welcome back, {user?.name?.split(' ')[0] || "Mentor"}!
+            </h1>
+            <p className="text-base sm:text-lg text-gray-400 mt-1">
+              Your mentor dashboard at a glance
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button
+              onClick={() => router.push("/")}
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg transition text-sm"
+            >
+              ← Back to Website
+            </button>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl sm:text-2xl">
+              {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || "MN"}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={FaMoneyBillWave}
+            title="Total Earnings"
+            value={`₹${mentorStats.totalEarnings.toLocaleString()}`}
+            subtitle="Lifetime earnings"
+            gradient="from-green-600 to-emerald-500"
+          />
+          <StatCard
+            icon={FaUserGraduate}
+            title="Students Mentored"
+            value={mentorStats.studentsMentored}
+            subtitle="Total students"
+            gradient="from-purple-600 to-pink-500"
+          />
+          <StatCard
+            icon={FaVideo}
+            title="Sessions"
+            value={mentorStats.sessionsCompleted}
+            subtitle="Completed"
+            gradient="from-blue-600 to-cyan-500"
+          />
+          <StatCard
+            icon={FaStar}
+            title="Rating"
+            value={mentorStats.avgRating}
+            subtitle="Average rating"
+            gradient="from-yellow-500 to-orange-500"
+          />
+        </div>
+
+        {/* Performance Overview */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-black/90 border border-gray-700 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <FaChartLine className="text-blue-400" />
+            Performance Overview
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-300">This Month</h3>
+                <FaChartBar className="text-green-400 text-xl" />
+              </div>
+              <p className="text-3xl font-bold text-green-400">₹{mentorStats.thisMonthEarnings.toLocaleString()}</p>
+              <p className="text-sm text-gray-400 mt-1">15% increase from last month</p>
+            </div>
+
+            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-300">Pending Sessions</h3>
+                <FaCalendarDay className="text-blue-400 text-xl" />
+              </div>
+              <p className="text-3xl font-bold text-blue-400">{mentorStats.pendingSessions}</p>
+              <p className="text-sm text-gray-400 mt-1">Scheduled for this week</p>
+            </div>
+
+            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-300">Completion Rate</h3>
+                <FaTrophy className="text-yellow-400 text-xl" />
+              </div>
+              <p className="text-3xl font-bold text-yellow-400">94%</p>
+              <p className="text-sm text-gray-400 mt-1">Session completion rate</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-gradient-to-br from-gray-900/90 to-black/90 border border-gray-700 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            <FaClock className="text-blue-400" />
+            Upcoming Sessions
+          </h2>
+
+          {meetings && meetings.length > 0 ? (
+            <div className="space-y-4">
+              {meetings.slice(0, 5).map((meeting, idx) => (
+                <div key={idx} className="bg-gray-800/30 p-4 rounded-xl border border-gray-700 hover:border-gray-600 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <h3 className="font-semibold text-white">{meeting.topic || "CA Guidance Session"}</h3>
+                      <p className="text-sm text-gray-400">with {meeting.with || "Student"}</p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                      <span className="text-sm text-blue-400">{meeting.date || "Today"}, {meeting.time || "3:00 PM"}</span>
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition">
+                        Join Session
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-4">
+                <FaCalendarDay className="text-5xl mx-auto" />
+              </div>
+              <p className="text-gray-400">No upcoming sessions scheduled</p>
+              <button className="mt-4 text-blue-400 hover:text-blue-300 underline">
+                View Calendar
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <QuickActionCard
+            title="View Profile"
+            description="Manage your professional profile"
+            icon={FaUserTie}
+            onClick={() => router.push("/mentor/myprofile")}
+          />
+          <QuickActionCard
+            title="My Bookings"
+            description="View your bookings"
+            icon={FaCalendarDay}
+            onClick={() => router.push("/mentor/mybookings")}
+          />
+          <QuickActionCard
+            title="My Classes"
+            description="View your classes"
+            icon={FaUsers}
+            onClick={() => router.push("/mentor/myclasses")}
+          />
+          <QuickActionCard
+            title="My Earnings"
+            description="View your earnings"
+            icon={FaMoneyBillWave}
+            onClick={() => {
+              toast.info("Earnings feature coming soon!");
+            }}
+          />
+        </div>
+
+        {/* Footer Branding */}
+        <footer className="mt-12 pt-8 border-t border-gray-800">
+          <div className="flex flex-col sm:flex-row items-center justify-between">
+            <div className="mb-4 sm:mb-0">
+              <div className="text-xl font-bold text-blue-400">
+                Myprofession<span className="text-white">.CA</span>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">
+                Professional CA Services Platform
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-400">
+              <span>© 2024 Myprofession.CA</span>
+              <span>•</span>
+              <span>Mentor Portal</span>
+            </div>
+          </div>
+        </footer>
+      </main>
+    </div>
+  );
+}
+
+// Stat Card Component
+function StatCard({ icon: Icon, title, value, subtitle, gradient }) {
+  return (
+    <div className={`relative overflow-hidden rounded-2xl p-6 shadow-xl bg-gradient-to-br ${gradient} group-hover:scale-105 transition-all duration-300`}>
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-10">
+        <Icon className="text-8xl" />
+      </div>
+      <div className="relative">
+        <Icon className="text-3xl mb-4 opacity-80" />
+        <h3 className="text-2xl font-bold mb-1">{value}</h3>
+        <p className="text-sm opacity-80">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+// Quick Action Card Component
+function QuickActionCard({ title, description, icon: Icon, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="w-full bg-gray-800/40 hover:bg-gray-800/60 border border-gray-700 hover:border-gray-600 rounded-xl p-4 text-left transition-all duration-200 group"
+    >
+      <Icon className="text-2xl text-blue-400 mb-3 group-hover:scale-110 transition-transform" />
+      <h3 className="font-semibold text-white mb-1">{title}</h3>
+      <p className="text-sm text-gray-400">{description}</p>
+    </button>
+  );
+}
