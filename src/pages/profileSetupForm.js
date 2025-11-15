@@ -71,14 +71,30 @@ export default function CompleteProfileWizard() {
     setError(null);
     const finalData = { ...profileData, ...data };
 
-    // 1. Create FormData (same as before)
+    // Debug logging
+    console.log('Final profile data:', finalData);
+    console.log('Profile picture file:', finalData.profilePicture);
+
+    // 1. Create FormData with proper validation
     const formData = new FormData();
+    
+    // Enhanced file validation and logging
     if (finalData.profilePicture) {
+      console.log('Appending profile picture to FormData:', finalData.profilePicture.name, finalData.profilePicture.type, finalData.profilePicture.size);
       formData.append('profilePicture', finalData.profilePicture);
+    } else {
+      console.log('No profile picture found in final data');
     }
+    
     formData.append('availability', JSON.stringify(finalData.availability));
     formData.append('pricing', JSON.stringify(finalData.pricing));
     formData.append('minSessionDuration', finalData.minSessionDuration);
+
+    // Debug: Log FormData contents
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value instanceof File ? `File: ${value.name}` : value);
+    }
 
     try {
       // 2. Call your Axios API service with token
@@ -95,6 +111,7 @@ export default function CompleteProfileWizard() {
     } catch (err) {
       // 4. Handle Error
       console.error('Profile completion error:', err);
+      console.error('Error response:', err.response?.data);
       setIsLoading(false);
       // Use err.response?.data?.message for more specific Axios errors if available
       setError(err.response?.data?.message || err.message);

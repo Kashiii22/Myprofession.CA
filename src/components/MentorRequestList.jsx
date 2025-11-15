@@ -25,7 +25,7 @@ import {
   FaDownload
 } from 'react-icons/fa';
 
-export default function MentorRequestList({ limit = 10 }) {
+export default function MentorRequestList({ limit = 10, onViewDetails }) {
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
@@ -255,7 +255,7 @@ export default function MentorRequestList({ limit = 10 }) {
                   <p className="text-gray-400 text-sm">{request.qualification}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
                   request.status === 'pending' ? 'bg-yellow-500 text-black' : 
                   request.status === 'approved' ? 'bg-green-600 text-white' : 
@@ -263,6 +263,14 @@ export default function MentorRequestList({ limit = 10 }) {
                 }`}>
                   {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                 </span>
+                {onViewDetails && (
+                  <button
+                    onClick={() => onViewDetails(request.registrationId)}
+                    className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded"
+                  >
+                    View Details
+                  </button>
+                )}
                 {request.status === 'pending' && (
                   <div className="flex gap-1">
                     <button 
@@ -507,10 +515,18 @@ export default function MentorRequestList({ limit = 10 }) {
                         <button
                           onClick={() => toggleExpandRequest(request.id)}
                           className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
-                          title="View Details"
+                          title="Quick View"
                         >
                           <FaEye />
                         </button>
+                        {onViewDetails && (
+                          <button
+                            onClick={() => onViewDetails(request.registrationId)}
+                            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded transition-colors"
+                          >
+                            View Details
+                          </button>
+                        )}
                         {request.status === 'pending' && (
                           <>
                             <button

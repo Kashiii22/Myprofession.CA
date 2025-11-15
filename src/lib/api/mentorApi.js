@@ -34,9 +34,14 @@ export const getMentorById = async (mentorId) => {
  * @returns {Promise<object>} The server response.
  */
 export const completeMentorProfile = async (profileData, token) => {
-  const response = await api.post('/mentor/complete-profile', profileData, {
-    // Axios will automatically set the 'Content-Type: multipart/form-data'
-    // header for you when you pass a FormData object.
+  // Create a new axios instance without the default Content-Type header for FormData
+  const formDataApi = require('axios').create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL + '/api/v1',
+    withCredentials: true,
+  });
+
+  const response = await formDataApi.post('/mentor/complete-profile', profileData, {
+    // Let axios set the Content-Type header automatically for FormData
     headers: {
       'Authorization': `Bearer ${token}`
     }
