@@ -77,12 +77,12 @@ export default function Dashboard() {
 
   // Professional stats display
   const mentorStats = {
-    totalEarnings: stats?.earnings || 45750,
-    studentsMentored: stats?.students || 127,
-    sessionsCompleted: stats?.sessions || 342,
-    avgRating: 4.8,
-    thisMonthEarnings: 12500,
-    pendingSessions: meetings?.length || 8
+    totalEarnings: 0,
+    studentsMentored: 0,
+    sessionsCompleted: 0,
+    avgRating: 0,
+    thisMonthEarnings: 0,
+    pendingSessions: 0
   };
 
   return (
@@ -168,7 +168,7 @@ export default function Dashboard() {
                 <FaChartBar className="text-green-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-green-400">₹{mentorStats.thisMonthEarnings.toLocaleString()}</p>
-              <p className="text-sm text-gray-400 mt-1">15% increase from last month</p>
+              <p className="text-sm text-gray-400 mt-1">This month's earnings</p>
             </div>
 
             <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
@@ -177,7 +177,7 @@ export default function Dashboard() {
                 <FaCalendarDay className="text-blue-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-blue-400">{mentorStats.pendingSessions}</p>
-              <p className="text-sm text-gray-400 mt-1">Scheduled for this week</p>
+              <p className="text-sm text-gray-400 mt-1">No pending sessions</p>
             </div>
 
             <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
@@ -185,8 +185,8 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-gray-300">Completion Rate</h3>
                 <FaTrophy className="text-yellow-400 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-yellow-400">94%</p>
-              <p className="text-sm text-gray-400 mt-1">Session completion rate</p>
+              <p className="text-3xl font-bold text-yellow-400">0%</p>
+              <p className="text-sm text-gray-400 mt-1">No sessions completed yet</p>
             </div>
           </div>
         </div>

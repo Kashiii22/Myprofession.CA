@@ -100,3 +100,18 @@ export const approveMentorRegistration = async (registrationId) => {
     throw error;
   }
 };
+
+// --- NEW FUNCTION ---
+/**
+ * Checks if the current user has an existing mentor application
+ * @returns {Promise<object>} The server response including application status
+ */
+export const checkApplicationStatus = async () => {
+  try {
+    const response = await api.get('/mentor/check-application-status');
+    return response.data;
+  } catch (error) {
+    if (error.response?.data?.message) throw new Error(error.response.data.message);
+    throw error;
+  }
+};

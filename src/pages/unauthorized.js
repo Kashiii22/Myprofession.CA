@@ -1,22 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaLock } from 'react-icons/fa';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export default function UnauthorizedPage() {
-  const router = useRouter();
-
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center p-4">
@@ -43,14 +33,7 @@ export default function UnauthorizedPage() {
         <h1 className="text-3xl font-bold text-white mb-4">Unauthorized</h1>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={handleGoBack}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-          >
-            Go Back
-          </button>
-          
+        <div className="flex justify-center">
           <Link
             href="/"
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"

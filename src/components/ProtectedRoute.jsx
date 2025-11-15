@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { canAccessSuperAdmin, isAuthenticated } from '../lib/authUtils';
+import AuthModal from './AuthModal';
+import { setLoginSuccess } from '../redux/authSlice';
 import toast from 'react-hot-toast';
 
 /**
@@ -19,7 +21,9 @@ export default function ProtectedRoute({
   showToast = true 
 }) {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { user, isLoggedIn, authLoading } = useSelector(state => state.auth);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // For debugging - remove later
   useEffect(() => {
@@ -43,11 +47,11 @@ export default function ProtectedRoute({
 
     // Check if user is not authenticated
     if (!isLoggedIn || !user) {
-      console.log('🔒 User not authenticated, redirecting to login');
+      console.log('🔒 User not authenticated, showing auth modal');
       if (showToast) {
         toast.error('Please log in to access this area');
       }
-      router.push(redirectPath);
+      setShowAuthModal(true);
       return;
     }
 
@@ -83,12 +87,40 @@ export default function ProtectedRoute({
     );
   }
 
-  // If not authenticated, show redirecting state
+  // If not authenticated, show auth modal with loading state
   if (!isLoggedIn || !user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-white text-xl">Redirecting to login...</div>
+      <div className="min-h-screen bg-black text-gray-100">
+        {showAuthModal && (
+          <AuthModal 
+            onClose={() => setShowAuthModal(false)}
+            onLoginSuccess={(user) => {
+              dispatch(setLoginSuccess(user));
+              setShowAuthModal(false);
+            }}
+          />
+        )}
+        {/* Background content shown while modal is open */}
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="text-center">
+            <div className="bg-gray-800/50 backdrop-blur-md rounded-2xl border border-gray-700 shadow-[0_0_60px_#1e3a8acc] p-8 max-w-md">
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Authentication Required</h1>
+              <p className="text-gray-300 mb-6">Please log in to access the Super Admin Dashboard</p>
+              <button 
+                onClick={() => setShowAuthModal(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              >
+                Sign In / Register
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

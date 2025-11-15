@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
 import Header from "@/components/Header"; // Your site's Header
 import Footer from "@/components/Footer"; // Your site's Footer
+import AuthModal from "@/components/AuthModal"; // Your AuthModal component
+import { setLoginSuccess } from "@/redux/authSlice"; // Your Redux action
 
 // --- ADD THIS IMPORT ---
 import { completeMentorProfile } from "@/lib/api/mentorApi"; // Adjust path as needed
@@ -22,6 +25,8 @@ const CameraIcon = () => <svg className="w-12 h-12 text-gray-500" fill="none" vi
 // --- MAIN WIZARD PAGE COMPONENT ---
 export default function CompleteProfileWizard() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { isLoggedIn } = useSelector(state => state.auth);
   const [step, setStep] = useState(1);
   const [profileData, setProfileData] = useState({
     profilePicture: null, 
@@ -34,6 +39,7 @@ export default function CompleteProfileWizard() {
   const [error, setError] = useState(null);
   const [token, setToken] = useState(null);
   const [tokenValid, setTokenValid] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Extract and validate token from URL
   useEffect(() => {
@@ -166,7 +172,7 @@ export default function CompleteProfileWizard() {
                 error={error}
               />
             )}
-            {step === 6 && <SuccessStep />}
+            {step === 6 && <SuccessStep showAuthModal={showAuthModal} setShowAuthModal={setShowAuthModal} />}
           </div>
         </div>
       </main>
@@ -379,11 +385,44 @@ const FinishStep = ({ onFinish, onBack, profileData, isLoading, error }) => (
     </div>
 );
 
-const SuccessStep = () => (
-    <div className="text-center py-10">
-        <div className="mx-auto mb-6 bg-green-500 h-16 w-16 rounded-full flex items-center justify-center border-2 border-green-400"><CheckIcon /></div>
-        <h2 className="text-3xl font-bold text-white mb-4">You're All Set!</h2>
-        <p className="text-gray-300 max-w-xl mx-auto mb-8">Your mentor profile is now live. Welcome to the community! You can now head to your dashboard to manage your sessions.</p>
-        <a href="/dashboard" className="px-10 py-3 text-lg bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors">Go to Dashboard</a>
-    </div>
-);
+const SuccessStep = ({ showAuthModal, setShowAuthModal }) => {
+    const router = useRouter();
+    const { isLoggedIn } = useSelector(state => state.auth);
+    const dispatch = useDispatch();
+    
+    const handleLoginSuccess = () => {
+        // After successful login, redirect to mentor dashboard
+        router.push('/mentor/dashboard');
+    };
+    
+    const handleGoToDashboard = () => {
+        // Check if user is logged in using Redux state
+        if (!isLoggedIn) {
+            // If not authenticated, open auth modal
+            setShowAuthModal(true);
+            return;
+        }
+        // If authenticated, redirect to mentor dashboard
+        router.push('/mentor/dashboard');
+    };
+
+    return (
+        <>
+            <div className="text-center py-10">
+                <div className="mx-auto mb-6 bg-green-500 h-16 w-16 rounded-full flex items-center justify-center border-2 border-green-400"><CheckIcon /></div>
+                <h2 className="text-3xl font-bold text-white mb-4">You're All Set!</h2>
+                <p className="text-gray-300 max-w-xl mx-auto mb-8">Your mentor profile is now live. Welcome to the community! You can now head to your dashboard to manage your sessions.</p>
+                <button onClick={handleGoToDashboard} className="px-10 py-3 text-lg bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors">Go to Dashboard</button>
+            </div>
+            {showAuthModal && (
+                <AuthModal 
+                    onClose={() => setShowAuthModal(false)}
+                    onLoginSuccess={(user) => {
+                        dispatch(setLoginSuccess(user));
+                        handleLoginSuccess();
+                    }}
+                />
+            )}
+        </>
+    );
+};
