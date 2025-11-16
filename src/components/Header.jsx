@@ -16,7 +16,7 @@ import RechargeModal from "@/components/RechargeModal";
 
 // Import Redux hooks and actions
 import { useSelector, useDispatch } from "react-redux";
-import { setLoginSuccess, setLogout } from "@/redux/authSlice"; 
+import { setLoginSuccess, setLogout, setClosing } from "@/redux/authSlice"; 
 
 // Import your 'getMe' and new 'logout' functions
 import { getMyProfile, logout } from "@/lib/api/auth";
@@ -565,6 +565,8 @@ export default function Header() {
           onClose={() => {
             setShowLoginModal(false);
             setPendingRedirect(null); // Clear redirect if modal is closed
+            // Reset closing state to allow reopening
+            dispatch(setClosing(false));
           }}
           onLoginSuccess={(userData) => { 
             setShowLoginModal(false);
@@ -575,6 +577,8 @@ export default function Header() {
               router.push(pendingRedirect);
               setPendingRedirect(null); // Clear redirect after using it
             }
+            // Ensure closing state is reset for future modal opens
+            dispatch(setClosing(false));
           }}
         />
       )}
@@ -582,10 +586,16 @@ export default function Header() {
       {/* ✅ NEW Consultant Join Modal */}
       {showConsultantModal && (
         <ConsultantJoinModal
-          onClose={() => setShowConsultantModal(false)}
+          onClose={() => {
+            setShowConsultantModal(false);
+            // Reset closing state to allow reopening
+            dispatch(setClosing(false));
+          }}
           onLoginSuccess={(userData) => {
             setShowConsultantModal(false);
             dispatch(setLoginSuccess(userData));
+            // Ensure closing state is reset for future modal opens
+            dispatch(setClosing(false));
           }}
         />
       )}

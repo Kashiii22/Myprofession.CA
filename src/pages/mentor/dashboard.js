@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Sidebar from "@/components/Sidebar";
 import { toast } from "react-hot-toast";
+import { getDashboardProfile } from '@/lib/api/mentorApi';
 import { 
   FaCalendarDay, 
   FaUserTie, 
@@ -27,9 +28,40 @@ export default function Dashboard() {
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isLoggedIn);
   const router = useRouter();
+  
+  // State for dashboard profile data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     AOS.init({ duration: 800 });
+  }, []);
+
+  // Fetch dashboard profile data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getDashboardProfile();
+        
+        if (response.success) {
+          console.log('Dashboard data received:', response.data);
+          setDashboardData(response.data);
+        } else {
+          throw new Error(response.message || 'Failed to fetch dashboard data');
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError(err.message);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
   useEffect(() => {
@@ -75,14 +107,51 @@ export default function Dashboard() {
     );
   }
 
-  // Professional stats display
+  // Return loading while dashboard data is being fetched
+  if (isLoading) {
+    return (
+      <div className="relative bg-black text-white font-sans min-h-screen flex flex-col md:flex-row">
+        <Sidebar />
+        <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p>Loading dashboard data...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Return error state if data fetch failed
+  if (error) {
+    return (
+      <div className="relative bg-black text-white font-sans min-h-screen flex flex-col md:flex-row">
+        <Sidebar />
+        <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+          <div className="text-center p-8 bg-red-900/50 border border-red-700 rounded-2xl max-w-md">
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
+            <h2 className="text-red-400 text-xl font-bold mb-3">Unable to Load Dashboard</h2>
+            <p className="text-red-300 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Professional stats display - use actual data from API or defaults
   const mentorStats = {
-    totalEarnings: 0,
-    studentsMentored: 0,
-    sessionsCompleted: 0,
-    avgRating: 0,
-    thisMonthEarnings: 0,
-    pendingSessions: 0
+    totalEarnings: dashboardData?.totalEarnings || 0,
+    studentsMentored: dashboardData?.studentsMentored || 0,
+    sessionsCompleted: dashboardData?.sessionsCompleted || 0,
+    avgRating: dashboardData?.avgRating || 0,
+    thisMonthEarnings: dashboardData?.thisMonthEarnings || 0,
+    pendingSessions: dashboardData?.pendingSessions || 0
   };
 
   return (

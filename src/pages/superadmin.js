@@ -60,13 +60,13 @@ export default function SuperAdminDashboard() {
     datasets: [
       { 
         label: 'Revenue', 
-        data: [12000, 15000, 11000, 18000, 20000, 22000], 
+        data: [0, 0, 0, 0, 0, 0], 
         backgroundColor: '#22c55e', 
         borderRadius: 6 
       },
       { 
         label: 'Expenses', 
-        data: [8000, 9000, 7000, 10000, 11000, 12000], 
+        data: [0, 0, 0, 0, 0, 0], 
         backgroundColor: '#ef4444', 
         borderRadius: 6 
       }
@@ -76,7 +76,7 @@ export default function SuperAdminDashboard() {
   const mentorStatusData = {
     labels: ['Active', 'Pending', 'Verified', 'Suspended'],
     datasets: [{
-      data: [45, 12, 8, 3],
+      data: [0, 0, 0, 0],
       backgroundColor: ['#22c55e', '#facc15', '#3b82f6', '#ef4444'],
     }]
   };
@@ -86,7 +86,7 @@ export default function SuperAdminDashboard() {
     datasets: [
       { 
         label: 'New Users', 
-        data: [120, 180, 150, 220], 
+        data: [0, 0, 0, 0], 
         borderColor: '#facc15', 
         backgroundColor: '#facc15', 
         fill: false, 
@@ -94,7 +94,7 @@ export default function SuperAdminDashboard() {
       },
       { 
         label: 'Active Sessions', 
-        data: [80, 120, 100, 160], 
+        data: [0, 0, 0, 0], 
         borderColor: '#22c55e', 
         backgroundColor: '#22c55e', 
         fill: false, 
@@ -143,11 +143,6 @@ export default function SuperAdminDashboard() {
   };
 
   const recentActivities = [
-    { id: 1, type: 'mentor_request', message: 'John Doe applied to become a mentor', time: '2 hours ago', status: 'pending' },
-    { id: 2, type: 'user_registered', message: 'New user Sarah Smith registered', time: '3 hours ago', status: 'success' },
-    { id: 3, type: 'payment_received', message: 'Payment received: $150 from session booking', time: '5 hours ago', status: 'success' },
-    { id: 4, type: 'mentor_approved', message: 'Mike Johnson approved as mentor', time: '1 day ago', status: 'success' },
-    { id: 5, type: 'system_alert', message: 'Server maintenance scheduled', time: '2 days ago', status: 'warning' },
   ];
 
   const getActivityIcon = (type) => {
@@ -210,7 +205,7 @@ export default function SuperAdminDashboard() {
                     <FaChalkboardTeacher className="text-blue-400 text-lg" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">68</div>
+                <div className="text-3xl font-bold text-white mb-2">0</div>
                 <div className="flex items-center gap-2">
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div className="bg-green-400 h-2 rounded-full" style={{width: '75%'}}></div>
@@ -229,7 +224,7 @@ export default function SuperAdminDashboard() {
                     <FaUsers className="text-green-400 text-lg" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">1,247</div>
+                <div className="text-3xl font-bold text-white mb-2">0</div>
                 <div className="flex items-center gap-2">
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div className="bg-green-400 h-2 rounded-full" style={{width: '82%'}}></div>
@@ -248,7 +243,7 @@ export default function SuperAdminDashboard() {
                     <FaDollarSign className="text-yellow-400 text-lg" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">$22,000</div>
+                <div className="text-3xl font-bold text-white mb-2">$0</div>
                 <div className="flex items-center gap-2">
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div className="bg-green-400 h-2 rounded-full" style={{width: '90%'}}></div>
@@ -267,7 +262,7 @@ export default function SuperAdminDashboard() {
                     <FaExclamationTriangle className="text-red-400 text-lg" />
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">12</div>
+                <div className="text-3xl font-bold text-white mb-2">0</div>
                 <div className="flex items-center gap-2">
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div className="bg-red-400 h-2 rounded-full animate-pulse" style={{width: '45%'}}></div>
@@ -374,7 +369,7 @@ export default function SuperAdminDashboard() {
                     View All Requests →
                   </button>
                   <span className="bg-orange-500/20 px-2 py-1 rounded-full text-xs text-orange-400 font-medium">
-                    {stats.pendingRequests} pending
+                    0 pending
                   </span>
                 </div>
               </div>

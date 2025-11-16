@@ -17,7 +17,7 @@ import Footer from '@/components/Footer';
 const expertiseCategories = ['Income Tax', 'GST', 'Audit', 'Accounting', 'Investment', 'Exam Oriented', 'Law & MCA'];
 const languages = ['English', 'Hindi', 'Punjabi', 'Gujarati', 'Bengali', 'Tamil', 'Telugu'];
 const genders = ['Male', 'Female', 'Other'];
-const kycProofTypes = ['Aadhar', 'PAN', 'ICAI', 'DrivingLicense', 'Passport'];
+const kycProofTypes = ['Aadhar', 'PAN', 'ICAI', 'Driving License', 'Passport'];
 
 const stepTitles = ['Basic', 'Profile', 'Qualifications', 'Experience', 'Verify', 'Complete'];
 

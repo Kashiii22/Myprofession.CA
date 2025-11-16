@@ -31,6 +31,7 @@ export default function CompleteProfileWizard() {
   const [profileData, setProfileData] = useState({
     profilePicture: null, 
     availability: [],
+    selectedDays: [], // Add selectedDays to track which days are selected
     pricing: [],
     minSessionDuration: 15,
   });
@@ -68,6 +69,7 @@ export default function CompleteProfileWizard() {
   };
 
   const handleBack = () => {
+    // Prevent data loss when going back - just decrement step
     setStep(prev => prev - 1);
   };
 
@@ -276,14 +278,86 @@ const ProfilePictureStep = ({ onNext, onBack, initialData }) => {
 const AvailabilityStep = ({ onNext, onBack, initialData }) => {
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const [availability, setAvailability] = useState(() => daysOfWeek.map(day => initialData.find(d => d.day === day) || { day, slots: [] }));
-  const [selectedDays, setSelectedDays] = useState(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
-  const handleDayClick = (day) => { setSelectedDays(prev => { const isSelected = prev.includes(day); if (isSelected) { return prev.length > 1 ? prev.filter(d => d !== day) : prev; } return [...prev, day]; }); };
+  // Restore selected days from initial data - check for both availability and explicit selectedDays
+  const [selectedDays, setSelectedDays] = useState(() => {
+    // First try to restore explicitly saved selectedDays if available
+    if (initialData.selectedDays && Array.isArray(initialData.selectedDays)) {
+      return initialData.selectedDays;
+    }
+    // Fallback: restore days that have slots
+    const daysWithSlots = initialData.filter(d => d.slots && d.slots.length > 0).map(d => d.day);
+    return daysWithSlots;
+  });
+  const [validationErrors, setValidationErrors] = useState({});
+  const handleDayClick = (day) => { setSelectedDays(prev => { const isSelected = prev.includes(day); if (isSelected) { return prev.filter(d => d !== day); } return [...prev, day]; }); };
   const templateDay = availability.find(d => d.day === selectedDays[0]);
   const displayedSlots = templateDay ? templateDay.slots : [];
   const performBulkSlotAction = (newSlots) => { setAvailability(prev => prev.map(dayState => selectedDays.includes(dayState.day) ? { ...dayState, slots: newSlots } : dayState)); };
-  const addSlot = () => performBulkSlotAction([...displayedSlots, { startTime: "10:00", endTime: "11:00" }]);
-  const removeSlot = (index) => performBulkSlotAction(displayedSlots.filter((_, i) => i !== index));
-  const updateSlot = (index, field, value) => { const newSlots = displayedSlots.map((slot, i) => i === index ? { ...slot, [field]: value } : slot); performBulkSlotAction(newSlots); };
+  
+  const validateTimeSlot = (startTime, endTime, slotIndex) => {
+    const errors = {};
+    
+    // Validate start time is before end time
+    if (startTime && endTime && startTime >= endTime) {
+      errors[`slot_${slotIndex}`] = 'Start time must be before end time';
+    }
+    
+    // Validate times are within reasonable business hours (6 AM to 11 PM)
+    if (startTime && (startTime < '06:00' || startTime > '23:00')) {
+      errors[`slot_${slotIndex}_start`] = 'Start time should be between 6 AM and 11 PM';
+    }
+    
+    if (endTime && (endTime < '06:00' || endTime > '23:00')) {
+      errors[`slot_${slotIndex}_end`] = 'End time should be between 6 AM and 11 PM';
+    }
+    
+    return errors;
+  };
+  
+  const addSlot = () => {
+    const newSlot = { startTime: "10:00", endTime: "11:00" };
+    performBulkSlotAction([...displayedSlots, newSlot]);
+    // Clear validation errors for new slot
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`slot_${displayedSlots.length}`];
+      return newErrors;
+    });
+  };
+  
+  const removeSlot = (index) => {
+    performBulkSlotAction(displayedSlots.filter((_, i) => i !== index));
+    // Clear validation errors for removed slot
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`slot_${index}`];
+      delete newErrors[`slot_${index}_start`];
+      delete newErrors[`slot_${index}_end`];
+      return newErrors;
+    });
+  };
+  
+  const updateSlot = (index, field, value) => {
+    const newSlots = displayedSlots.map((slot, i) => i === index ? { ...slot, [field]: value } : slot);
+    
+    // Validate the updated slot
+    const slot = newSlots[index];
+    const errors = validateTimeSlot(slot.startTime, slot.endTime, index);
+    
+    // Update validation errors
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      // Remove old errors for this slot
+      delete newErrors[`slot_${index}`];
+      delete newErrors[`slot_${index}_start`];
+      delete newErrors[`slot_${index}_end`];
+      // Add new errors
+      Object.assign(newErrors, errors);
+      return newErrors;
+    });
+    
+    performBulkSlotAction(newSlots);
+  };
   return (
     <div>
       <div className="flex items-center mb-8"><ClockIcon />
@@ -293,14 +367,65 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
         {daysOfWeek.map(day => (<button key={day} onClick={() => handleDayClick(day)} className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-colors duration-300 ${selectedDays.includes(day) ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-800 hover:bg-gray-700'}`}>{day}</button>))}
       </div>
       <div className="min-h-[16rem] p-4 bg-black/20 rounded-lg">
-        <h3 className="font-semibold text-lg text-white mb-4">Editing Schedule for: <span className="text-cyan-400">{selectedDays.join(', ')}</span></h3>
-        {displayedSlots.length > 0 ? (<div className="space-y-3">{displayedSlots.map((slot, index) => (<div key={index} className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg"><input type="time" value={slot.startTime} onChange={(e) => updateSlot(index, 'startTime', e.target.value)} className="bg-gray-700 p-2 rounded-md border-gray-600 w-full" /><span className="text-gray-400">to</span><input type="time" value={slot.endTime} onChange={(e) => updateSlot(index, 'endTime', e.target.value)} className="bg-gray-700 p-2 rounded-md border-gray-600 w-full" /><button onClick={() => removeSlot(index)} className="text-red-500 hover:text-red-400 p-2 rounded-full bg-gray-700 hover:bg-red-500/20 transition-colors"><TrashIcon /></button></div>))}</div>
-        ) : (<div className="flex flex-col items-center justify-center h-full text-center py-8 text-gray-500"><p>You are unavailable on the selected day(s).</p><p className="text-sm">Click "Add Time Slot" to set your hours.</p></div>)}
-        <button onClick={addSlot} className="flex items-center gap-2 text-cyan-400 font-semibold mt-4 hover:text-cyan-300 transition-colors"><PlusIcon /> Add Time Slot</button>
+        <h3 className="font-semibold text-lg text-white mb-4">Editing Schedule for: <span className="text-cyan-400">{selectedDays.length > 0 ? selectedDays.join(', ') : 'Select days above'}</span></h3>
+        {selectedDays.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center py-8 text-gray-500">
+            <p>Please select one or more days to set your availability.</p>
+            <p className="text-sm">Click on the days above to get started.</p>
+          </div>
+        ) : displayedSlots.length > 0 ? (
+          <div className="space-y-3">
+            {displayedSlots.map((slot, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                <div className="flex-1">
+                  <input 
+                    type="time" 
+                    value={slot.startTime} 
+                    onChange={(e) => updateSlot(index, 'startTime', e.target.value)} 
+                    className={`bg-gray-700 p-2 rounded-md border ${validationErrors[`slot_${index}_start`] ? 'border-red-500' : 'border-gray-600'} w-full`} 
+                  />
+                  {validationErrors[`slot_${index}_start`] && (
+                    <p className="text-red-400 text-xs mt-1">{validationErrors[`slot_${index}_start`]}</p>
+                  )}
+                </div>
+                <span className="text-gray-400">to</span>
+                <div className="flex-1">
+                  <input 
+                    type="time" 
+                    value={slot.endTime} 
+                    onChange={(e) => updateSlot(index, 'endTime', e.target.value)} 
+                    className={`bg-gray-700 p-2 rounded-md border ${validationErrors[`slot_${index}_end`] ? 'border-red-500' : 'border-gray-600'} w-full`} 
+                  />
+                  {validationErrors[`slot_${index}_end`] && (
+                    <p className="text-red-400 text-xs mt-1">{validationErrors[`slot_${index}_end`]}</p>
+                  )}
+                </div>
+                <button onClick={() => removeSlot(index)} className="text-red-500 hover:text-red-400 p-2 rounded-full bg-gray-700 hover:bg-red-500/20 transition-colors">
+                  <TrashIcon />
+                </button>
+              </div>
+            ))}
+            {validationErrors[`slot_${displayedSlots.length - 1}`] && (
+              <div className="text-red-400 text-sm mt-2">
+                {validationErrors[`slot_${displayedSlots.length - 1}`]}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center py-8 text-gray-500">
+            <p>You are unavailable on the selected day(s).</p>
+            <p className="text-sm">Click "Add Time Slot" to set your hours.</p>
+          </div>
+        )}
+        {selectedDays.length > 0 && (
+          <button onClick={addSlot} className="flex items-center gap-2 text-cyan-400 font-semibold mt-4 hover:text-cyan-300 transition-colors">
+            <PlusIcon /> Add Time Slot
+          </button>
+        )}
       </div>
       <div className="flex justify-between mt-12">
         <button onClick={onBack} className="px-6 py-2 rounded-full text-gray-300 hover:bg-gray-800 transition-colors">Back</button>
-        <button onClick={() => onNext({ availability: availability.filter(d => d.slots.length > 0) })} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Define Services</button>
+        <button onClick={() => onNext({ availability: availability, selectedDays: selectedDays })} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Define Services</button>
       </div>
     </div>
   );

@@ -15,7 +15,6 @@ import {
 } from "react-icons/fa";
 
 import Header from "@/components/Header";
-import ScheduleSessionModal from "@/components/ScheduleSessionModal";
 import Footer from "@/components/Footer";
 import { getMentorById } from '@/lib/api/mentorApi'; // Assuming this is your API import
 
@@ -66,14 +65,8 @@ export default function MentorDetailPage() {
   const [mentor, setMentor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedMode, setSelectedMode] = useState("video");
-  const [selectedDuration, setSelectedDuration] = useState("15");
   const [newReview, setNewReview] = useState("");
   const [reviews, setReviews] = useState([]);
-  const [availableDates, setAvailableDates] = useState([]);
-  const [bookedDates, setBookedDates] = useState([]);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
@@ -100,13 +93,6 @@ export default function MentorDetailPage() {
 
         const mentorData = result.data;
 
-        // Process pricing structure from backend
-        const pricingForType = (type) => {
-          const pricing = mentorData.registrationRef?.pricing || [];
-          const priceData = pricing.find(p => p.type === type);
-          return priceData?.price || 30; // Default fallback in INR
-        };
-
         const transformedMentor = {
           id: mentorData._id,
           name: mentorData.userRef.name,
@@ -114,22 +100,24 @@ export default function MentorDetailPage() {
           email: mentorData.userRef.email,
           title: mentorData.registrationRef?.qualification?.[0] || 'Professional Mentor',
           rating: mentorData.rating || 4.5,
-          pricing: mentorData.registrationRef?.pricing || [
+          pricing: mentorData.pricing || [
             { type: "chat", price: 10, duration: 1 },
+            { type: "voice", price: 20, duration: 1 },
             { type: "video", price: 30, duration: 1 }
           ],
-          chatPricePerMinute: pricingForType("chat"),
-          videoPricePerMinute: pricingForType("video"),
-          voicePricePerMinute: pricingForType("voice"),
-          minSessionDuration: mentorData.registrationRef?.minSessionDuration || 15,
-          isActive: mentorData.registrationRef?.isActive || false,
-          isAvailableNow: mentorData.registrationRef?.isAvailableNow || false,
-          availabilitySchedule: mentorData.registrationRef?.availability || [],
-          location: mentorData.location || "Location not specified",
+          minSessionDuration: mentorData.minSessionDuration || 15,
+          isActive: mentorData.isActive || false,
+          isBanned: mentorData.isBanned || false,
+          isAvailableNow: mentorData.isAvailableNow || false,
+          availabilitySchedule: mentorData.availability || [],
+          languages: mentorData.registrationRef?.languages || [],
           expertise: mentorData.registrationRef?.expertise || [],
-          experience: mentorData.registrationRef?.experience || mentorData.experience || "Experience not specified",
+          experience: mentorData.registrationRef?.experienceInfo || "Experienced professional",
           qualifications: mentorData.registrationRef?.qualification || [],
-          about: mentorData.registrationRef?.description || "Experienced professional mentor dedicated to helping students succeed.",
+          achievements: mentorData.registrationRef?.achievements || [],
+          publications: mentorData.registrationRef?.publications || [],
+          yearsExperience: mentorData.registrationRef?.yearsOfExperience || 0,
+          kycVerified: mentorData.registrationRef?.kycProofNumber ? true : false,
           socials: mentorData.socials || {},
           stats: {
             sessionsCompleted: mentorData.sessionsCompleted || 0,
@@ -143,13 +131,6 @@ export default function MentorDetailPage() {
         if (mentorData.reviews && Array.isArray(mentorData.reviews)) {
           setReviews(mentorData.reviews);
         }
-
-        if (mentorData.availableScheduleDates && Array.isArray(mentorData.availableScheduleDates)) {
-          setAvailableDates(mentorData.availableScheduleDates);
-        }
-        if (mentorData.bookedScheduleDates && Array.isArray(mentorData.bookedScheduleDates)) {
-          setBookedDates(mentorData.bookedScheduleDates);
-        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -162,6 +143,10 @@ export default function MentorDetailPage() {
 
   const handleGoBack = () => {
     router.push('/mentors');
+  };
+
+  const handleNavigateToBooking = () => {
+    router.push(`/mentor/${mentorId}/booking`);
   };
 
   // --- Loading State ---
@@ -221,8 +206,15 @@ export default function MentorDetailPage() {
           <div className="lg:col-span-3 space-y-5 text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl font-bold">{mentor.name}</h1>
             <p className="text-2xl sm:text-3xl text-blue-400">{mentor.title}</p>
-            <p className="text-lg sm:text-xl text-gray-400">{mentor.location}</p>
-            <p className="text-lg sm:text-xl text-blue-100">{mentor.experience}</p>
+            
+            <div className="flex flex-wrap gap-4 justify-center lg:justify-start text-lg sm:text-xl">
+              {mentor.yearsExperience > 0 && (
+                <div className="flex items-center gap-2">
+                  <FaRegClock className="text-green-400" />
+                  <span className="text-gray-300">{mentor.yearsExperience} years experience</span>
+                </div>
+              )}
+            </div>
 
             {mentor.expertise.length > 0 && (
               <div className="bg-gray-800 p-5 mt-5 rounded-xl">
@@ -238,7 +230,7 @@ export default function MentorDetailPage() {
             <div className="mt-6 flex justify-center lg:justify-start">
               <button
                 className="border border-blue-600 text-blue-400 px-8 py-4 rounded-full hover:bg-blue-800/20 text-lg sm:text-xl font-medium"
-                onClick={() => setShowModal(true)}
+                onClick={handleNavigateToBooking}
               >
                 Schedule Session
               </button>
@@ -248,10 +240,61 @@ export default function MentorDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2 space-y-8" data-aos="fade-right">
+            {/* About Section */}
             <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg">
               <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-3">About</h2>
-              <p className="text-gray-300 leading-relaxed text-lg sm:text-xl">{mentor.about}</p>
+              <div className="text-gray-300 leading-relaxed text-lg sm:text-xl whitespace-pre-line">
+                {mentor.experience}
+              </div>
             </div>
+
+            {/* Languages Section */}
+            {mentor.languages.length > 0 && (
+              <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg">
+                <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-3">Languages</h2>
+                <div className="flex flex-wrap gap-3">
+                  {mentor.languages.map((lang, idx) => (
+                    <span key={idx} className="px-4 py-2 bg-blue-900/30 border border-blue-600/50 rounded-full text-lg sm:text-xl text-blue-300">
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Achievements Section */}
+            {mentor.achievements.length > 0 && mentor.achievements[0] !== "" && (
+              <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg">
+                <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-3">Achievements</h2>
+                <ul className="space-y-3">
+                  {mentor.achievements.map((achievement, idx) => (
+                    achievement && achievement.trim() && (
+                      <li key={idx} className="flex items-start gap-3 text-lg sm:text-xl text-gray-300">
+                        <FaCertificate className="text-yellow-400 mt-1 flex-shrink-0" />
+                        <span>{achievement}</span>
+                      </li>
+                    )
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Publications Section */}
+            {mentor.publications.length > 0 && mentor.publications[0] !== "" && (
+              <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg">
+                <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-3">Publications</h2>
+                <ul className="space-y-3">
+                  {mentor.publications.map((publication, idx) => (
+                    publication && publication.trim() && (
+                      <li key={idx} className="flex items-start gap-3 text-lg sm:text-xl text-gray-300">
+                        <FaUniversity className="text-purple-400 mt-1 flex-shrink-0" />
+                        <span>{publication}</span>
+                      </li>
+                    )
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="bg-[#0f172a] p-8 rounded-2xl border border-gray-700 shadow-lg space-y-6">
               <h2 className="text-3xl sm:text-4xl font-semibold text-blue-400">Reviews</h2>
@@ -328,23 +371,7 @@ export default function MentorDetailPage() {
           </div>
         </div>
 
-        {/* --- This is the updated, API-driven modal call --- */}
-        {showModal && (
-          <ScheduleSessionModal
-            onClose={() => setShowModal(false)}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            selectedMode={selectedMode}
-            setSelectedMode={setSelectedMode}
-            selectedDuration={selectedDuration}
-            setSelectedDuration={setSelectedDuration}
-            mentorPricing={mentor.pricing} // Uses the full pricing object
-            minSessionDuration={mentor.minSessionDuration}
-            availableDates={availableDates}
-            bookedDates={bookedDates}
-            DAY_WISE_AVAILABILITY={mentor.availabilitySchedule}
-          />
-        )}
+        
       </section>
       <Footer />
     </div>
