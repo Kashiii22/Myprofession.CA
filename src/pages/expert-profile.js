@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import Confetti from 'react-confetti';
 import { FaFileUpload, FaTimes, FaCheck, FaPlus, FaBook, FaTrophy, FaPaperPlane, FaCheckCircle, FaLock, FaUserSecret, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast'; 
@@ -26,7 +26,8 @@ const ApplicationStatusComponents = {
     <div className="min-h-screen bg-black text-gray-200 flex items-center justify-center px-4 py-20">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <h1 className="text-2xl font-bold text-white">Checking Status...</h1>
+        <h1 className="text-2xl font-bold text-white">Loading Registration Page...</h1>
+        <p className="text-gray-400 mt-2">Preparing your consultant application form</p>
       </div>
     </div>
   ),
@@ -112,22 +113,92 @@ const DynamicFieldArray = ({ title, fieldKey, icon, values, placeholder, onUpdat
 export default function ExpertProfile() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  
+  // ✅ RENAMED: Changed 'loading' to 'isSubmitting' to avoid conflict with Auth Loading
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  
   const [kycPreview, setKycPreview] = useState(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState('loading');
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   
   const pageTopRef = useRef(null); 
-  const { user, isLoggedIn } = useSelector((state) => state.auth);
+  
+  // ✅ UPDATED: Extracting 'loading' from Redux (aliased as authLoading)
+  const { user, isLoggedIn, loading: authLoading } = useSelector((state) => state.auth);
 
+  // Log the state for debugging
+  console.log('🔍 ExpertProfile - Redux Auth State:', {
+    user: user?.name ? user.name : 'null',
+    isLoggedIn,
+    authLoading,
+    isAuthorized,
+    authCheckComplete
+  });
+
+  // ✅ FIXED: Improved Auth Check with extended loading guard and state tracking
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.push('/unauthorized');
+    console.log('🔍 ExpertProfile - Auth Check:', { 
+      authLoading, 
+      isLoggedIn, 
+      user: user?.name || 'null',
+      userRole: user?.role || 'null',
+      isAuthorized,
+      authCheckComplete
+    });
+    
+    // Wait for auth to finish loading AND don't run if already completed
+    if (authLoading === true || authCheckComplete) {
+      console.log('🔍 ExpertProfile - Auth still loading or check complete, waiting...');
       return;
     }
-    setIsAuthorized(true);
-  }, [isLoggedIn, router]);
+    
+    // Add a small delay to ensure Redux state is fully hydrated
+    const timer = setTimeout(() => {
+      // At this point, authLoading is false, check authentication
+      
+      // First, if we have user data from AuthInitializer, trust it
+      if (user && isLoggedIn) {
+        console.log('🔍 ExpertProfile - User authenticated via Redux, allowing access');
+        setIsAuthorized(true);
+        setAuthCheckComplete(true);
+        return;
+      }
+      
+      // If already authorized, don't re-check or redirect
+      if (isAuthorized) {
+        console.log('🔍 ExpertProfile - Already authorized, skipping auth check');
+        setAuthCheckComplete(true);
+        return;
+      }
+      
+      // If Redux shows not logged in, do a quick cookie check to be sure
+      const checkAuthFromCookies = async () => {
+        try {
+          const response = await api.get('/me');
+          if (response.success) {
+            console.log('🔍 ExpertProfile - User authenticated via cookies, updating Redux and allowing access');
+            // We could dispatch setLoginSuccess here, but AuthInitializer should handle it
+            setIsAuthorized(true);
+            setAuthCheckComplete(true);
+            return true;
+          }
+        } catch (error) {
+          console.log('🔍 ExpertProfile - Cookie auth check failed:', error.response?.status === 401 ? 'No valid token' : error.message);
+        }
+        
+        console.log('🔍 ExpertProfile - Not logged in, redirecting to unauthorized');
+        setAuthCheckComplete(true);
+        router.push('/unauthorized');
+        return false;
+      };
+      
+      checkAuthFromCookies();
+    }, 500); // 500ms delay to ensure Redux hydration
+
+    return () => clearTimeout(timer);
+  }, [isLoggedIn, authLoading, router, user, isAuthorized, authCheckComplete]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -167,11 +238,10 @@ export default function ExpertProfile() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
-  // ✅ FIX: Force loading to false when entering Step 5
+  // ✅ UPDATED: Use isSubmitting instead of loading
   useEffect(() => {
     if (step === 5) {
-      console.log("Step 5 mounted, forcing loading to false");
-      setLoading(false);
+      setIsSubmitting(false);
     }
   }, [step]); 
   
@@ -199,7 +269,7 @@ export default function ExpertProfile() {
     if (file) {
       setVerificationDetails(prev => ({ ...prev, kycProofDocument: file }));
       setKycPreview(file.name);
-      setLoading(false); 
+      setIsSubmitting(false); 
     }
   };
   
@@ -218,7 +288,7 @@ export default function ExpertProfile() {
       return;
     }
 
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       const sigResponse = await api.post('/uploads/generate-cloudinary-signature');
       const { signature, timestamp } = sigResponse.data;
@@ -252,7 +322,7 @@ export default function ExpertProfile() {
       const errorMessage = error.response?.data?.message || error.message || 'An unexpected error occurred.';
       toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
   
@@ -266,7 +336,7 @@ export default function ExpertProfile() {
         toast.error("Please select at least one language.");
         return;
     }
-    setLoading(false);
+    setIsSubmitting(false);
     setStep(2);
   };
   
@@ -279,7 +349,7 @@ export default function ExpertProfile() {
         toast.error("Please select at least one area of expertise.");
         return;
     }
-    setLoading(false);
+    setIsSubmitting(false);
     setStep(3);
   };
   
@@ -288,7 +358,7 @@ export default function ExpertProfile() {
         toast.error("Please add at least one qualification.");
         return;
     }
-    setLoading(false);
+    setIsSubmitting(false);
     setStep(4);
   };
   
@@ -297,7 +367,7 @@ export default function ExpertProfile() {
         toast.error("Please describe your experience.");
         return;
     }
-    setLoading(false);
+    setIsSubmitting(false);
     setStep(5);
   };
 
@@ -306,8 +376,18 @@ export default function ExpertProfile() {
   const selectClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-2 w-full text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
   const textAreaClass = 'bg-gray-800 border border-gray-700 rounded-md px-4 py-3 w-full text-gray-200 placeholder-gray-500 resize-none min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
 
-  // Render
-  if (!isAuthorized) return null; // Handled by redirect/auth component
+  // ✅ FIXED: Render - Handle Global Auth Loading with extended check
+  if (authLoading === true || !authCheckComplete) {
+    console.log('🔍 ExpertProfile - Showing loading component, authLoading:', authLoading, 'authCheckComplete:', authCheckComplete);
+    const LoadingComponent = ApplicationStatusComponents.loading;
+    return <LoadingComponent />;
+  }
+
+  // Don't render anything if not authorized (the useEffect will redirect)
+  if (!isAuthorized) {
+    console.log('🔍 ExpertProfile - Not authorized, waiting for redirect or auth check');
+    return null;
+  }
 
   if (applicationStatus !== 'none') {
     const StatusComponent = ApplicationStatusComponents[applicationStatus];
@@ -404,7 +484,7 @@ export default function ExpertProfile() {
                       </div>
                   </div>
                   <div className="mt-12 flex justify-between">
-                      <button type="button" onClick={() => {setLoading(false); setStep(1);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
+                      <button type="button" onClick={() => {setIsSubmitting(false); setStep(1);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                       <button type="button" onClick={handleStep2to3} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                   </section>
@@ -416,7 +496,7 @@ export default function ExpertProfile() {
                   <h3 className="text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-6">Your Qualifications</h3>
                   <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} />
                   <div className="mt-12 flex justify-between">
-                      <button type="button" onClick={() => {setLoading(false); setStep(2);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
+                      <button type="button" onClick={() => {setIsSubmitting(false); setStep(2);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                       <button type="button" onClick={handleStep3to4} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                 </section>
@@ -434,13 +514,13 @@ export default function ExpertProfile() {
                     <DynamicFieldArray title="Publications" fieldKey="publications" fieldKey="publications" icon={FaPaperPlane} values={professionalDetails.publications} placeholder="Publication" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} />
                   </div>
                   <div className="mt-12 flex justify-between">
-                      <button type="button" onClick={() => {setLoading(false); setStep(3);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
+                      <button type="button" onClick={() => {setIsSubmitting(false); setStep(3);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                       <button type="button" onClick={handleStep4to5} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
                   </div>
                 </section>
               )}
 
-              {/* Step 5: Verification - FIXED */}
+              {/* Step 5: Verification */}
               {step === 5 && (
                 <section>
                   <h2 className="text-3xl font-semibold text-white text-center mb-8">Identity Verification (KYC)</h2>
@@ -455,7 +535,6 @@ export default function ExpertProfile() {
                       <label className="text-sm font-medium text-gray-400 mb-2 block">Upload Document <span className="text-red-500 ml-1">*</span></label>
                       <label htmlFor="kyc-upload" className="w-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer hover:bg-gray-800/50 transition">
                         <FaFileUpload className="text-4xl text-gray-500 mb-2" />
-                        {/* Display the file name if it exists in state, even if the input is technically empty due to navigation */}
                         <span className="text-blue-400 font-semibold">{kycPreview || (verificationDetails.kycProofDocument ? verificationDetails.kycProofDocument.name : "Click to upload a file")}</span>
                         <p className="text-xs text-gray-500 mt-1">PNG, JPG, or PDF (MAX. 5MB)</p>
                       </label>
@@ -482,16 +561,14 @@ export default function ExpertProfile() {
                   </div>
                   
                   <div className="mt-12 flex justify-between">
-                    {/* Cleaned up Back Button */}
-                    <button type="button" onClick={() => {setLoading(false); setStep(4);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
+                    <button type="button" onClick={() => {setIsSubmitting(false); setStep(4);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                     
-                    {/* Cleaned up Submit Button: Removed onClick, relies on Form onSubmit */}
                     <button 
                       type="submit" 
-                      disabled={loading || !acknowledged} 
+                      disabled={isSubmitting || !acknowledged} 
                       className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Submitting...' : 'Submit for Verification'}
+                      {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
                     </button>
                   </div>
                 </section>

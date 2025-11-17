@@ -190,7 +190,7 @@ export default function MentorDetailPage() {
 
   // --- Main Content (New Design + API Data) ---
   return (
-    <div className="bg-black text-white min-h-screen text-[18px] sm:text-[20px] font-['Outfit']">
+    <div className="bg-black text-white min-h-screen text-[18px] sm:text-[20px] font-sans">
       <Header />
       <section className="px-6 sm:px-8 md:px-14 lg:px-24 py-14 space-y-14 max-w-screen-xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">

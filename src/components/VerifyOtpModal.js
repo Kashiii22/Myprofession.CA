@@ -50,7 +50,7 @@ export default function VerifyOtpModal({ phone, onClose, onVerify, loading }) {
     if (counter > 0 || resendLoading) return;
     setResendLoading(true);
     try {
-      const response = await resendOTP({ phone: `+91${phone}` });
+      const response = await resendOTP({ phone: phone });
       if (response.success) {
         toast.success(response.message);
         setCounter(30); // Reset timer on success
@@ -87,7 +87,7 @@ export default function VerifyOtpModal({ phone, onClose, onVerify, loading }) {
           Verify OTP
         </h1>
         <p className="text-sm text-center text-gray-400 mb-6">
-          Enter the 6-digit OTP sent to +91{phone}
+          Enter the 6-digit OTP sent to {phone}
         </p>
 
         <form onSubmit={handleVerify} className="space-y-6">
