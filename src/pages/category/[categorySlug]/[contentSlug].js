@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router"; // Changed to next/router as this seems to be the Pages directory
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { sanityClient } from "../../../lib/sanityClient";
@@ -10,7 +10,7 @@ import { ptComponents } from "../../../components/PortableTextComponents";
 import { FiFileText } from "react-icons/fi";
 import { FaChevronRight } from "react-icons/fa";
 
-// --- DATA FETCHING (No Changes) ---
+// --- DATA FETCHING ---
 export async function getStaticPaths() {
     const query = `*[_type == "content"]{ "slug": slug.current, "categorySlug": category->slug.current }`;
     const allContents = await sanityClient.fetch(query);
@@ -71,19 +71,6 @@ export async function getStaticProps({ params }) {
 }
 // --- END OF DATA FETCHING ---
 
-// Helper function (no longer used for truncation, but good to keep for word counts)
-const getWordCount = (blocks) => {
-    if (!blocks) return 0;
-    return blocks
-        .filter(b => b._type === 'block' && b.children)
-        .flatMap(b => b.children.map(c => c.text || ''))
-        .join(' ')
-        .split(/\s+/)
-        .filter(Boolean).length;
-};
-// --- End of helper ---
-
-
 export default function CategoryPage({ contentItem }) {
     const router = useRouter(); 
     const [openSections, setOpenSections] = useState({ documents: false, topic: false });
@@ -100,7 +87,7 @@ export default function CategoryPage({ contentItem }) {
     
     const toggleSection = (section) => setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
-    // Intersection Observer (No Change)
+    // Intersection Observer
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -123,7 +110,7 @@ export default function CategoryPage({ contentItem }) {
         });
     }, [validSections]);
 
-    // Active Pill Effect (No Change)
+    // Active Pill Effect
     useEffect(() => {
         if (activeSection && topicsListRef.current) {
             const activeIndex = validSections.findIndex(s => s.title.toLowerCase().replace(/\s+/g, '-') === activeSection);
@@ -138,7 +125,7 @@ export default function CategoryPage({ contentItem }) {
         }
     }, [activeSection, validSections]);
 
-    // Section Click Handler (No Change)
+    // Section Click Handler
     const handleSectionClick = (sectionId) => {
         const element = document.getElementById(sectionId);
         if (element && headerRef.current) {
@@ -153,16 +140,7 @@ export default function CategoryPage({ contentItem }) {
         }
     };
     
-    // Time to Read (No Change)
-    const timeToRead = useMemo(() => {
-        if (!validSections) return 1;
-        const extractText = (blocks) => blocks.map(b => b.children?.map(c => c.text).join('')).join(' ');
-        const text = validSections.map(s => extractText(s.description || [])).join(' ');
-        const wordCount = text.split(/\s+/).length;
-        return Math.ceil(wordCount / 200);
-    }, [validSections]);
-
-    // Portable Text components (always shows download)
+    // Portable Text components
     const customPtComponents = useMemo(() => ({
         ...ptComponents, 
         types: {
@@ -185,7 +163,7 @@ export default function CategoryPage({ contentItem }) {
     }), []); 
 
     
-    // renderContent function (No Change)
+    // renderContent function
     const renderContent = (sections) => {
         if (!sections) return null;
         return sections.map((section) => {
@@ -208,17 +186,6 @@ export default function CategoryPage({ contentItem }) {
         // Do nothing, allow default download
     };
 
-    // Loading component (No Change)
-    const LoadingSpinner = () => (
-        <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-            <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p className="text-lg">Loading content...</p>
-        </div>
-    );
-
     return (
         <div className="bg-slate-100 text-slate-800 font-sans">
             <div className="sticky top-0 z-40" ref={headerRef}>
@@ -227,7 +194,7 @@ export default function CategoryPage({ contentItem }) {
 
             <main className="flex flex-row items-start">
                 {/* --- SIDEBAR --- */}
-                <aside className="w-69 flex-shrink-0  bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
+                <aside className="w-69 flex-shrink-0 bg-slate-200 border-r border-slate-200 h-[calc(100vh-116px)] lg:sticky top-[116px] hidden lg:flex flex-col">
                     <div className="px-6 pt-6 pb-4 border-b border-slate-200">
                         <h2 className="text-xl font-bold text-slate-900 mb-1">{contentItem.title}</h2>
                         <p className="text-xl text-slate-500">Summary Box</p>
@@ -296,9 +263,6 @@ export default function CategoryPage({ contentItem }) {
                                             Download
                                         </a>
                                     </div>
-                                Setting `isTruncated` to always be `false` means the `isTruncated &&` check in the fade-out block is also `false`, so it will never render.
-
-This code is now clean and has no login logic.
                                 </div>
                             </div>
                         )}
@@ -306,7 +270,7 @@ This code is now clean and has no login logic.
                 </aside>
                 
                 {/* --- MAIN CONTENT --- */}
-                <section className="flex-1 min-w-0 py-8 pr-20 g-white shadow-inner-left relative">
+                <section className="flex-1 min-w-0 py-8 pr-20 bg-white shadow-inner-left relative">
                     <div className="max-w-5xl mx-auto">
                         {contentItem ? (
                             <>
@@ -315,12 +279,10 @@ This code is now clean and has no login logic.
                                     {contentItem.subtitle && <p className="text-xl text-slate-600 italic">{contentItem.subtitle}</p>}
                                 </div>
                                 
-                                {/* ✅ --- FIX: Removed all conditional logic --- */}
                                 <div className="relative">
                                     <div>
                                         {renderContent(validSections)}
                                     </div>
-                                    {/* The fade-out block is now gone */}
                                 </div>
                             </>
                         ) : (<p className="p-8">Loading Content...</p>)}
@@ -329,8 +291,6 @@ This code is now clean and has no login logic.
             </main>
 
             <Footer />
-
-            {/* AuthModal is fully removed */}
         </div>
     );
 }
