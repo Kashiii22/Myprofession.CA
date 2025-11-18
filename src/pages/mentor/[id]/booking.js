@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  FaComments, FaPhone, FaVideo, FaArrowLeft, FaCalendarAlt, 
+  FaComments, FaVideo, FaArrowLeft, FaCalendarAlt, 
   FaClock, FaUser, FaMapMarkerAlt, FaStar, FaCheck, FaVideoSlash,
   FaBusinessTime, FaDollarSign
 } from "react-icons/fa";
@@ -17,7 +17,6 @@ import { getMentorById } from '@/lib/api/mentorApi';
 
 const MODES = [
   { type: "chat", icon: <FaComments />, label: "Chat" },
-  { type: "voice", icon: <FaPhone />, label: "Voice Call" },
   { type: "video", icon: <FaVideo />, label: "Video Call" },
 ];
 
@@ -209,7 +208,6 @@ export default function BookingPage() {
           rating: mentorData.rating || 4.5,
           pricing: mentorData.pricing || [
             { type: "chat", price: 10, duration: 1 },
-            { type: "voice", price: 20, duration: 1 },
             { type: "video", price: 30, duration: 1 }
           ],
           minSessionDuration: mentorData.minSessionDuration || 15,
@@ -566,7 +564,7 @@ export default function BookingPage() {
             {/* Session Mode */}
             <div className="bg-[#0f172a]/50 backdrop-blur-md border border-gray-800 rounded-xl p-4">
               <h3 className="text-base font-semibold text-blue-400 mb-3">Session Mode</h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {MODES.map(({ type, icon, label }) => (
                   <button
                     key={type}

@@ -64,44 +64,84 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  // Create state to track auth initialization
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [authCheckDelay, setAuthCheckDelay] = useState(true);
+
   useEffect(() => {
-    // Check if user is authenticated and is a mentor
+    // Give Redux 1 second to initialize on page refresh
+    const timer = setTimeout(() => {
+      setAuthCheckDelay(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Don't check authentication until both Redux is ready and delay is over
+    if (authCheckDelay) {
+      console.log("Waiting for Redux to initialize...");
+      setIsAuthLoading(true);
+      return;
+    }
+
     console.log("Auth State:", { isAuthenticated, user });
     console.log("User Role:", user?.role);
     
-    // Add better null checking and loading state check
-    if (isAuthenticated === false && (!user || !user.role)) {
+    // If Redux is still initializing (undefined), wait
+    if (isAuthenticated === undefined) {
+      setIsAuthLoading(true);
+      return;
+    }
+    
+    // Once Redux is loaded (true or false), set auth loading to false
+    setIsAuthLoading(false);
+    
+    // User is definitely not logged in
+    if (isAuthenticated === false) {
       toast.error("Please login to access mentor dashboard.");
       router.push("/");
       return;
     }
     
+    // User is logged in but is not a mentor
     if (isAuthenticated && user && user.role !== "MENTOR") {
       toast.error("Access denied. Mentor access required.");
       router.push("/");
       return;
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, authCheckDelay]);
+
+  const loadingMessages = [
+    "Launching your dashboard... 🚀",
+    "Preparing mentor space... 📊",
+    "Powering up insights... ⚡",
+    "Crafting your experience... ✨",
+    "Almost there... 🎯",
+    "Ready to mentor! 🎉"
+  ];
+
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
+  // Cycle through messages while loading
+  useEffect(() => {
+    if (!isAuthLoading) return;
+    
+    const messageTimer = setInterval(() => {
+      setCurrentMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 800);
+
+    return () => clearInterval(messageTimer);
+  }, [isAuthLoading, loadingMessages.length]);
 
   // Return loading state while checking authentication
-  if (isAuthenticated === false && (!user || !user.role || user.role !== "MENTOR")) {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Return loading if auth is still being determined
-  if (isAuthenticated !== true || !user) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p className="text-lg text-blue-400 mb-2">{loadingMessages[currentMessageIndex]}</p>
+          <p className="text-sm text-gray-400">Your mentor dashboard is just moments away</p>
         </div>
       </div>
     );

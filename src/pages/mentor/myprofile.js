@@ -47,7 +47,6 @@ const MyProfile = () => {
   const [editingPricing, setEditingPricing] = useState(false);
   const [pricing, setPricing] = useState([
     { type: 'chat', price: 5 }, // Price per minute
-    { type: 'voice', price: 10 }, // Price per minute  
     { type: 'video', price: 15 } // Price per minute
   ]);
   const [minSessionDuration, setMinSessionDuration] = useState(15);
@@ -77,9 +76,10 @@ const MyProfile = () => {
       setQualifications(profileData?.registrationRef?.qualification?.join(', ') || qualifications);
       setExpertise((profileData?.registrationRef?.expertise || ['GST', 'Income Tax']).join(', '));
       
-      // Update pricing data
+      // Update pricing data (filter out voice entries)
       if (profileData?.pricing) {
-        setPricing(profileData.pricing);
+        const filteredPricing = profileData.pricing.filter(item => item.type !== 'voice');
+        setPricing(filteredPricing);
       }
       if (profileData?.minSessionDuration) {
         setMinSessionDuration(profileData.minSessionDuration);
@@ -410,7 +410,7 @@ const MyProfile = () => {
             {editingPricing ? (
               <div className="space-y-4">
                 <p className="text-sm text-gray-400">Set your pricing per minute for each session type</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {pricing.map((price, idx) => (
                     <div key={idx} className="space-y-2">
                       <label className="text-sm text-gray-400 font-semibold">
@@ -464,7 +464,7 @@ const MyProfile = () => {
               </div>
             ) : (
               <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {profileData?.pricing?.map((price, idx) => (
                     <Detail 
                       key={idx} 
