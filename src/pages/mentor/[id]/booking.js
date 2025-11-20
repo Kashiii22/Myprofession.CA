@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   FaComments, FaVideo, FaArrowLeft, FaCalendarAlt, 
   FaClock, FaUser, FaMapMarkerAlt, FaStar, FaCheck, FaVideoSlash,
-  FaBusinessTime, FaDollarSign
+  FaBusinessTime
 } from "react-icons/fa";
 import Image from "next/image";
 import { DayPicker } from "react-day-picker";
@@ -56,7 +56,7 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
     return (
       <div
         className={`
-          relative h-20 p-1 border rounded-lg transition-all cursor-pointer
+          relative h-14 p-1 border rounded-lg transition-all cursor-pointer
           ${isPast ? 'opacity-40 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-gray-800/50'}
           ${isSelected ? 'border-blue-500 bg-blue-900/30 ring-2 ring-blue-500/50' : 'border-gray-700'}
           ${!isPast && !hasEvents && 'opacity-60'}
@@ -75,10 +75,8 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
         </div>
         
         {getEventCount() > 0 && (
-          <div className="absolute bottom-1 left-1 right-1">
-            <div className={`${getEventColor()} text-white text-xs rounded py-0.5 px-1 text-center truncate`}>
-              {getEventText()}
-            </div>
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+            <div className={`w-2 h-2 ${getEventColor()} rounded-full`}></div>
           </div>
         )}
         
@@ -126,8 +124,8 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
   };
   
   return (
-    <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-700">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-blue-400">
           {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </h3>
@@ -147,9 +145,9 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
         </div>
       </div>
       
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-2">
+          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
             {day}
           </div>
         ))}
@@ -399,72 +397,20 @@ export default function BookingPage() {
           <div className="w-24"></div> {/* Spacer for centering */}
         </div>
 
-        {/* Mentor Compact Info Card */}
-        <div className="bg-[#0f172a]/50 backdrop-blur-md border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl">
-          <div className="flex flex-col sm:flex-row gap-6">
-            <div className="flex-shrink-0">
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-blue-500/50">
-                <Image src={mentor.image} alt={mentor.name} fill className="object-cover" />
-              </div>
-            </div>
-            <div className="flex-1 space-y-3">
-              <div>
-                <h2 className="text-xl font-bold text-white mb-1">{mentor.name}</h2>
-                <p className="text-blue-300">{mentor.title}</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2 text-gray-300">
-                  <FaUser className="text-blue-400" />
-                  <span>Experience: {mentor.experience}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <FaStar className="text-yellow-400" />
-                  <span>Rating: {mentor.rating}/5</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <FaClock className="text-green-400" />
-                  <span>Min Session: {mentor.minSessionDuration} min</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <FaCalendarAlt className="text-purple-400" />
-                  <span>{mentor.availabilitySchedule.filter(d => d.slots.length > 0).length} days available</span>
-                </div>
-              </div>
-              {mentor.expertise.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {mentor.expertise.slice(0, 4).map((skill, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-blue-900/30 border border-blue-600/50 rounded-full text-xs text-blue-300">
-                      {skill}
-                    </span>
-                  ))}
-                  {mentor.expertise.length > 4 && (
-                    <span className="px-2 py-1 bg-gray-800 border border-gray-700 rounded-full text-xs text-gray-400">
-                      +{mentor.expertise.length - 4} more
-                    </span>
-                  )}
-                </div>
-              )}
-              {mentor.languages.length > 0 && (
-                <div className="text-xs text-gray-400">
-                  Languages: {mentor.languages.join(', ')}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        
 
         {/* Compact Booking Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Calendar Section - 7 columns */}
           <div className="lg:col-span-7">
-            <div className="bg-[#0f172a]/50 backdrop-blur-md border border-gray-800 rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
+            <div className="bg-[#0f172a]/50 backdrop-blur-md border border-gray-800 rounded-2xl p-4">
+              <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center gap-2">
                 <FaCalendarAlt />
                 Select Date & Time
               </h3>
               
               {dayWiseAvailableDates.length > 0 ? (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* Enhanced Calendar with Events */}
                   <CustomCalendar
                     selected={selectedDate}
@@ -596,7 +542,7 @@ export default function BookingPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <FaDollarSign className="text-yellow-400" />
+                    <span className="text-yellow-400 text-sm">₹</span>
                     <span className="text-sm">Rate</span>
                   </div>
                   <span className="text-sm font-semibold">₹{getPricePerMinute(selectedMode)}/minute</span>

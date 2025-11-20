@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+import { FaStar, FaStarHalfAlt, FaRegStar, FaUser } from "react-icons/fa";
 import { FiRefreshCw, FiLoader } from "react-icons/fi"; // Added loader icon
 import { motion, AnimatePresence } from "framer-motion";
 const{getActiveMentors} = require('@/lib/api/mentorApi'); // --- 1. IMPORT API SERVICE ---
@@ -52,7 +52,13 @@ const MentorCard = ({ mentor }) => {
       )}
 
       <div className="relative w-28 h-28 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-500 shadow-md">
-        <Image src={mentor.image} alt={mentor.name} fill className="object-cover" sizes="112px" />
+        {mentor.image ? (
+          <Image src={mentor.image} alt={mentor.name} fill className="object-cover" sizes="112px" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <FaUser className="text-white text-3xl" />
+          </div>
+        )}
       </div>
 
       <div className="text-center">

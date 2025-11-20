@@ -8,6 +8,7 @@ import "aos/dist/aos.css";
 import Sidebar from "@/components/Sidebar";
 import { toast } from "react-hot-toast";
 import { getDashboardProfile } from '@/lib/api/mentorApi';
+import InactiveProfileModal from "@/components/InactiveProfileModal";
 import { 
   FaCalendarDay, 
   FaUserTie, 
@@ -33,6 +34,8 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileInactive, setProfileInactive] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 800 });
@@ -49,6 +52,12 @@ export default function Dashboard() {
         if (response.success) {
           console.log('Dashboard data received:', response.data);
           setDashboardData(response.data);
+          
+          // Check if profile is inactive
+          if (!response.data.isActive) {
+            setProfileInactive(true);
+            setShowProfileModal(true);
+          }
         } else {
           throw new Error(response.message || 'Failed to fetch dashboard data');
         }
@@ -161,6 +170,14 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // Handle profile completion success
+  const handleProfileComplete = () => {
+    setProfileInactive(false);
+    setShowProfileModal(false);
+    setDashboardData(prev => ({ ...prev, isActive: true }));
+    toast.success('Profile completed successfully! Welcome aboard!');
+  };
 
   // Return error state if data fetch failed
   if (error) {
@@ -388,6 +405,13 @@ export default function Dashboard() {
           </div>
         </footer>
       </main>
+      
+      {/* Inactive Profile Modal */}
+      <InactiveProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onProfileComplete={handleProfileComplete}
+      />
     </div>
   );
 }

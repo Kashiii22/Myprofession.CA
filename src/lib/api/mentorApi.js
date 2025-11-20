@@ -65,6 +65,39 @@ export const updateAvailability = async (availabilityData) => {
 };
 
 /**
+ * Updates the mentor's profile photo.
+ * This route sends cookies automatically for authentication.
+ * @param {FormData} formData - FormData containing the profile photo file
+ * @returns {Promise<object>} The server response.
+ */
+export const updateProfilePhoto = async (formData) => {
+  // Create a new axios instance without the default Content-Type header for FormData
+  const formDataApi = require('axios').create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL + '/api/v1',
+    withCredentials: true,
+  });
+
+  const response = await formDataApi.put('/mentor/dashboard/profile', formData, {
+    // Let axios set the Content-Type header automatically for FormData
+    // Don't explicitly set Content-Type for FormData as axios handles it correctly
+  });
+  return response.data;
+};
+
+/**
+ * Updates the mentor's bio information.
+ * This route sends cookies automatically for authentication.
+ * @param {string} bio - The bio text to update
+ * @returns {Promise<object>} The server response.
+ */
+export const updateBio = async (bio) => {
+  const response = await api.put('/mentor/dashboard/profile', {
+    experienceInfo: bio
+  });
+  return response.data;
+};
+
+/**
  * Submits the mentor's completed profile (availability, pricing, etc.).
  * (This route requires token authentication)
  * @param {FormData} profileData - A FormData object containing the file and JSON strings.

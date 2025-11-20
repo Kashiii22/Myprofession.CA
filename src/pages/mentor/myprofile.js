@@ -8,12 +8,13 @@ import {
   updateProfessionalDetails,
 } from '../../redux/expertSlice';
 import { toast } from 'react-hot-toast';
-import { getDashboardProfile, updatePricing, updateAvailability } from '../../lib/api/mentorApi';
+import { getDashboardProfile, updatePricing, updateAvailability, updateProfilePhoto, updateBio } from '../../lib/api/mentorApi';
 
 import {
   FaEdit, FaCamera, FaBriefcase, FaUserTie, FaEnvelope, FaUser,
   FaCalendarAlt, FaLanguage,
   FaCertificate, FaClock, FaStar, FaBook, FaCheckCircle, FaUniversity, FaBuilding, FaMoneyBillWave,
+  FaExclamationTriangle,
 } from 'react-icons/fa';
 
 import Sidebar from '@/components/Sidebar';
@@ -36,7 +37,9 @@ const MyProfile = () => {
     'Chartered Accountant with over 7 years of experience in taxation, auditing, and financial planning. Passionate about leveraging financial knowledge for strategic business growth.'
   );
   const [editingBio, setEditingBio] = useState(false);
-  const [profileImage, setProfileImage] = useState('https://randomuser.me/api/portraits/women/65.jpg');
+  const [profileImage, setProfileImage] = useState(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
   const [status, setStatus] = useState('Actively Consulting');
   const [experience, setExperience] = useState(7);
   const [qualifications, setQualifications] = useState('CA, B.Com');
@@ -70,7 +73,7 @@ const MyProfile = () => {
   useEffect(() => {
     if (profileData) {
       setBio(profileData?.registrationRef?.experienceInfo || bio);
-      setProfileImage(profileData?.userRef?.avatar || profileImage);
+      setProfileImage(profileData?.userRef?.avatar || null);
       setStatus(profileData?.registrationRef?.status || status);
       setExperience(profileData?.registrationRef?.yearsOfExperience || experience);
       setQualifications(profileData?.registrationRef?.qualification?.join(', ') || qualifications);
@@ -117,6 +120,49 @@ const MyProfile = () => {
 
     fetchProfileData();
   }, []);
+
+  // Handle profile photo upload
+  const handlePhotoUpload = async (file) => {
+    if (!file) {
+      toast.error('Please select a photo first');
+      return null;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return null;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return null;
+    }
+
+    setIsUploadingPhoto(true);
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const response = await updateProfilePhoto(formData);
+      
+      if (response.success) {
+        toast.success('Profile photo updated successfully!');
+        
+        // Return the new photo URL if available
+        return response.data?.profilePhoto || URL.createObjectURL(file);
+      } else {
+        throw new Error(response.message || 'Failed to update profile photo');
+      }
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      toast.error(error.message || 'Failed to update profile photo');
+      return null;
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     // Check if user is authenticated and is a mentor
@@ -176,14 +222,35 @@ const MyProfile = () => {
     );
   }
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl);
-      dispatch(updatePersonalDetails({ image: imageUrl }));
+      // Show loading state
+      setImagePreview(URL.createObjectURL(file));
+      
+      // Upload the photo
+      const uploadedUrl = await handlePhotoUpload(file);
+      
+      if (uploadedUrl) {
+        setProfileImage(uploadedUrl);
+        dispatch(updatePersonalDetails({ image: uploadedUrl }));
+        
+        // Refresh profile data to get updated photo
+        const profileResponse = await getDashboardProfile();
+        if (profileResponse.success) {
+          setProfileData(profileResponse.data);
+        }
+      } else {
+        // Reset preview if upload failed
+        setImagePreview(null);
+      }
+      
+      // Clear the file input
+      e.target.value = '';
     }
   };
+  
+  
 
   const handleBioSave = () => {
     dispatch(updatePersonalDetails({ bio }));
@@ -286,22 +353,71 @@ const MyProfile = () => {
           </button>
         </div>
 
+        {/* Profile Completion Warning */}
+        {profileData && !profileData.isActive && (
+          <div className="bg-yellow-900/50 border border-yellow-600 rounded-2xl p-6 mb-6">
+            <div className="flex items-start gap-4">
+              <div className="text-yellow-400 text-2xl mt-1">
+                <FaExclamationTriangle />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-yellow-300 text-lg font-bold mb-2">Complete Your Profile</h3>
+                <p className="text-yellow-100 text-sm leading-relaxed">
+                  Your mentor profile is not yet active. To start receiving consultation requests, please complete all required profile sections including personal information, professional details, pricing, and availability schedule.
+                </p>
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={() => router.push('/expert-profile')}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+                  >
+                    Complete Profile Now
+                  </button>
+                  <button
+                    onClick={() => toast.info('Contact support for assistance with profile completion')}
+                    className="bg-transparent border border-yellow-600 text-yellow-400 hover:bg-yellow-600/20 px-4 py-2 rounded-lg transition text-sm font-medium"
+                  >
+                    Need Help?
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={profileRef} className="space-y-10">
           {/* Personal Info */}
           <div className="bg-[#1a1a1d] border border-blue-600 rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col lg:flex-row gap-6 lg:gap-10">
             <div className="relative group self-center sm:self-start w-32 h-32 sm:w-36 sm:h-36 md:w-44 md:h-44">
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-full h-full rounded-full object-cover border-4 border-blue-500 shadow-lg"
-              />
-              <label className="absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full text-white flex items-center justify-center cursor-pointer hover:bg-blue-700">
-                <FaCamera className="text-sm sm:text-base" />
+              {(imagePreview || profileImage || user?.avatar) ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={imagePreview || profileImage || user?.avatar}
+                    alt="Profile"
+                    className="w-full h-full rounded-full object-cover border-4 border-blue-500 shadow-lg"
+                  />
+                  {isUploadingPhoto && (
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border-4 border-blue-500 shadow-lg flex items-center justify-center">
+                  <FaUser className="text-white text-4xl sm:text-5xl" />
+                </div>
+              )}
+              <label className="absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full text-white flex items-center justify-center cursor-pointer hover:bg-blue-700 hover:bg-opacity-90 transition-all">
+                {isUploadingPhoto ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <FaCamera className="text-sm sm:text-base" />
+                )}
                 <input
                   type="file"
                   accept="image/*"
                   className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={handleImageChange}
+                  disabled={isUploadingPhoto}
                 />
               </label>
             </div>

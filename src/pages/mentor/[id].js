@@ -6,7 +6,6 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import Image from "next/image";
 import {
-  FaStar, FaStarHalfAlt, FaRegStar,
   FaTwitter, FaLinkedin, FaGlobe,
   FaRegClock, FaCalendarAlt, FaChartLine,
   FaArrowLeft, FaCheckCircle, FaMoneyBillWave,
@@ -19,17 +18,6 @@ import Footer from "@/components/Footer";
 import { getMentorById } from '@/lib/api/mentorApi'; // Assuming this is your API import
 
 // --- Reusable Components (from new static template) ---
-
-const RenderStars = memo(({ rating }) => (
-  <div className="flex gap-2 mt-3 justify-center text-2xl sm:text-3xl">
-    {Array.from({ length: 5 }, (_, i) => {
-      const value = i + 1;
-      if (rating >= value) return <FaStar key={value} className="text-yellow-400" />;
-      if (rating >= value - 0.5) return <FaStarHalfAlt key={value} className="text-yellow-400" />;
-      return <FaRegStar key={value} className="text-yellow-400" />;
-    })}
-  </div>
-));
 
 // This component is now local, driven by the `mentor` state variable
 const SocialLinks = ({ socials }) => (
@@ -96,10 +84,9 @@ export default function MentorDetailPage() {
         const transformedMentor = {
           id: mentorData._id,
           name: mentorData.userRef.name,
-          image: mentorData.userRef.avatar || "https://i.pravatar.cc/150?img=12",
+          image: mentorData.userRef.avatar,
           email: mentorData.userRef.email,
-          title: mentorData.registrationRef?.qualification?.[0] || 'Professional Mentor',
-          rating: mentorData.rating || 4.5,
+          designation: mentorData.registrationRef?.status || 'Professional Mentor',
           pricing: mentorData.pricing || [
             { type: "chat", price: 10, duration: 1 },
             { type: "voice", price: 20, duration: 1 },
@@ -122,7 +109,6 @@ export default function MentorDetailPage() {
           stats: {
             sessionsCompleted: mentorData.sessionsCompleted || 0,
             totalMinutes: mentorData.totalMinutes || 0,
-            rating: mentorData.rating || 4.5,
           },
         };
 
@@ -196,16 +182,23 @@ export default function MentorDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
           <div className="lg:col-span-2 flex flex-col items-center text-center lg:text-left">
             <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-full overflow-hidden border-4 border-blue-500">
-              <Image src={mentor.image} alt={mentor.name} fill className="object-cover" />
+              {mentor.image ? (
+                <Image src={mentor.image} alt={mentor.name} fill className="object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <div className="text-white text-4xl sm:text-5xl font-bold">
+                    {mentor.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </div>
+                </div>
+              )}
             </div>
-            <RenderStars rating={mentor.rating} />
-            <p className="text-gray-400 mt-2 text-lg">Rated {mentor.rating} / 5</p>
+            
             <SocialLinks socials={mentor.socials} />
           </div>
 
           <div className="lg:col-span-3 space-y-5 text-center lg:text-left">
             <h1 className="text-4xl sm:text-5xl font-bold">{mentor.name}</h1>
-            <p className="text-2xl sm:text-3xl text-blue-400">{mentor.title}</p>
+            <p className="text-2xl sm:text-3xl text-blue-400">{mentor.designation}</p>
             
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start text-lg sm:text-xl">
               {mentor.yearsExperience > 0 && (
@@ -358,14 +351,7 @@ export default function MentorDetailPage() {
                   border="border-green-500"
                   text="text-green-100"
                 />
-                <StatCard
-                  icon={FaStar}
-                  label="Rating"
-                  value={`${mentor.stats.rating} / 5`}
-                  bg="bg-yellow-800"
-                  border="border-yellow-500"
-                  text="text-yellow-100"
-                />
+                
               </div>
             </div>
           </div>

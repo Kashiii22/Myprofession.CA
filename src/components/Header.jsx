@@ -71,6 +71,7 @@ export default function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   
   const dispatch = useDispatch();
   const { isLoggedIn, user } = useSelector((state) => state.auth);
@@ -92,8 +93,11 @@ export default function Header() {
           sessionStorage.removeItem('consultantJoinFlow');
           router.push('/expert-profile');
         }
+        setIsAuthLoading(false);
         return;
       }
+      
+      setIsAuthLoading(true);
       try {
         const data = await getMyProfile(); 
         if (data.success) {
@@ -110,6 +114,8 @@ export default function Header() {
         }
       } catch (error) {
         dispatch(setLogout()); 
+      } finally {
+        setIsAuthLoading(false);
       }
     };
     checkUserSession();
@@ -204,6 +210,8 @@ export default function Header() {
 
   // ❌ RoleAwareButton component is REMOVED
 
+  
+
   return (
     <>
       <header className="backdrop-blur-lg bg-black/80 text-white font-sans shadow-2xl rounded-b-2xl z-50 relative">
@@ -260,7 +268,7 @@ export default function Header() {
             {/* ✅ Role-specific Admin/Mentor buttons */}
             {isLoggedIn && user?.role === 'MENTOR' && (
               <Link href="/mentor/dashboard" className="text-sm font-medium px-3 py-1.5 rounded-lg transition bg-green-600 hover:bg-green-700 text-white">
-                Mentor
+                Mentor Dashboard
               </Link>
             )}
             {isLoggedIn && user?.role === 'SUPERADMIN' && (
@@ -327,13 +335,16 @@ export default function Header() {
                     </div>
 
                     <div className="py-1">
-                      <Link
-                        href="/profile"
-                        onClick={handleLinkClick}
-                        className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition duration-200 rounded-lg"
-                      >
-                        <FaUser className="mr-3 w-4" /> My Profile
-                      </Link>
+                      {user.role === 'MENTOR' && (
+                        <Link
+                          href="/mentor/myprofile"
+                          onClick={handleLinkClick}
+                          className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition duration-200 rounded-lg"
+                        >
+                          <FaUser className="mr-3 w-4" />
+                          My Profile
+                        </Link>
+                      )}
 
                       {user.role === 'MENTOR' && (
                         <Link
@@ -455,13 +466,15 @@ export default function Header() {
                     </button>
                   </div>
                   
-                  <Link
-                    href="/profile"
-                    onClick={handleLinkClick}
-                    className="block text-center w-full px-4 py-2 bg-gray-700 text-white rounded-lg transition"
-                  >
-                    My Profile
-                  </Link>
+                  {user.role === 'MENTOR' && (
+                    <Link
+                      href="/mentor/myprofile"
+                      onClick={handleLinkClick}
+                      className="block text-center w-full px-4 py-2 bg-gray-700 text-white rounded-lg transition"
+                    >
+                      My Profile
+                    </Link>
+                  )}
                   
                   {user.role === 'MENTOR' && (
                     <Link

@@ -92,11 +92,11 @@ const LabeledTextarea = ({ label, ...props }) => (
   </div>
 );
 
-const DynamicFieldArray = ({ title, fieldKey, icon, values, placeholder, onUpdate, onAdd, onRemove }) => {
+const DynamicFieldArray = ({ title, fieldKey, icon, values, placeholder, onUpdate, onAdd, onRemove, required = false }) => {
   const IconComponent = icon;
   return (
     <div className="sm:col-span-2 space-y-3">
-      <label className="text-sm font-medium text-gray-400 flex items-center gap-2"><IconComponent /> {title}</label>
+      <label className="text-sm font-medium text-gray-400 flex items-center gap-2"><IconComponent /> {title} {required && <span className="text-red-500 ml-1">*</span>}</label>
       {values.map((value, index) => (
         <div key={index} className="flex items-center space-x-2">
           <input type="text" value={value} onChange={(e) => onUpdate(fieldKey, index, e.target.value)} placeholder={`${placeholder} #${index + 1}`} className="bg-gray-800 text-gray-200 border border-gray-700 rounded-md px-3 py-2 flex-grow focus:outline-none focus:ring-1 focus:ring-blue-500" />
@@ -345,6 +345,10 @@ export default function ExpertProfile() {
         toast.error("Please enter your years of experience.");
         return;
     }
+    if (!professionalDetails.status) {
+        toast.error("Please enter your designation.");
+        return;
+    }
     if (professionalDetails.expertise.length === 0) {
         toast.error("Please select at least one area of expertise.");
         return;
@@ -442,7 +446,7 @@ export default function ExpertProfile() {
                       <h3 className="md:col-span-2 text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-4">Basic Information</h3>
                       <LabeledInput label="Full Name" name="name" type="text" value={personalDetails.name} onChange={handleDetailsChange(setPersonalDetails)} className={inputClass} required disabled={true} />
                       <LabeledInput label="Mobile Number" name="mobileNumber" type="tel" value={personalDetails.mobileNumber} onChange={handleDetailsChange(setPersonalDetails)} placeholder="10-digit mobile number" className={inputClass} required disabled={!!user?.phone} />
-                      <LabeledInput label="Email Address" name="email" type="email" value={personalDetails.email} onChange={handleDetailsChange(setPersonalDetails)} className={inputClass} disabled={!!user?.email} />
+                      <LabeledInput label="Email Address" name="email" type="email" value={personalDetails.email} onChange={handleDetailsChange(setPersonalDetails)} className={inputClass} disabled={!!user?.email} required />
                       <LabeledSelect label="Gender" name="gender" value={personalDetails.gender} onChange={handleDetailsChange(setPersonalDetails)} className={selectClass} required>
                           <option value="">Select gender</option>
                           {genders.map(g => <option key={g} value={g}>{g}</option>)}
@@ -471,7 +475,7 @@ export default function ExpertProfile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       <h3 className="md:col-span-2 text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-4">Professional Profile</h3>
                       <LabeledInput label="Years of Experience" name="yearsOfExperience" type="number" value={professionalDetails.yearsOfExperience} onChange={handleDetailsChange(setProfessionalDetails)} className={inputClass} required />
-                      <LabeledInput label="Current Status / Designation" name="status" type="text" value={professionalDetails.status} onChange={handleDetailsChange(setProfessionalDetails)} placeholder="e.g., Chartered Accountant" className={inputClass} />
+                      <LabeledInput label="Designation" name="status" type="text" value={professionalDetails.status} onChange={handleDetailsChange(setProfessionalDetails)} placeholder="e.g., Chartered Accountant" className={inputClass} required />
                       <div className="md:col-span-2">
                           <label className="text-sm font-medium text-gray-400 mb-2 block">Areas of Expertise <span className="text-red-500 ml-1">*</span></label>
                           <div className="flex flex-wrap gap-3">
@@ -494,7 +498,7 @@ export default function ExpertProfile() {
               {step === 3 && (
                 <section>
                   <h3 className="text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-6">Your Qualifications</h3>
-                  <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} />
+                  <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} required={true} />
                   <div className="mt-12 flex justify-between">
                       <button type="button" onClick={() => {setIsSubmitting(false); setStep(2);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                       <button type="button" onClick={handleStep3to4} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
@@ -553,7 +557,7 @@ export default function ExpertProfile() {
                       />
                       <div className="ml-3 text-sm">
                         <label htmlFor="acknowledgement" className="text-gray-300">
-                          I acknowledge that the details shared are accurate and I agree to the <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-medium text-blue-400 hover:underline">Terms of Service and Privacy Policy</a>.
+                          I acknowledge that the details shared are accurate and I agree to the <a href="/privacyPolicy" target="_blank" rel="noopener noreferrer" className="font-medium text-blue-400 hover:underline">Privacy Policy</a>.
                           <span className="text-red-500 ml-1">*</span>
                         </label>
                       </div>
@@ -580,10 +584,9 @@ export default function ExpertProfile() {
                   <FaCheckCircle className="text-green-500 text-6xl mx-auto mb-6" />
                   <h2 className="text-4xl font-extrabold text-white mb-4">Thank You!</h2>
                   <p className="text-lg text-gray-300 mb-3">Your application has been submitted successfully.</p>
-                  <p className="text-gray-400">You will be notified via email once the verification process is complete.</p>
-                  <div className="bg-gray-900/70 border border-gray-800 rounded-xl p-6 max-w-xl mx-auto mt-8">
-                    <p className="text-gray-300 text-md italic">“Your knowledge has the power to change lives. Get ready to impact the world—one conversation at a time.”</p>
-                  </div>
+                  <p className="text-yellow-300 bg-yellow-900/20 px-6 py-4 rounded-xl border-2 border-yellow-300">You will be notified via email once the verification process is complete.</p>
+                  
+        
                   <button onClick={() => window.location.href = '/'} className="mt-8 bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-xl font-semibold transition">Return Home</button>
                 </div>
               )}
@@ -592,7 +595,7 @@ export default function ExpertProfile() {
           </form>
       </main>
       
-      <Footer />
+      <Footer /> 
     </div>
   );
 }

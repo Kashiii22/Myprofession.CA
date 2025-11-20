@@ -1,17 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import Header from "@/components/Header"; // Your site's Header
-import Footer from "@/components/Footer"; // Your site's Footer
-import AuthModal from "@/components/AuthModal"; // Your AuthModal component
-import { setLoginSuccess } from "@/redux/authSlice"; // Your Redux action
+import { FaUserTie, FaCalendarAlt, FaRupeeSign, FaClock, FaRocket, FaCheck } from "react-icons/fa";
+import { completeMentorProfile } from "@/lib/api/mentorApi";
 
-// --- ADD THIS IMPORT ---
-import { completeMentorProfile } from "@/lib/api/mentorApi"; // Adjust path as needed
-
-// --- Helper Icon Components (Unchanged) ---
+// --- Helper Icon Components ---
 const CheckIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>;
 const ClockIcon = () => <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const PriceIcon = () => <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 6v-1m0-1V4m0 2.01M12 14v4m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 14c-1.657 0-3-.895-3-2s1.343-2 3-2m0 0c1.11 0 2.08.402 2.599 1M12 14v-1" /></svg>;
@@ -21,12 +14,43 @@ const TrashIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24"
 const UserIcon = () => <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 const CameraIcon = () => <svg className="w-12 h-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
 
+// Add the toggle-checkbox CSS for consistent styling
+const toggleCheckboxCSS = `
+<style jsx>{\`
+  .toggle-checkbox {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    appearance: none;
+    background-color: #4b5563;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .toggle-checkbox::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+  }
+  
+  .toggle-checkbox:checked {
+    background-color: #2563eb;
+  }
+  
+  .toggle-checkbox:checked::before {
+    transform: translateX(24px);
+  }
+\`}</style>
+`;
 
-// --- MAIN WIZARD PAGE COMPONENT ---
-export default function CompleteProfileWizard() {
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const { isLoggedIn } = useSelector(state => state.auth);
+const InactiveProfileModal = ({ isOpen, onClose, onProfileComplete }) => {
   const [step, setStep] = useState(1);
   const [profileData, setProfileData] = useState({
     profilePicture: null, 
@@ -39,26 +63,14 @@ export default function CompleteProfileWizard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [token, setToken] = useState(null);
-  const [tokenValid, setTokenValid] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Extract and validate token from URL
+  // For already authenticated users, we'll use cookies for auth instead of token
+  // The API will automatically handle authentication via cookies
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenFromUrl = urlParams.get('token');
-      console.log('Extracted token from URL:', tokenFromUrl);
-      
-      if (!tokenFromUrl) {
-        // No token in URL, redirect to unauthorized page
-        router.push('/unauthorized');
-        return;
-      }
-      
-      setToken(tokenFromUrl);
-      setTokenValid(true);
-    }
-  }, [router]);
+    // No need for manual token extraction since user is already authenticated
+    // The completeMentorProfile API will work with existing cookie-based auth
+    setToken(null); // We'll let cookies handle authentication
+  }, []);
 
   const stepsConfig = ["Welcome", "Upload Photo", "Set Schedule", "Define Services", "Launch Profile"];
   const progress = ((step - 1) / (stepsConfig.length - 1)) * 100;
@@ -73,7 +85,7 @@ export default function CompleteProfileWizard() {
     setStep(prev => prev - 1);
   };
 
-  // --- THIS FUNCTION IS NOW UPDATED ---
+  // --- API Integration Function ---
   const handleFinish = async (data) => {
     setIsLoading(true);
     setError(null);
@@ -105,7 +117,7 @@ export default function CompleteProfileWizard() {
     }
 
     try {
-      // 2. Call your Axios API service with token
+      // 2. Call your Axios API service - token is optional for already authenticated users
       const result = await completeMentorProfile(formData, token);
 
       if (!result.success) {
@@ -114,7 +126,7 @@ export default function CompleteProfileWizard() {
 
       // 3. Handle Success
       setIsLoading(false);
-      setStep(prev => prev + 1); // Move to success screen
+      onProfileComplete();
 
     } catch (err) {
       // 4. Handle Error
@@ -126,70 +138,53 @@ export default function CompleteProfileWizard() {
     }
   };
 
-  // Show loading state while checking token
-  if (!tokenValid) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-4 sm:p-8 flex flex-col items-center justify-center font-sans">
-          <div className="w-full max-w-md text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <h2 className="text-2xl font-bold text-white mb-2">Validating Access...</h2>
-            <p className="text-gray-400">Please wait while we verify your access token.</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
-  }
+  
+
+  if (!isOpen) return null;
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-4 sm:p-8 flex flex-col items-center justify-center font-sans">
-        <div className="w-full max-w-3xl space-y-6">
-          {step <= stepsConfig.length && (
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-base font-medium text-blue-400">{stepsConfig[step - 1]}</span>
-                <span className="text-sm font-medium text-blue-400">{Math.round(progress)}%</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div className="bg-gradient-to-r from-blue-600 to-cyan-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-              </div>
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-800 shadow-2xl shadow-blue-900/10">
+        {step <= stepsConfig.length && (
+          <div className="p-6 border-b border-gray-700">
+            <div className="flex justify-between mb-2">
+              <span className="text-base font-medium text-blue-400">{stepsConfig[step - 1]}</span>
+              <span className="text-sm font-medium text-blue-400">{Math.round(progress)}%</span>
             </div>
-          )}
-
-          <div className="bg-gray-900 p-6 sm:p-10 rounded-2xl border border-gray-800 shadow-2xl shadow-blue-900/10">
-            {step === 1 && <WelcomeStep onNext={() => setStep(2)} />}
-            {step === 2 && <ProfilePictureStep onNext={handleNext} onBack={handleBack} initialData={profileData.profilePicture} />}
-            {step === 3 && <AvailabilityStep onNext={handleNext} onBack={handleBack} initialData={profileData.availability} />}
-            {step === 4 && <PricingStep onNext={handleNext} onBack={handleBack} initialData={profileData} />}
-            {step === 5 && (
-              <FinishStep 
-                onFinish={handleFinish} 
-                onBack={handleBack} 
-                profileData={profileData}
-                isLoading={isLoading}
-                error={error}
-              />
-            )}
-            {step === 6 && <SuccessStep showAuthModal={showAuthModal} setShowAuthModal={setShowAuthModal} />}
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+            </div>
           </div>
-        </div>
-      </main>
-      <Footer />
-    </>
-  );
-}
+        )}
 
-// --- Wizard Steps (All Unchanged) ---
+        <div className="p-6 sm:p-10">
+          {step === 1 && <WelcomeStep onNext={() => setStep(2)} />}
+          {step === 2 && <ProfilePictureStep onNext={handleNext} onBack={handleBack} initialData={profileData.profilePicture} />}
+          {step === 3 && <AvailabilityStep onNext={handleNext} onBack={handleBack} initialData={profileData.availability} />}
+          {step === 4 && <PricingStep onNext={handleNext} onBack={handleBack} initialData={profileData} />}
+          {step === 5 && (
+            <FinishStep 
+              onFinish={handleFinish} 
+              onBack={handleBack} 
+              profileData={profileData}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
+          {step === 6 && <SuccessStep onClose={onProfileComplete} />}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Wizard Steps Components (adapted from profileSetupForm.js) ---
 
 const WelcomeStep = ({ onNext }) => (
   <div className="text-center py-4">
     <div className="mx-auto mb-6 bg-gray-800 h-16 w-16 rounded-full flex items-center justify-center border-2 border-blue-500"><RocketIcon /></div>
     <h2 className="text-3xl font-bold text-white mb-4">Let's Launch Your Mentor Profile</h2>
-    <p className="text-gray-300 max-w-xl mx-auto mb-10">Congratulations on your approval! In just a few quick steps, you'll be ready to connect with mentees.</p>
+    <p className="text-gray-300 max-w-xl mx-auto mb-10">Welcome to Myprofession.CA! Let's complete your mentor profile to start connecting with students. This will only take a few minutes.</p>
     <button onClick={onNext} className="px-10 py-3 text-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-full hover:scale-105 transition-transform duration-300">Start Setup</button>
   </div>
 );
@@ -510,44 +505,15 @@ const FinishStep = ({ onFinish, onBack, profileData, isLoading, error }) => (
     </div>
 );
 
-const SuccessStep = ({ showAuthModal, setShowAuthModal }) => {
-    const router = useRouter();
-    const { isLoggedIn } = useSelector(state => state.auth);
-    const dispatch = useDispatch();
-    
-    const handleLoginSuccess = () => {
-        // After successful login, redirect to mentor dashboard
-        router.push('/mentor/dashboard');
-    };
-    
-    const handleGoToDashboard = () => {
-        // Check if user is logged in using Redux state
-        if (!isLoggedIn) {
-            // If not authenticated, open auth modal
-            setShowAuthModal(true);
-            return;
-        }
-        // If authenticated, redirect to mentor dashboard
-        router.push('/mentor/dashboard');
-    };
-
+const SuccessStep = ({ onClose }) => {
     return (
-        <>
-            <div className="text-center py-10">
-                <div className="mx-auto mb-6 bg-green-500 h-16 w-16 rounded-full flex items-center justify-center border-2 border-green-400"><CheckIcon /></div>
-                <h2 className="text-3xl font-bold text-white mb-4">You're All Set!</h2>
-                <p className="text-gray-300 max-w-xl mx-auto mb-8">Your mentor profile is now live. Welcome to the community! You can now head to your dashboard to manage your sessions.</p>
-                <button onClick={handleGoToDashboard} className="px-10 py-3 text-lg bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors">Go to Dashboard</button>
-            </div>
-            {showAuthModal && (
-                <AuthModal 
-                    onClose={() => setShowAuthModal(false)}
-                    onLoginSuccess={(user) => {
-                        dispatch(setLoginSuccess(user));
-                        handleLoginSuccess();
-                    }}
-                />
-            )}
-        </>
+        <div className="text-center py-10">
+            <div className="mx-auto mb-6 bg-green-500 h-16 w-16 rounded-full flex items-center justify-center border-2 border-green-400"><CheckIcon /></div>
+            <h2 className="text-3xl font-bold text-white mb-4">You're All Set!</h2>
+            <p className="text-gray-300 max-w-xl mx-auto mb-8">Your mentor profile is now live. Welcome to the community! Let's refresh the dashboard to see your new profile.</p>
+            <button onClick={onClose} className="px-10 py-3 text-lg bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors">Continue to Dashboard</button>
+        </div>
     );
 };
+
+export default InactiveProfileModal;
