@@ -23,11 +23,22 @@ const MODES = [
 // Custom Calendar with Event Visualization
 const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [hoveredDay, setHoveredDay] = useState(null);
+  
+  const navigateMonth = (direction) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + direction, 1));
+  };
   
   // Generate calendar days with events
   const renderDay = (day) => {
-    const dateStr = day.toISOString().split('T')[0];
+    // Format date as YYYY-MM-DD in local timezone
+    const year = day.getFullYear();
+    const month = String(day.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(day.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayNum}`;
+    
     const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
     const hasEvents = dayWiseAvailableDates.find(d => d.date === dateStr);
     const isSelected = selected === dateStr;
@@ -44,13 +55,6 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
       if (count <= 2) return 'bg-green-600';
       if (count <= 4) return 'bg-blue-600';
       return 'bg-purple-600';
-    };
-    
-    const getEventText = () => {
-      const count = getEventCount();
-      if (count === 0) return '';
-      if (count === 1) return `${count} slot`;
-      return `${count} slots`;
     };
     
     return (
@@ -103,21 +107,42 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
   };
   
   const generateCalendarDays = () => {
-    const year = today.getFullYear();
-    const month = today.getMonth();
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
-    const startPadding = firstDayOfMonth.getDay();
+    const startPadding = firstDayOfMonth.getDay(); // Sunday = 0
     const days = [];
     
-    // Add padding days
-    for (let i = 0; i < startPadding; i++) {
-      days.push(<div key={`pad-${i}`} className="h-20"></div>);
+    // Add padding days for days before month starts
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startPadding - 1; i >= 0; i--) {
+      const prevDay = new Date(year, month - 1, prevMonthLastDay - i);
+      days.push(
+        <div key={`prev-${prevDay.getDate()}`} className="h-14 opacity-30 text-gray-600">
+          <div className="text-center">
+            <div className="text-sm">{prevDay.getDate()}</div>
+          </div>
+        </div>
+      );
     }
     
-    // Add actual days
+    // Add actual days of current month
     for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
       days.push(renderDay(new Date(year, month, day)));
+    }
+    
+    // Add padding days for days after month ends
+    const totalCells = days.length;
+    const remainingCells = 42 - totalCells; // 6 rows * 7 cols
+    for (let day = 1; day <= remainingCells; day++) {
+      days.push(
+        <div key={`next-${day}`} className="h-14 opacity-30 text-gray-600">
+          <div className="text-center">
+            <div className="text-sm">{day}</div>
+          </div>
+        </div>
+      );
     }
     
     return days;
@@ -126,9 +151,27 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
   return (
     <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-700">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-blue-400">
-          {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-        </h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigateMonth(-1)}
+            className="p-1 hover:bg-gray-800 rounded transition-colors"
+          >
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h3 className="font-semibold text-blue-400">
+            {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </h3>
+          <button
+            onClick={() => navigateMonth(1)}
+            className="p-1 hover:bg-gray-800 rounded transition-colors"
+          >
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
         <div className="flex gap-2 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-600 rounded-full"></div>
@@ -236,24 +279,27 @@ export default function BookingPage() {
   // Function to convert day-wise availability to calendar dates
   const generateAvailableDatesFromDayWise = (dayWiseAvailability) => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to midnight to avoid timezone issues
     const dates = [];
-    const dayMap = {
-      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-      'Thursday': 4, 'Friday': 5, 'Saturday': 6
-    };
 
-    for (let i = 0; i < 30; i++) {
+    // Generate dates for the next 60 days to cover current and next month
+    for (let i = 0; i < 60; i++) {
       const currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);
       
-      if (currentDate < today) continue;
+      // Normalize date to avoid timezone issues
+      currentDate.setHours(0, 0, 0, 0);
       
       const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-      const dayIndex = dayMap[dayOfWeek];
       
       const dayAvailability = dayWiseAvailability.find(day => day.day === dayOfWeek);
       if (dayAvailability && dayAvailability.slots && dayAvailability.slots.length > 0) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        // Format date as YYYY-MM-DD in local timezone
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
         dates.push({
           date: dateStr,
           day: dayOfWeek,
