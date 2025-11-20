@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect,useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import { fetchClasses } from '@/redux/classSlice';
@@ -30,26 +30,72 @@ export default function MyDashboardPage() {
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isLoggedIn);
 
+  // Create state to track auth initialization
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [authCheckDelay, setAuthCheckDelay] = useState(true);
+  const loadingMessages = [
+    "Loading your classes... 📚",
+    "Preparing mentor space... 📊",
+    "Gathering session data... 📋",
+    "Almost there... 🎯",
+    "Ready to view classes! 🎉"
+  ];
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
   useEffect(() => {
-    // Check if user is authenticated and is a mentor
-    if (!isAuthenticated || !user?.role || user.role !== "MENTOR") {
+    // Give Redux 1 second to initialize on page refresh
+    const timer = setTimeout(() => {
+      setAuthCheckDelay(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Cycle through messages while loading
+  useEffect(() => {
+    if (!isAuthLoading) return;
+    
+    const messageTimer = setInterval(() => {
+      setCurrentMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 800);
+
+    return () => clearInterval(messageTimer);
+  }, [isAuthLoading, loadingMessages.length]);
+
+  useEffect(() => {
+    // Don't check authentication until both Redux is ready and delay is over
+    if (authCheckDelay) {
+      console.log("Waiting for Redux to initialize...");
+      setIsAuthLoading(true);
+      return;
+    }
+
+    console.log("Auth State:", { isAuthenticated, user });
+    console.log("User Role:", user?.role);
+    
+    // If Redux is still initializing (undefined), wait
+    if (isAuthenticated === undefined) {
+      setIsAuthLoading(true);
+      return;
+    }
+    
+    // Once Redux is loaded (true or false), set auth loading to false
+    setIsAuthLoading(false);
+    
+    // User is definitely not logged in
+    if (isAuthenticated === false) {
+      toast.error("Please login to access mentor dashboard.");
+      router.push("/");
+      return;
+    }
+    
+    // User is logged in but is not a mentor
+    if (isAuthenticated && user && user.role !== "MENTOR") {
       toast.error("Access denied. Mentor access required.");
       router.push("/");
       return;
     }
-  }, [isAuthenticated, user, router]);
-
-  // Return loading state while checking authentication
-  if (!isAuthenticated || !user?.role || user.role !== "MENTOR") {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [isAuthenticated, user, router, authCheckDelay]);
 
   const defaultStats = {
     nextClass: '05 Aug, 3:00 PM',
@@ -99,12 +145,25 @@ export default function MyDashboardPage() {
   ];
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    } else {
+    // Only fetch classes if user is authenticated and is a mentor
+    // Don't redirect here - that's handled by the main auth check
+    if (user && isAuthenticated && user.role === "MENTOR") {
       dispatch(fetchClasses());
     }
-  }, [user, dispatch]);
+  }, [user, isAuthenticated, dispatch]);
+
+  // Return loading state while checking authentication
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-blue-400 mb-2">{loadingMessages[currentMessageIndex]}</p>
+          <p className="text-sm text-gray-400">Your mentor dashboard is just moments away</p>
+        </div>
+      </div>
+    );
+  }
 
   const StatCard = ({ icon: Icon, label, value, color }) => (
     <div className={`flex items-center gap-4 p-4 rounded-2xl shadow-md ${color}`}>

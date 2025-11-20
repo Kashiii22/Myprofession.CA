@@ -164,22 +164,81 @@ const MyProfile = () => {
     }
   };
 
+  // Create state to track auth initialization
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [authCheckDelay, setAuthCheckDelay] = useState(true);
+  const loadingMessages = [
+    "Loading your profile... 📋",
+    "Preparing mentor space... 👤",
+    "Gathering your data... 📊",
+    "Almost there... 🎯",
+    "Ready to manage profile! 🎉"
+  ];
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
   useEffect(() => {
-    // Check if user is authenticated and is a mentor
-    if (!isAuthenticated || !user?.role || user.role !== "MENTOR") {
+    // Give Redux 1 second to initialize on page refresh
+    const timer = setTimeout(() => {
+      setAuthCheckDelay(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Cycle through messages while loading
+  useEffect(() => {
+    if (!isAuthLoading) return;
+    
+    const messageTimer = setInterval(() => {
+      setCurrentMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 800);
+
+    return () => clearInterval(messageTimer);
+  }, [isAuthLoading, loadingMessages.length]);
+
+  useEffect(() => {
+    // Don't check authentication until both Redux is ready and delay is over
+    if (authCheckDelay) {
+      console.log("Waiting for Redux to initialize...");
+      setIsAuthLoading(true);
+      return;
+    }
+
+    console.log("Auth State:", { isAuthenticated, user });
+    console.log("User Role:", user?.role);
+    
+    // If Redux is still initializing (undefined), wait
+    if (isAuthenticated === undefined) {
+      setIsAuthLoading(true);
+      return;
+    }
+    
+    // Once Redux is loaded (true or false), set auth loading to false
+    setIsAuthLoading(false);
+    
+    // User is definitely not logged in
+    if (isAuthenticated === false) {
+      toast.error("Please login to access mentor profile.");
+      router.push("/");
+      return;
+    }
+    
+    // User is logged in but is not a mentor
+    if (isAuthenticated && user && user.role !== "MENTOR") {
       toast.error("Access denied. Mentor access required.");
       router.push("/");
       return;
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, authCheckDelay]);
 
   // Return loading state while checking authentication
-  if (!isAuthenticated || !user?.role || user.role !== "MENTOR") {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Checking authentication...</p>
+          <p className="text-lg text-blue-400 mb-2">{loadingMessages[currentMessageIndex]}</p>
+          <p className="text-sm text-gray-400">Your mentor profile is just moments away</p>
         </div>
       </div>
     );

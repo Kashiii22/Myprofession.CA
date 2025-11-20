@@ -371,8 +371,8 @@ export default function Dashboard() {
             onClick={() => router.push("/mentor/mybookings")}
           />
           <QuickActionCard
-            title="My Classes"
-            description="View your classes"
+            title="My Sessions"
+            description="View your sessions"
             icon={FaUsers}
             onClick={() => router.push("/mentor/myclasses")}
           />

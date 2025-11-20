@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/router";
-import { removeSlot } from "../../redux/availabilitySlice";
-import AddSlotForm from "../../components/AddSlotForm";
+import { getDashboardProfile, updateAvailability } from '../../lib/api/mentorApi';
 import { toast } from "react-hot-toast";
 import {
   FaCalendarDay,
@@ -12,55 +11,233 @@ import {
   FaVideo,
   FaTrash,
   FaRupeeSign,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import Sidebar from "../../components/Sidebar";
 
 export default function MentorAvailability() {
-  const { slots } = useSelector((state) => state.availability);
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isLoggedIn);
   const router = useRouter();
   const dispatch = useDispatch();
 
+  // State for availability data
+  const [availabilityData, setAvailabilityData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editingAvailability, setEditingAvailability] = useState(false);
+  const [availability, setAvailability] = useState([
+    { day: 'Monday', slots: [] },
+    { day: 'Tuesday', slots: [] },
+    { day: 'Wednesday', slots: [] },
+    { day: 'Thursday', slots: [] },
+    { day: 'Friday', slots: [] },
+    { day: 'Saturday', slots: [] },
+    { day: 'Sunday', slots: [] }
+  ]);
+
+  // Create state to track auth initialization
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [authCheckDelay, setAuthCheckDelay] = useState(true);
+  const loadingMessages = [
+    "Loading availability... 📅",
+    "Preparing mentor space... 📊",
+    "Gathering schedule data... ⏰",
+    "Almost there... 🎯",
+    "Ready to manage availability! 🎉"
+  ];
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
   useEffect(() => {
-    // Check if user is authenticated and is a mentor
-    if (isAuthenticated === false && (!user || !user.role)) {
+    // Give Redux 1 second to initialize on page refresh
+    const timer = setTimeout(() => {
+      setAuthCheckDelay(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Cycle through messages while loading
+  useEffect(() => {
+    if (!isAuthLoading) return;
+    
+    const messageTimer = setInterval(() => {
+      setCurrentMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 800);
+
+    return () => clearInterval(messageTimer);
+  }, [isAuthLoading, loadingMessages.length]);
+
+  useEffect(() => {
+    // Don't check authentication until both Redux is ready and delay is over
+    if (authCheckDelay) {
+      console.log("Waiting for Redux to initialize...");
+      setIsAuthLoading(true);
+      return;
+    }
+
+    console.log("Auth State:", { isAuthenticated, user });
+    console.log("User Role:", user?.role);
+    
+    // If Redux is still initializing (undefined), wait
+    if (isAuthenticated === undefined) {
+      setIsAuthLoading(true);
+      return;
+    }
+    
+    // Once Redux is loaded (true or false), set auth loading to false
+    setIsAuthLoading(false);
+    
+    // User is definitely not logged in
+    if (isAuthenticated === false) {
       toast.error("Please login to access availability page.");
       router.push("/");
       return;
     }
     
+    // User is logged in but is not a mentor
     if (isAuthenticated && user && user.role !== "MENTOR") {
       toast.error("Access denied. Mentor access required.");
       router.push("/");
       return;
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, authCheckDelay]);
+
+  // Update states when availabilityData is loaded
+  useEffect(() => {
+    if (availabilityData) {
+      // Update availability data
+      if (availabilityData?.availability) {
+        setAvailability(availabilityData.availability);
+      }
+    }
+  }, [availabilityData]);
+
+  // Fetch availability data
+  useEffect(() => {
+    const fetchAvailabilityData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getDashboardProfile();
+        
+        if (response.success) {
+          console.log('Availability data received:', response.data);
+          setAvailabilityData(response.data);
+        } else {
+          throw new Error(response.message || 'Failed to fetch availability data');
+        }
+      } catch (err) {
+        console.error('Error fetching availability data:', err);
+        setError(err.message);
+        toast.error('Failed to load availability data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Only fetch if authenticated
+    if (!isAuthLoading && isAuthenticated && user && user.role === "MENTOR") {
+      fetchAvailabilityData();
+    }
+  }, [isAuthLoading, isAuthenticated, user]);
 
   // Return loading state while checking authentication
-  if (isAuthenticated === false && (!user || !user.role || user.role !== "MENTOR")) {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Checking authentication...</p>
+          <p className="text-lg text-blue-400 mb-2">{loadingMessages[currentMessageIndex]}</p>
+          <p className="text-sm text-gray-400">Your mentor schedule is just moments away</p>
         </div>
       </div>
     );
   }
 
-  // Return loading if auth is still being determined
-  if (isAuthenticated !== true || !user) {
+  // Return loading while availability data is being fetched
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
+      <div className="flex flex-col md:flex-row min-h-screen bg-black text-white font-sans">
+        <Sidebar />
+        <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p>Loading availability data...</p>
+          </div>
+        </main>
       </div>
     );
   }
+
+  // Return error state if data fetch failed
+  if (error) {
+    return (
+      <div className="flex flex-col md:flex-row min-h-screen bg-black text-white font-sans">
+        <Sidebar />
+        <main className="flex-1 p-4 sm:p-6 md:p-8 flex items-center justify-center">
+          <div className="text-center p-8 bg-red-900/50 border border-red-700 rounded-2xl max-w-md">
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
+            <h2 className="text-red-400 text-xl font-bold mb-3">Unable to Load Availability</h2>
+            <p className="text-red-300 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Availability management functions
+  const handleAvailabilitySave = async () => {
+    try {
+      const response = await updateAvailability(availability);
+      if (response.success) {
+        toast.success('Availability updated successfully!');
+        setEditingAvailability(false);
+        // Refresh availability data
+        const availabilityResponse = await getDashboardProfile();
+        if (availabilityResponse.success) {
+          setAvailabilityData(availabilityResponse.data);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update availability');
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      toast.error('Failed to update availability: ' + error.message);
+    }
+  };
+
+  const handleSlotChange = (dayIndex, slotIndex, field, value) => {
+    const newAvailability = [...availability];
+    if (field === 'startTime' || field === 'endTime') {
+      newAvailability[dayIndex].slots[slotIndex][field] = value;
+    }
+    setAvailability(newAvailability);
+  };
+
+  const addSlot = (dayIndex) => {
+    const newAvailability = [...availability];
+    newAvailability[dayIndex].slots.push({
+      startTime: '',
+      endTime: ''
+    });
+    setAvailability(newAvailability);
+  };
+
+  const removeSlot = (dayIndex, slotIndex) => {
+    const newAvailability = [...availability];
+    if (newAvailability[dayIndex].slots.length > 0) {
+      newAvailability[dayIndex].slots.splice(slotIndex, 1);
+      setAvailability(newAvailability);
+    }
+  };
 
   return (
     <div className="relative bg-black text-white font-sans min-h-screen flex flex-col md:flex-row">
@@ -90,71 +267,159 @@ export default function MentorAvailability() {
           </div>
         </div>
 
-        {/* Add Slot Form */}
-        <section className="mb-12">
-          <AddSlotForm />
-        </section>
-
-        {/* Availability Cards */}
+        {/* Availability Section */}
         <section>
-          <h2 className="text-2xl font-bold text-white mb-6">Your Available Slots</h2>
-          {slots.length === 0 ? (
-            <p className="text-center text-gray-500 text-lg">
-              You haven't added any availability slots yet.
-            </p>
-          ) : (
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {slots.map((slot, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="relative bg-[#1f2937] p-6 rounded-2xl shadow-md border border-gray-700 hover:shadow-blue-500/20 transition-all"
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">Your Availability Schedule</h2>
+            <button
+              onClick={() => setEditingAvailability(!editingAvailability)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm"
+            >
+              {editingAvailability ? 'Cancel' : 'Edit Schedule'}
+            </button>
+          </div>
+
+          {editingAvailability ? (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-400">Manage your weekly availability schedule. Add time slots for each day when you're available.</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {availability.map((day, dayIndex) => (
+                  <div key={dayIndex} className="bg-[#2c2c2e] p-4 rounded-xl border border-gray-600">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-lg font-semibold text-blue-300">{day.day}</h4>
+                      <button
+                        onClick={() => addSlot(dayIndex)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm"
+                      >
+                        + Add Slot
+                      </button>
+                    </div>
+                    
+                    {day.slots.length > 0 ? (
+                      <div className="space-y-2">
+                        {day.slots.map((slot, slotIndex) => (
+                          <div key={slotIndex} className="flex gap-2 items-center">
+                            <input
+                              type="time"
+                              value={slot.startTime}
+                              onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'startTime', e.target.value)}
+                              className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
+                              placeholder="Start"
+                            />
+                            <span className="text-gray-400">to</span>
+                            <input
+                              type="time"
+                              value={slot.endTime}
+                              onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'endTime', e.target.value)}
+                              className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
+                              placeholder="End"
+                            />
+                            <button
+                              onClick={() => removeSlot(dayIndex, slotIndex)}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No slots scheduled for {day.day}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={handleAvailabilitySave}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
                 >
-                  {/* Day */}
-                  <div className="flex items-center mb-3 gap-2 text-blue-400">
-                    <FaCalendarDay />
-                    <span className="text-lg font-semibold">{slot.day}</span>
+                  Save Schedule
+                </button>
+                <button
+                  onClick={() => setEditingAvailability(false)}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-full"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {availability?.every(day => day.slots.length === 0) ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <FaCalendarDay className="text-5xl mx-auto" />
                   </div>
-
-                  {/* Time */}
-                  <div className="flex items-center mb-3 gap-2 text-gray-300">
-                    <FaClock />
-                    <span className="text-md">{slot.time}</span>
-                  </div>
-
-                  {/* Platform */}
-                  <div className="flex items-center mb-3 gap-2 text-green-400">
-                    <FaVideo />
-                    <span className="text-md">Video Session</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center mb-3 gap-2 text-gray-200">
-                    <FaRupeeSign />
-                    <span className="text-md">₹500</span>
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex items-center mb-3 gap-2 text-blue-300">
-                    <span className="text-md font-medium">Status:</span>
-                    <span className="bg-blue-900 px-2 py-1 rounded-full text-sm">
-                      Available
-                    </span>
-                  </div>
-
-                  {/* Delete Button */}
+                  <p className="text-gray-400 mb-4">
+                    You haven't added any availability slots yet.
+                  </p>
                   <button
-                    onClick={() => dispatch(removeSlot(index))}
-                    className="absolute top-3 right-3 text-red-400 hover:text-red-600 transition"
-                    aria-label="Delete slot"
-                    title="Delete Slot"
+                    onClick={() => setEditingAvailability(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm"
                   >
-                    <FaTrash />
+                    Add Availability Slots
                   </button>
-                </motion.div>
-              ))}
+                </div>
+              ) : (
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {availability?.map((day, dayIndex) => (
+                    day.slots.length > 0 && (
+                      <motion.div
+                        key={dayIndex}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: dayIndex * 0.1 }}
+                        className="relative bg-[#1f2937] p-6 rounded-2xl shadow-md border border-gray-700 hover:shadow-blue-500/20 transition-all"
+                      >
+                        {/* Day */}
+                        <div className="flex items-center mb-3 gap-2 text-blue-400">
+                          <FaCalendarDay />
+                          <span className="text-lg font-semibold">{day.day}</span>
+                        </div>
+
+                        {/* Time Slots */}
+                        <div className="space-y-2 mb-3">
+                          {day.slots.map((slot, slotIndex) => (
+                            <div key={slotIndex} className="flex items-center gap-2 text-gray-300">
+                              <FaClock className="text-sm" />
+                              <span className="text-sm">{slot.startTime} - {slot.endTime}</span>
+                            </div>
+                          ))}
+                          {day.slots.length === 0 && (
+                            <p className="text-gray-500 text-sm">No slots</p>
+                          )}
+                        </div>
+
+                        {/* Platform */}
+                        <div className="flex items-center mb-3 gap-2 text-green-400">
+                          <FaVideo />
+                          <span className="text-md">Video Session</span>
+                        </div>
+
+                        {/* Pricing info from profile */}
+                        {availabilityData?.pricing && (
+                          <div className="flex items-center mb-3 gap-2 text-gray-200">
+                            <FaRupeeSign />
+                            <span className="text-md">
+                              ₹{availabilityData.pricing.find(p => p.type === 'video')?.price || 15}/min
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Status */}
+                        <div className="flex items-center gap-2 text-blue-300">
+                          <span className="text-md font-medium">Status:</span>
+                          <span className="bg-green-900 px-2 py-1 rounded-full text-sm">
+                            Available
+                          </span>
+                        </div>
+                      </motion.div>
+                    )
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>
