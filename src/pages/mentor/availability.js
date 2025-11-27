@@ -217,18 +217,89 @@ export default function MentorAvailability() {
   const handleSlotChange = (dayIndex, slotIndex, field, value) => {
     const newAvailability = [...availability];
     if (field === 'startTime' || field === 'endTime') {
-      newAvailability[dayIndex].slots[slotIndex][field] = value;
+      // Round to nearest 15-minute interval
+      const roundedValue = roundToNearest15Minutes(value);
+      newAvailability[dayIndex].slots[slotIndex][field] = roundedValue;
+      
+      // Auto-set end time if only start time is changed and end time is empty
+      if (field === 'startTime' && !newAvailability[dayIndex].slots[slotIndex].endTime) {
+        const [hours, minutes] = roundedValue.split(':').map(Number);
+        let endHours = hours;
+        let endMinutes = minutes + 15;
+        
+        if (endMinutes >= 60) {
+          endHours = (endHours + 1) % 24;
+          endMinutes = endMinutes - 60;
+        }
+        
+        const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+        newAvailability[dayIndex].slots[slotIndex].endTime = endTime;
+      }
     }
     setAvailability(newAvailability);
   };
 
+  // Function to round time to nearest 15-minute interval
+  const roundToNearest15Minutes = (timeString) => {
+    if (!timeString) return '';
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    let finalHours = hours;
+    let finalMinutes = roundedMinutes;
+    
+    if (roundedMinutes >= 60) {
+      finalHours = (hours + 1) % 24;
+      finalMinutes = 0;
+    }
+    
+    return `${String(finalHours).padStart(2, '0')}:${String(finalMinutes).padStart(2, '0')}`;
+  };
+
+  // Function to get recommended slots based on current time
+  const getRecommendedSlots = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const recommended = [];
+    
+    // Generate common business hour slots
+    const businessHours = [
+      '09:00', '09:15', '09:30', '09:45',
+      '10:00', '10:15', '10:30', '10:45',
+      '11:00', '11:15', '11:30', '11:45',
+      '14:00', '14:15', '14:30', '14:45',
+      '15:00', '15:15', '15:30', '15:45',
+      '16:00', '16:15', '16:30', '16:45',
+      '17:00', '17:15', '17:30', '17:45'
+    ];
+    
+    return businessHours;
+  };
+
   const addSlot = (dayIndex) => {
     const newAvailability = [...availability];
+    const recommendedSlots = getRecommendedSlots();
+    const nextSlot = recommendedSlots[0]; // Start with 9:00 AM
+    
     newAvailability[dayIndex].slots.push({
-      startTime: '',
-      endTime: ''
+      startTime: nextSlot,
+      endTime: getNext15MinuteTime(nextSlot)
     });
     setAvailability(newAvailability);
+  };
+
+  // Function to get next 15-minute time
+  const getNext15MinuteTime = (timeString) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    let nextHours = hours;
+    let nextMinutes = minutes + 15;
+    
+    if (nextMinutes >= 60) {
+      nextHours = (nextHours + 1) % 24;
+      nextMinutes = nextMinutes - 60;
+    }
+    
+    return `${String(nextHours).padStart(2, '0')}:${String(nextMinutes).padStart(2, '0')}`;
   };
 
   const removeSlot = (dayIndex, slotIndex) => {
@@ -281,7 +352,35 @@ export default function MentorAvailability() {
 
           {editingAvailability ? (
             <div className="space-y-6">
-              <p className="text-sm text-gray-400">Manage your weekly availability schedule. Add time slots for each day when you're available.</p>
+              <p className="text-sm text-gray-400">Manage your weekly availability schedule. All slots are 15 minutes duration. Add time slots for each day when you're available.</p>
+              
+              {/* Quick recommendations */}
+              <div className="bg-[#2c2c2e] p-4 rounded-xl border border-gray-600">
+                <h4 className="text-sm font-medium text-blue-300 mb-3">Quick Add Common Time Slots:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {getRecommendedSlots().slice(0, 8).map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => {
+                        const newAvailability = [...availability];
+                        newAvailability.forEach((day, dayIndex) => {
+                          if (day.slots.length === 0 || !day.slots.some(slot => slot.startTime === time)) {
+                            newAvailability[dayIndex].slots.push({
+                              startTime: time,
+                              endTime: getNext15MinuteTime(time)
+                            });
+                          }
+                        });
+                        setAvailability(newAvailability);
+                        toast.success(`Added ${time} - ${getNext15MinuteTime(time)} slot to all days`);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {availability.map((day, dayIndex) => (
                   <div key={dayIndex} className="bg-[#2c2c2e] p-4 rounded-xl border border-gray-600">
@@ -305,6 +404,7 @@ export default function MentorAvailability() {
                               onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'startTime', e.target.value)}
                               className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
                               placeholder="Start"
+                              step="900"
                             />
                             <span className="text-gray-400">to</span>
                             <input
@@ -313,6 +413,7 @@ export default function MentorAvailability() {
                               onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'endTime', e.target.value)}
                               className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
                               placeholder="End"
+                              step="900"
                             />
                             <button
                               onClick={() => removeSlot(dayIndex, slotIndex)}
@@ -399,11 +500,18 @@ export default function MentorAvailability() {
                         </div>
 
                         {/* Pricing info from profile */}
-                        {availabilityData?.pricing && (
+                        {availabilityData?.pricing && availabilityData.pricing.length > 0 ? (
                           <div className="flex items-center mb-3 gap-2 text-gray-200">
                             <FaRupeeSign />
                             <span className="text-md">
-                              ₹{availabilityData.pricing.find(p => p.type === 'video')?.price || 15}/min
+                              ₹{availabilityData.pricing.find(p => p.type === 'video')?.price * 15 || 225}/slot (15 min)
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center mb-3 gap-2 text-gray-400">
+                            <FaRupeeSign />
+                            <span className="text-md">
+                              Not Available
                             </span>
                           </div>
                         )}

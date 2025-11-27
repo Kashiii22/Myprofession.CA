@@ -33,7 +33,6 @@ export default function CompleteProfileWizard() {
     availability: [],
     selectedDays: [], // Add selectedDays to track which days are selected
     pricing: [],
-    minSessionDuration: 15,
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -289,7 +288,40 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
     return daysWithSlots;
   });
   const [validationErrors, setValidationErrors] = useState({});
-  const handleDayClick = (day) => { setSelectedDays(prev => { const isSelected = prev.includes(day); if (isSelected) { return prev.filter(d => d !== day); } return [...prev, day]; }); };
+  
+  // Validate that selected days have time slots
+  const validateAvailability = () => {
+    const errors = {};
+    
+    // Check if any days are selected but have no time slots
+    for (const day of selectedDays) {
+      const dayAvailability = availability.find(d => d.day === day);
+      if (!dayAvailability || !dayAvailability.slots || dayAvailability.slots.length === 0) {
+        errors.dayValidation = `Please add time slots for ${day}`;
+        break; // Show first error only
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
+  const handleDayClick = (day) => { 
+    setSelectedDays(prev => { 
+      const isSelected = prev.includes(day); 
+      if (isSelected) { 
+        return prev.filter(d => d !== day); 
+      } 
+      return [...prev, day]; 
+    }); 
+    
+    // Clear validation errors when day selection changes
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.dayValidation;
+      return newErrors;
+    });
+  };
   const templateDay = availability.find(d => d.day === selectedDays[0]);
   const displayedSlots = templateDay ? templateDay.slots : [];
   const performBulkSlotAction = (newSlots) => { setAvailability(prev => prev.map(dayState => selectedDays.includes(dayState.day) ? { ...dayState, slots: newSlots } : dayState)); };
@@ -300,6 +332,19 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
     // Validate start time is before end time
     if (startTime && endTime && startTime >= endTime) {
       errors[`slot_${slotIndex}`] = 'Start time must be before end time';
+    }
+    
+    // Validate slot duration is exactly 15 minutes or multiples of 15 minutes
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      const startTotalMinutes = startHour * 60 + startMinute;
+      const endTotalMinutes = endHour * 60 + endMinute;
+      const duration = endTotalMinutes - startTotalMinutes;
+      
+      if (duration % 15 !== 0) {
+        errors[`slot_${slotIndex}_duration`] = 'Slot duration must be a multiple of 15 minutes';
+      }
     }
     
     // Validate times are within reasonable business hours (6 AM to 11 PM)
@@ -314,13 +359,63 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
     return errors;
   };
   
+  // Function to generate 15-minute slot recommendations
+  const generate15MinuteSlots = (startTime, endTime) => {
+    if (!startTime || !endTime || startTime >= endTime) return [];
+    
+    const slots = [];
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    
+    // Generate 15-minute intervals
+    for (let currentMinutes = startTotalMinutes; currentMinutes < endTotalMinutes; currentMinutes += 15) {
+      const slotEndMinutes = Math.min(currentMinutes + 15, endTotalMinutes);
+      
+      const slotStartHour = Math.floor(currentMinutes / 60).toString().padStart(2, '0');
+      const slotStartMin = (currentMinutes % 60).toString().padStart(2, '0');
+      const slotEndHour = Math.floor(slotEndMinutes / 60).toString().padStart(2, '0');
+      const slotEndMin = (slotEndMinutes % 60).toString().padStart(2, '0');
+      
+      slots.push({
+        startTime: `${slotStartHour}:${slotStartMin}`,
+        endTime: `${slotEndHour}:${slotEndMin}`
+      });
+    }
+    
+    return slots;
+  };
+  
   const addSlot = () => {
-    const newSlot = { startTime: "10:00", endTime: "11:00" };
+    const lastSlot = displayedSlots[displayedSlots.length - 1];
+    let newSlot = { startTime: "10:00", endTime: "10:15" }; // Default to 15-minute slot
+    
+    // If there's a previous slot, suggest the next 15-minute interval
+    if (lastSlot && lastSlot.endTime) {
+      const [endHour, endMinute] = lastSlot.endTime.split(':').map(Number);
+      const totalMinutes = endHour * 60 + endMinute;
+      const nextSlotStartMinutes = totalMinutes;
+      const nextSlotStartHour = Math.floor(nextSlotStartMinutes / 60).toString().padStart(2, '0');
+      const nextSlotStartMin = (nextSlotStartMinutes % 60).toString().padStart(2, '0');
+      const nextSlotEndMinutes = nextSlotStartMinutes + 15;
+      const nextSlotEndHour = Math.floor(nextSlotEndMinutes / 60).toString().padStart(2, '0');
+      const nextSlotEndMin = (nextSlotEndMinutes % 60).toString().padStart(2, '0');
+      
+      newSlot = {
+        startTime: `${nextSlotStartHour}:${nextSlotStartMin}`,
+        endTime: `${nextSlotEndHour}:${nextSlotEndMin}`
+      };
+    }
+    
     performBulkSlotAction([...displayedSlots, newSlot]);
     // Clear validation errors for new slot
     setValidationErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[`slot_${displayedSlots.length}`];
+      delete newErrors[`slot_${displayedSlots.length}_duration`];
+      delete newErrors.dayValidation; // Also clear day validation when slots are added
       return newErrors;
     });
   };
@@ -333,6 +428,7 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
       delete newErrors[`slot_${index}`];
       delete newErrors[`slot_${index}_start`];
       delete newErrors[`slot_${index}_end`];
+      delete newErrors[`slot_${index}_duration`];
       return newErrors;
     });
   };
@@ -351,6 +447,7 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
       delete newErrors[`slot_${index}`];
       delete newErrors[`slot_${index}_start`];
       delete newErrors[`slot_${index}_end`];
+      delete newErrors[`slot_${index}_duration`];
       // Add new errors
       Object.assign(newErrors, errors);
       return newErrors;
@@ -358,10 +455,52 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
     
     performBulkSlotAction(newSlots);
   };
+  
+  // Function to replace all slots with 15-minute intervals based on the first slot
+  const apply15MinuteSlots = () => {
+    if (displayedSlots.length === 0) return;
+    
+    const firstSlot = displayedSlots[0];
+    if (!firstSlot.startTime || !firstSlot.endTime) return;
+    
+    const recommendedSlots = generate15MinuteSlots(firstSlot.startTime, firstSlot.endTime);
+    performBulkSlotAction(recommendedSlots);
+    
+    // Clear validation errors when applying recommendations
+    setValidationErrors({});
+  };
+  
+  // Function to replace a specific slot with 15-minute intervals
+  const apply15MinutesToSlot = (index) => {
+    const slot = displayedSlots[index];
+    if (!slot.startTime || !slot.endTime) return;
+    
+    const recommendedSlots = generate15MinuteSlots(slot.startTime, slot.endTime);
+    
+    // Remove the current slot and add the 15-minute slots
+    const newSlots = [
+      ...displayedSlots.slice(0, index),
+      ...recommendedSlots,
+      ...displayedSlots.slice(index + 1)
+    ];
+    
+    performBulkSlotAction(newSlots);
+    
+    // Clear validation errors
+    setValidationErrors({});
+  };
+  
+  // Handle next button with validation
+  const handleNext = () => {
+    if (validateAvailability()) {
+      onNext({ availability: availability, selectedDays: selectedDays });
+    }
+  };
+  
   return (
     <div>
       <div className="flex items-center mb-8"><ClockIcon />
-        <div><h2 className="text-2xl font-bold text-white">Set Your Weekly Schedule</h2><p className="text-gray-400">Select one or more days to apply a schedule to them all at once.</p></div>
+        <div><h2 className="text-2xl font-bold text-white">Set Your Weekly Schedule</h2><p className="text-gray-400">Select one or more days to set 15-minute time slots for availability.</p></div>
       </div>
       <div className="flex flex-wrap gap-3 mb-8 border-b border-gray-700 pb-6">
         {daysOfWeek.map(day => (<button key={day} onClick={() => handleDayClick(day)} className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-colors duration-300 ${selectedDays.includes(day) ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-800 hover:bg-gray-700'}`}>{day}</button>))}
@@ -375,6 +514,9 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
           </div>
         ) : displayedSlots.length > 0 ? (
           <div className="space-y-3">
+            <div className="text-sm text-gray-400 mb-2">
+              ⚡ All time slots must be 15 minutes or multiples of 15 minutes (15, 30, 45, 60, etc.)
+            </div>
             {displayedSlots.map((slot, index) => (
               <div key={index} className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
                 <div className="flex-1">
@@ -400,9 +542,20 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
                     <p className="text-red-400 text-xs mt-1">{validationErrors[`slot_${index}_end`]}</p>
                   )}
                 </div>
-                <button onClick={() => removeSlot(index)} className="text-red-500 hover:text-red-400 p-2 rounded-full bg-gray-700 hover:bg-red-500/20 transition-colors">
-                  <TrashIcon />
-                </button>
+                <div className="flex items-center gap-1">
+                  {slot.startTime && slot.endTime && generate15MinuteSlots(slot.startTime, slot.endTime).length > 1 && (
+                    <button 
+                      onClick={() => apply15MinutesToSlot(index)}
+                      title="Split this slot into 15-minute intervals"
+                      className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                    >
+                      15-min
+                    </button>
+                  )}
+                  <button onClick={() => removeSlot(index)} className="text-red-500 hover:text-red-400 p-2 rounded-full bg-gray-700 hover:bg-red-500/20 transition-colors">
+                    <TrashIcon />
+                  </button>
+                </div>
               </div>
             ))}
             {validationErrors[`slot_${displayedSlots.length - 1}`] && (
@@ -410,43 +563,104 @@ const AvailabilityStep = ({ onNext, onBack, initialData }) => {
                 {validationErrors[`slot_${displayedSlots.length - 1}`]}
               </div>
             )}
+            {Object.keys(validationErrors).filter(key => key.includes('_duration')).length > 0 && (
+              <div className="text-red-400 text-sm mt-2 bg-red-900/20 border border-red-700 p-2 rounded">
+                <p>All time slots must be exactly 15 minutes or multiples of 15 minutes (15, 30, 45, 60, etc.)</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center py-8 text-gray-500">
             <p>You are unavailable on the selected day(s).</p>
-            <p className="text-sm">Click "Add Time Slot" to set your hours.</p>
+            <p className="text-sm">Click "Add Time Slot" to set 15-minute availability slots.</p>
+            <p className="text-xs mt-2 text-gray-400">⚡ All slots must be 15 minutes or multiples of 15 minutes</p>
           </div>
         )}
         {selectedDays.length > 0 && (
-          <button onClick={addSlot} className="flex items-center gap-2 text-cyan-400 font-semibold mt-4 hover:text-cyan-300 transition-colors">
-            <PlusIcon /> Add Time Slot
-          </button>
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <button onClick={addSlot} className="flex items-center gap-2 text-cyan-400 font-semibold hover:text-cyan-300 transition-colors">
+                  <PlusIcon /> Add 15-min Slot
+                </button>
+                {displayedSlots.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    <button 
+                      onClick={apply15MinuteSlots}
+                      className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition-colors"
+                    >
+                      Split All to 15-min
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Show 15-minute recommendations for the first slot */}
+            {displayedSlots.length > 0 && displayedSlots[0].startTime && displayedSlots[0].endTime && (
+              <div className="p-3 bg-blue-900/20 border border-blue-600/50 rounded-lg">
+                <p className="text-sm text-blue-300 font-medium mb-2">
+                  💡 15-minute slots available for {displayedSlots[0].startTime} - {displayedSlots[0].endTime}:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {generate15MinuteSlots(displayedSlots[0].startTime, displayedSlots[0].endTime).slice(0, 6).map((slot, index) => (
+                    <span key={index} className="text-xs bg-gray-700 px-2 py-1 rounded border border-gray-600">
+                      {slot.startTime} - {slot.endTime}
+                    </span>
+                  ))}
+                  {generate15MinuteSlots(displayedSlots[0].startTime, displayedSlots[0].endTime).length > 6 && (
+                    <span className="text-xs text-gray-400">+{generate15MinuteSlots(displayedSlots[0].startTime, displayedSlots[0].endTime).length - 6} more</span>
+                  )}
+                </div>
+                {generate15MinuteSlots(displayedSlots[0].startTime, displayedSlots[0].endTime).length > 1 && (
+                  <button
+                    onClick={() => apply15MinutesToSlot(0)}
+                    className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 underline"
+                  >
+                    Use these 15-minute slots instead
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Validation error display */}
+        {validationErrors.dayValidation && (
+          <div className="mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg">
+            <p className="text-red-300 text-sm">{validationErrors.dayValidation}</p>
+          </div>
+        )}
+        
+        {/* Validation error display for duration restrictions */}
+        {Object.keys(validationErrors).filter(key => key.includes('_duration')).length > 0 && (
+          <div className="mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg">
+            <p className="text-red-300 text-sm">⚠️ Time slots must be exactly 15 minutes or multiples of 15 minutes (15, 30, 45, 60, etc.)</p>
+          </div>
         )}
       </div>
       <div className="flex justify-between mt-12">
         <button onClick={onBack} className="px-6 py-2 rounded-full text-gray-300 hover:bg-gray-800 transition-colors">Back</button>
-        <button onClick={() => onNext({ availability: availability, selectedDays: selectedDays })} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Define Services</button>
+        <button onClick={handleNext} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Define Services</button>
       </div>
     </div>
   );
 };
 
 const PricingStep = ({ onNext, onBack, initialData }) => {
-  const defaultPricing = [{ type: "chat", price: 10, enabled: false, description: "" },{ type: "video", price: 30, enabled: false, description: "" },];
+  const defaultPricing = [{ type: "chat", price: 450, enabled: false, description: "" },{ type: "video", price: 750, enabled: false, description: "" },];
   const [pricing, setPricing] = useState(() => defaultPricing.map(p => ({ ...p, ...(initialData.pricing.find(i => i.type === p.type) || {}), enabled: !!initialData.pricing.find(i => i.type === p.type) })));
-  const [minDuration, setMinDuration] = useState(initialData.minSessionDuration);
   const updatePricing = (index, field, value) => { setPricing(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p)); };
   const toggleService = (index) => { setPricing(prev => prev.map((p, i) => i === index ? { ...p, enabled: !p.enabled } : p)); };
   return (
     <div>
       <div className="flex items-center mb-8"><PriceIcon />
-        <div><h2 className="text-2xl font-bold text-white">Define Your Services</h2><p className="text-gray-400">Set your per-minute rates and minimum session time.</p></div>
+        <div><h2 className="text-2xl font-bold text-white">Define Your Services</h2><p className="text-gray-400">Set your rates per 15-minute session.</p></div>
       </div>
-      <div className="bg-gray-800 p-5 rounded-lg mb-8"><label className="font-semibold text-white text-lg">Minimum Session Duration</label><p className="text-sm text-gray-400 mb-3">The shortest booking time a mentee can request.</p><select value={minDuration} onChange={e => setMinDuration(e.target.value)} className="w-full sm:w-1/2 mt-1 bg-gray-700 p-3 rounded-md"><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option></select></div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{pricing.map((service, index) => (<div key={service.type} className={`p-6 rounded-xl border-2 transition-all duration-300 ${service.enabled ? 'border-blue-600 bg-gray-800' : 'border-gray-700 bg-gray-800/50'}`}><div className="flex items-center justify-between mb-4"><h3 className="text-xl font-bold capitalize text-white">{service.type}</h3><input type="checkbox" checked={service.enabled} onChange={() => toggleService(index)} className="toggle-checkbox" /></div><p className="text-gray-400 text-sm mb-4 h-10">{service.description}</p><div className={`space-y-4 transition-opacity duration-300 ${service.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}><div><label className="text-sm text-gray-400">Rate per minute (INR)</label><input type="number" min="0" step="1" value={service.price} onChange={e => updatePricing(index, 'price', e.target.value)} className="w-full mt-1 bg-gray-700 p-3 rounded-md" /></div></div></div>))}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{pricing.map((service, index) => (<div key={service.type} className={`p-6 rounded-xl border-2 transition-all duration-300 ${service.enabled ? 'border-blue-600 bg-gray-800' : 'border-gray-700 bg-gray-800/50'}`}><div className="flex items-center justify-between mb-4"><h3 className="text-xl font-bold capitalize text-white">{service.type}</h3><input type="checkbox" checked={service.enabled} onChange={() => toggleService(index)} className="toggle-checkbox" /></div><p className="text-gray-400 text-sm mb-4 h-10">{service.description}</p><div className={`space-y-4 transition-opacity duration-300 ${service.enabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}><div><label className="text-sm text-gray-400">Rate per 15-minute session (INR)</label><input type="number" min="0" step="1" value={service.price} onChange={e => updatePricing(index, 'price', e.target.value)} className="w-full mt-1 bg-gray-700 p-3 rounded-md" /></div></div></div>))}</div>
       <div className="flex justify-between mt-12">
         <button onClick={onBack} className="px-6 py-2 rounded-full text-gray-300 hover:bg-gray-800 transition-colors">Back</button>
-        <button onClick={() => onNext({ minSessionDuration: minDuration, pricing: pricing.filter(p => p.enabled).map(({ enabled, description, ...rest }) => rest) })} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Final Review</button>
+        <button onClick={() => onNext({ pricing: pricing.filter(p => p.enabled).map(({ enabled, description, ...rest }) => rest) })} className="px-8 py-3 bg-blue-600 rounded-full font-semibold hover:bg-blue-500 transition-colors">Next: Final Review</button>
       </div>
     </div>
   );
@@ -474,10 +688,9 @@ const FinishStep = ({ onFinish, onBack, profileData, isLoading, error }) => (
             
             <div className="pt-6 border-t border-gray-700">
                 <h3 className="font-semibold text-cyan-400 text-lg">Your Services & Rates</h3>
-                <p className="text-gray-300 mt-1 mb-3">Minimum session duration: <strong>{profileData.minSessionDuration} minutes</strong></p>
                 {profileData.pricing?.length > 0 ? (
                     <ul className="list-disc list-inside text-gray-300 space-y-1">
-                        {profileData.pricing.map(p => <li key={p.type}>{p.type.charAt(0).toUpperCase() + p.type.slice(1)}: <strong>₹{p.price}/minute</strong></li>)}
+                        {profileData.pricing.map(p => <li key={p.type}>{p.type.charAt(0).toUpperCase() + p.type.slice(1)}: <strong>₹{p.price}/15-min session</strong></li>)}
                     </ul>
                 ) : (
                     <p className="text-gray-400">No services enabled.</p>

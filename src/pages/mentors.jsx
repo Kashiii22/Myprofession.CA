@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { FaStar, FaStarHalfAlt, FaRegStar, FaUser } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 import { FiRefreshCw, FiLoader } from "react-icons/fi"; // Added loader icon
 import { motion, AnimatePresence } from "framer-motion";
 const{getActiveMentors} = require('@/lib/api/mentorApi'); // --- 1. IMPORT API SERVICE ---
@@ -14,17 +14,6 @@ const{getActiveMentors} = require('@/lib/api/mentorApi'); // --- 1. IMPORT API S
 const categories = ["All", "IncomeTax", "GST", "Accounting", "Audit", "Investment", "Exam Oriented" ];
 
 // --- REMOVED hardcoded 'mentors' array ---
-
-const RenderStars = memo(({ rating }) => (
-  <div className="flex justify-center gap-1 mt-2 text-xl">
-    {[1, 2, 3, 4, 5].map((i) => {
-      if (rating >= i) return <FaStar key={i} className="text-yellow-400" />;
-      if (rating >= i - 0.5) return <FaStarHalfAlt key={i} className="text-yellow-400" />;
-      return <FaRegStar key={i} className="text-yellow-400" />;
-    })}
-  </div>
-));
-RenderStars.displayName = 'RenderStars'; // Added for React DevTools
 
 const MentorCard = ({ mentor }) => {
   const router = useRouter();
@@ -45,12 +34,6 @@ const MentorCard = ({ mentor }) => {
       onClick={handleViewProfile}
       className="cursor-pointer relative w-full bg-[#0D1117] border border-blue-600 rounded-3xl p-6 shadow-xl hover:scale-[1.02] hover:shadow-blue-500/30 transition-all flex flex-col justify-between mx-auto sm:max-w-[300px]"
     >
-      {mentor.rating >= 4.8 && (
-        <span className="absolute top-4 right-4 bg-blue-600 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-sm">
-          ⭐ Top Mentor
-        </span>
-      )}
-
       <div className="relative w-28 h-28 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-500 shadow-md">
         {mentor.image ? (
           <Image src={mentor.image} alt={mentor.name} fill className="object-cover" sizes="112px" />
@@ -64,7 +47,6 @@ const MentorCard = ({ mentor }) => {
       <div className="text-center">
         <h3 className="text-xl font-bold text-white">{mentor.name}</h3>
         <p className="text-base text-gray-400">{mentor.title}</p>
-        <RenderStars rating={mentor.rating} />
       </div>
 
       <div className="mt-4 text-sm text-center flex flex-wrap justify-center gap-2">
@@ -122,9 +104,6 @@ export default function MentorListPage() {
           image: mentor.userRef.avatar,
           // Create a title from qualifications or a default
           title: mentor.registrationRef.qualification[0] || 'Chartered Accountant',
-          // Your API doesn't have a rating, so we use a placeholder.
-          // You will need to add a rating system later.
-          rating: 4.5, 
           // Join the expertise array into a comma-separated string
           specialization: mentor.registrationRef.expertise.join(', '), 
         }));
@@ -154,8 +133,6 @@ export default function MentorListPage() {
 
     // Sorting logic (no changes)
     const sortMentors = {
-      desc: () => filteredList.sort((a, b) => b.rating - a.rating),
-      asc: () => filteredList.sort((a, b) => a.rating - b.rating),
       az: () => filteredList.sort((a, b) => a.name.localeCompare(b.name)),
       za: () => filteredList.sort((a, b) => b.name.localeCompare(a.name)),
     };
@@ -207,8 +184,6 @@ export default function MentorListPage() {
             className="bg-gray-800 border border-gray-600 text-white px-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
           >
             <option value="" disabled>Sort by</option>
-            <option value="desc">Rating: High to Low</option>
-            <option value="asc">Rating: Low to High</option>
             <option value="az">Name: A-Z</option>
             <option value="za">Name: Z-A</option>
           </select>

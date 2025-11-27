@@ -43,34 +43,22 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
     const hasEvents = dayWiseAvailableDates.find(d => d.date === dateStr);
     const isSelected = selected === dateStr;
     const isPast = day < today;
-    
-    const getEventCount = () => {
-      if (!hasEvents) return 0;
-      return hasEvents.slots.length;
-    };
-    
-    const getEventColor = () => {
-      const count = getEventCount();
-      if (count === 0) return 'bg-gray-700';
-      if (count <= 2) return 'bg-green-600';
-      if (count <= 4) return 'bg-blue-600';
-      return 'bg-purple-600';
-    };
+    const isAvailable = hasEvents && hasEvents.slots && hasEvents.slots.length > 0;
     
     return (
       <div
         className={`
           relative h-14 p-1 border rounded-lg transition-all cursor-pointer
-          ${isPast ? 'opacity-40 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-gray-800/50'}
+          ${isPast || !isAvailable ? 'opacity-40 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-gray-800/50'}
           ${isSelected ? 'border-blue-500 bg-blue-900/30 ring-2 ring-blue-500/50' : 'border-gray-700'}
           ${!isPast && !hasEvents && 'opacity-60'}
         `}
-        onClick={() => !isPast && onSelect(dateStr)}
+        onClick={() => !isPast && isAvailable && onSelect(dateStr)}
         onMouseEnter={() => setHoveredDay(dateStr)}
         onMouseLeave={() => setHoveredDay(null)}
       >
         <div className="text-center">
-          <div className={`text-sm font-medium ${isSelected ? 'text-blue-300' : isPast ? 'text-gray-500' : 'text-white'}`}>
+          <div className={`text-sm font-medium ${isSelected ? 'text-blue-300' : isPast ? 'text-gray-500' : isAvailable ? 'text-white' : 'text-gray-600'}`}>
             {day.getDate()}
           </div>
           <div className="text-xs text-gray-400">
@@ -78,9 +66,9 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
           </div>
         </div>
         
-        {getEventCount() > 0 && (
+        {isAvailable && (
           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
-            <div className={`w-2 h-2 ${getEventColor()} rounded-full`}></div>
+            <div className={`w-2 h-2 bg-green-600 rounded-full`}></div>
           </div>
         )}
         
@@ -172,20 +160,6 @@ const CustomCalendar = ({ selected, onSelect, dayWiseAvailableDates }) => {
             </svg>
           </button>
         </div>
-        <div className="flex gap-2 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-            <span className="text-gray-400">1-2 slots</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <span className="text-gray-400">3-4 slots</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-            <span className="text-gray-400">5+ slots</span>
-          </div>
-        </div>
       </div>
       
       <div className="grid grid-cols-7 gap-1 mb-1">
@@ -214,7 +188,7 @@ export default function BookingPage() {
 
   // Booking states
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedMode, setSelectedMode] = useState("video");
   const [meetingTopic, setMeetingTopic] = useState("");
   const [isBookingLoading, setIsBookingLoading] = useState(false);
@@ -247,10 +221,7 @@ export default function BookingPage() {
           image: mentorData.userRef.avatar || "https://i.pravatar.cc/150?img=12",
           title: mentorData.registrationRef?.qualification?.[0] || 'Professional Mentor',
           rating: mentorData.rating || 4.5,
-          pricing: mentorData.pricing || [
-            { type: "chat", price: 10, duration: 1 },
-            { type: "video", price: 30, duration: 1 }
-          ],
+          pricing: mentorData.pricing || null,
           minSessionDuration: mentorData.minSessionDuration || 15,
           isActive: mentorData.isActive || false,
           isBanned: mentorData.isBanned || false,
@@ -318,38 +289,66 @@ export default function BookingPage() {
   // Get unique dates from day-wise availability
   const uniqueAvailableDates = dayWiseAvailableDates.map(d => d.date);
 
-  // Function to get price per minute based on selected mode
-  const getPricePerMinute = (mode) => {
-    const pricingItem = mentor?.pricing?.find(p => p.type === mode);
-    return pricingItem?.price || 30; // Price per minute
+  // Function to get price per 15-minute session based on selected mode
+  const getPricePer15Minutes = (mode) => {
+    if (!mentor?.pricing) return null;
+    const pricingItem = mentor.pricing.find(p => p.type === mode);
+    return pricingItem?.price || null;
+  };
+
+  // Function to calculate total duration for selected slots
+  const getTotalDuration = () => {
+    return selectedSlots.reduce((total, slot) => {
+      const start = new Date(`1970-01-01T${slot.startTime}:00`);
+      const end = new Date(`1970-01-01T${slot.endTime}:00`);
+      const duration = (end - start) / (1000 * 60); // Convert to minutes
+      return total + duration;
+    }, 0);
   };
 
   const getPriceForDuration = (duration, mode) => {
-    const pricePerMinute = getPricePerMinute(mode);
-    return `₹${duration * pricePerMinute}`;
+    const pricePer15Minutes = getPricePer15Minutes(mode);
+    if (pricePer15Minutes === null) return 'Pricing not available';
+    
+    // Calculate how many 15-minute blocks are needed
+    const sessionBlocks = Math.ceil(duration / 15);
+    const totalPrice = sessionBlocks * pricePer15Minutes;
+    return `₹${totalPrice}`;
   };
 
   
 
   // Function to handle booking submission
   const handleBookingSubmit = async () => {
-    if (!selectedDate || !selectedSlot || !meetingTopic.trim()) {
-      alert("Please select a date, time slot, and provide a meeting topic");
+    if (!selectedDate || selectedSlots.length === 0 || !meetingTopic.trim()) {
+      alert("Please select a date, at least one time slot, and provide a meeting topic");
+      return;
+    }
+
+    // Check if pricing is available
+    if (!mentor?.pricing) {
+      alert("Pricing information is not available for this mentor. Please contact support.");
+      return;
+    }
+
+    const totalDuration = getTotalDuration();
+    const priceForDuration = getPriceForDuration(totalDuration, selectedMode);
+    if (priceForDuration === 'Pricing not available') {
+      alert("Pricing is not available for the selected session type. Please try another mode or contact the mentor.");
       return;
     }
 
     setIsBookingLoading(true);
     
     try {
-      const sessionDuration = mentor?.minSessionDuration || 15;
       const bookingData = {
         mentorId: mentor.id,
         date: selectedDate,
-        slot: selectedSlot,
+        slots: selectedSlots, // Send array of selected slots
         mode: selectedMode,
-        duration: sessionDuration,
+        duration: totalDuration, // Total duration in minutes
         topic: meetingTopic.trim(),
-        totalPrice: getPriceForDuration(sessionDuration, selectedMode).replace('₹', '')
+        totalPrice: priceForDuration.replace('₹', '')
       };
 
       // This would be your API call to submit the booking
@@ -362,7 +361,7 @@ export default function BookingPage() {
       });
 
       if (response.ok) {
-        alert('Session booked successfully! You will receive a confirmation email.');
+        alert('Sessions booked successfully! You will receive a confirmation email.');
         router.push('/dashboard'); // Redirect to dashboard after successful booking
       } else {
         const error = await response.json();
@@ -462,7 +461,7 @@ export default function BookingPage() {
                     selected={selectedDate}
                     onSelect={(date) => {
                       setSelectedDate(date);
-                      setSelectedSlot(null);
+                      setSelectedSlots([]); // Clear selected slots when changing date
                     }}
                     dayWiseAvailableDates={dayWiseAvailableDates}
                   />
@@ -471,20 +470,32 @@ export default function BookingPage() {
                   {selectedDate && (
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm text-gray-400">Available slots for {selectedDate}</p>
+                        <p className="text-lg text-white font-semibold">Available slots for {selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</p>
                         <p className="text-xs text-gray-500">
-                          {getAvailableSlotsForDate().length} slot{getAvailableSlotsForDate().length !== 1 ? 's' : ''} available
+                          {selectedSlots.length > 0 && `${selectedSlots.length} slot${selectedSlots.length !== 1 ? 's' : ''} selected`}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                         {getAvailableSlotsForDate().map((slot, idx) => (
                           <button
                             key={idx}
-                            onClick={() => setSelectedSlot(slot)}
-                            className={`p-3 rounded-lg text-xs sm:text-sm transition-all group ${
-                              selectedSlot?.startTime === slot.startTime
-                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/30 transform scale-105"
-                                : "bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 hover:border-blue-500"
+                            onClick={() => {
+                              const slotKey = `${slot.startTime}-${slot.endTime}`;
+                              setSelectedSlots(prev => {
+                                const isAlreadySelected = prev.some(s => s.startTime === slot.startTime && s.endTime === slot.endTime);
+                                if (isAlreadySelected) {
+                                  // Remove slot if already selected
+                                  return prev.filter(s => !(s.startTime === slot.startTime && s.endTime === slot.endTime));
+                                } else {
+                                  // Add slot to selection
+                                  return [...prev, slot];
+                                }
+                              });
+                            }}
+                            className={`p-3 rounded-lg text-xs sm:text-sm transition-all group border-2 ${
+                              selectedSlots.some(s => s.startTime === slot.startTime && s.endTime === slot.endTime)
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/30 transform scale-105 border-blue-400"
+                                : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700 hover:border-blue-500"
                             }`}
                           >
                             <div className="font-semibold text-center">{slot.startTime}</div>
@@ -505,6 +516,27 @@ export default function BookingPage() {
                           <FaVideoSlash className="text-3xl text-gray-500 mx-auto mb-2" />
                           <p className="text-gray-400">No available slots</p>
                           <p className="text-gray-500 text-sm">Please select another date</p>
+                        </div>
+                      )}
+                      
+                      {selectedSlots.length > 0 && (
+                        <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+                          <p className="text-sm text-blue-300 font-medium mb-2">Selected Time Slots:</p>
+                          <div className="space-y-1">
+                            {selectedSlots.map((slot, index) => (
+                              <div key={index} className="flex justify-between items-center text-white text-sm bg-gray-800/50 p-2 rounded">
+                                <span>{slot.startTime} - {slot.endTime}</span>
+                                <button
+                                  onClick={() => {
+                                    setSelectedSlots(prev => prev.filter(s => !(s.startTime === slot.startTime && s.endTime === slot.endTime)));
+                                  }}
+                                  className="text-red-400 hover:text-red-300 text-xs"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -557,21 +589,31 @@ export default function BookingPage() {
             <div className="bg-[#0f172a]/50 backdrop-blur-md border border-gray-800 rounded-xl p-4">
               <h3 className="text-base font-semibold text-blue-400 mb-3">Session Mode</h3>
               <div className="grid grid-cols-2 gap-2">
-                {MODES.map(({ type, icon, label }) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedMode(type)}
-                    className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all ${
-                      selectedMode === type
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                        : "bg-gray-800 hover:bg-gray-700 text-gray-300"
-                    }`}
-                  >
-                    <div className="text-lg">{icon}</div>
-                    <span className="text-xs font-medium">{label}</span>
-                    <span className="text-xs text-gray-400">₹{getPricePerMinute(type)}/min</span>
-                  </button>
-                ))}
+                {MODES.map(({ type, icon, label }) => {
+                  const pricePer15Minutes = getPricePer15Minutes(type);
+                  const isPricingAvailable = pricePer15Minutes !== null;
+                  
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => isPricingAvailable && setSelectedMode(type)}
+                      className={`p-3 rounded-lg flex flex-col items-center gap-1 transition-all ${
+                        selectedMode === type
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                          : isPricingAvailable
+                          ? "bg-gray-800 hover:bg-gray-700 text-gray-300 cursor-pointer"
+                          : "bg-gray-800/50 text-gray-500 cursor-not-allowed"
+                      }`}
+                      disabled={!isPricingAvailable}
+                    >
+                      <div className="text-lg">{icon}</div>
+                      <span className="text-xs font-medium">{label}</span>
+                      <span className="text-xs">
+                        {isPricingAvailable ? `₹${pricePer15Minutes}/15 min` : 'Not available'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -584,27 +626,52 @@ export default function BookingPage() {
                     <FaBusinessTime className="text-green-400" />
                     <span className="text-sm">Session Duration</span>
                   </div>
-                  <span className="text-sm font-semibold">{mentor?.minSessionDuration || 15} minutes</span>
+                  <span className="text-sm font-semibold">
+                    {selectedSlots.length > 0 ? `${getTotalDuration()} minutes (${selectedSlots.length} slot${selectedSlots.length !== 1 ? 's' : ''})` : 'No slots selected'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-400 text-sm">₹</span>
                     <span className="text-sm">Rate</span>
                   </div>
-                  <span className="text-sm font-semibold">₹{getPricePerMinute(selectedMode)}/minute</span>
+                  <span className="text-sm font-semibold">
+                    {getPricePer15Minutes(selectedMode) !== null 
+                      ? `₹${getPricePer15Minutes(selectedMode)}/15 min session` 
+                      : 'Not available'
+                    }
+                  </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-600/50 rounded-lg">
+                <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                  selectedSlots.length > 0 && getPriceForDuration(getTotalDuration(), selectedMode) !== 'Pricing not available'
+                    ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-600/50'
+                    : 'bg-gray-800/30 border border-gray-600'
+                }`}>
                   <span className="text-sm font-medium">Total Session Cost</span>
-                  <span className="text-lg font-bold text-green-400">
-                    {getPriceForDuration(mentor?.minSessionDuration || 15, selectedMode)}
+                  <span className={`text-lg font-bold ${
+                    selectedSlots.length > 0 && getPriceForDuration(getTotalDuration(), selectedMode) !== 'Pricing not available'
+                      ? 'text-green-400'
+                      : 'text-gray-500'
+                  }`}>
+                    {selectedSlots.length > 0 ? getPriceForDuration(getTotalDuration(), selectedMode) : 'No slots selected'}
                   </span>
                 </div>
               </div>
-              <div className="mt-3 p-2 bg-gray-800/50 rounded-lg">
-                <p className="text-xs text-gray-400">
-                  💡 All sessions are {mentor?.minSessionDuration || 15} minutes minimum with transparent per-minute pricing
-                </p>
-              </div>
+              {!mentor?.pricing && (
+                <div className="mt-3 p-2 bg-yellow-900/20 border border-yellow-600/50 rounded-lg">
+                  <p className="text-xs text-yellow-400">
+                    ⚠️ Pricing information not available. Please contact the mentor for session rates.
+                  </p>
+                </div>
+              )}
+              {mentor?.pricing && (
+                <div className="mt-3 p-2 bg-gray-800/50 rounded-lg">
+                  <p className="text-xs text-gray-400">
+                    💡 Sessions are billed in 15-minute blocks. Select multiple slots to book longer sessions.
+                    {selectedSlots.length > 0 && ` Total duration: ${getTotalDuration()} minutes requiring ${Math.ceil(getTotalDuration() / 15)} × 15-minute blocks.`}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Meeting Topic */}
@@ -624,7 +691,7 @@ export default function BookingPage() {
             </div>
 
             {/* Summary */}
-            {(selectedDate || selectedSlot) && (
+            {(selectedDate || selectedSlots.length > 0) && (
               <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-600/50 rounded-xl p-4">
                 <h3 className="text-base font-semibold text-blue-400 mb-3 flex items-center gap-2">
                   <FaCheck className="text-green-400" />
@@ -634,26 +701,40 @@ export default function BookingPage() {
                   {selectedDate && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Date:</span>
-                      <span className="text-white">{selectedDate}</span>
+                      <span className="text-white">{selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</span>
                     </div>
                   )}
-                  {selectedSlot && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Time:</span>
-                      <span className="text-white">{selectedSlot.startTime} - {selectedSlot.endTime}</span>
+                  
+                  {selectedSlots.length > 0 && (
+                    <div>
+                      <div className="text-gray-400 mb-1">Time Slots:</div>
+                      <div className="space-y-1">
+                        {selectedSlots.map((slot, index) => (
+                          <div key={index} className="text-white ml-2 text-xs">
+                            • {slot.startTime} - {slot.endTime}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
+                  
                   <div className="flex justify-between">
                     <span className="text-gray-400">Mode:</span>
                     <span className="text-white capitalize">{selectedMode}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Duration:</span>
-                    <span className="text-white">{mentor?.minSessionDuration || 15} min</span>
+                    <span className="text-white">{ getTotalDuration() } min ({selectedSlots.length} slot{selectedSlots.length !== 1 ? 's' : ''})</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-gray-700">
                     <span className="text-gray-300 font-medium">Total:</span>
-                    <span className="text-lg font-bold text-green-400">{getPriceForDuration(mentor?.minSessionDuration || 15, selectedMode)}</span>
+                    <span className={`text-lg font-bold ${
+                      getPriceForDuration(getTotalDuration(), selectedMode) !== 'Pricing not available'
+                        ? 'text-green-400'
+                        : 'text-gray-500'
+                    }`}>
+                      {getPriceForDuration(getTotalDuration(), selectedMode)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -662,24 +743,36 @@ export default function BookingPage() {
             {/* Book Button */}
             <button
               onClick={handleBookingSubmit}
-              disabled={isBookingLoading || !selectedDate || !selectedSlot || !meetingTopic.trim()}
+              disabled={
+                isBookingLoading || 
+                !selectedDate || 
+                selectedSlots.length === 0 || 
+                !meetingTopic.trim() ||
+                !mentor?.pricing ||
+                getPricePer15Minutes(selectedMode) === null
+              }
               className={`w-full py-3 rounded-xl font-bold transition-all ${
-                isBookingLoading || !selectedDate || !selectedSlot || !meetingTopic.trim()
+                isBookingLoading || 
+                !selectedDate || 
+                selectedSlots.length === 0 || 
+                !meetingTopic.trim() ||
+                !mentor?.pricing ||
+                getPricePer15Minutes(selectedMode) === null
                   ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50"
               }`}
             >
-              {isBookingLoading ? "Processing..." : "Book Session"}
+              {!mentor?.pricing ? "Pricing Not Available" : isBookingLoading ? "Processing..." : "Book Sessions"}
             </button>
 
             {/* Helper Text */}
             {!selectedDate && uniqueAvailableDates.length > 0 && (
               <p className="text-center text-gray-500 text-xs">Select a date to continue</p>
             )}
-            {selectedDate && !selectedSlot && getAvailableSlotsForDate().length > 0 && (
-              <p className="text-center text-gray-500 text-xs">Choose a time slot</p>
+            {selectedDate && selectedSlots.length === 0 && getAvailableSlotsForDate().length > 0 && (
+              <p className="text-center text-gray-500 text-xs">Choose one or more time slots</p>
             )}
-            {selectedDate && selectedSlot && !meetingTopic.trim() && (
+            {selectedDate && selectedSlots.length > 0 && !meetingTopic.trim() && (
               <p className="text-center text-gray-500 text-xs">Describe your meeting topic</p>
             )}
           </div>

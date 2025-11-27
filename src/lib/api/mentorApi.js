@@ -39,14 +39,40 @@ export const getDashboardProfile = async () => {
 /**
  * Updates the mentor's pricing information.
  * This route sends cookies automatically for authentication.
- * @param {Array} pricingData - Array of pricing objects with type and price (per minute)
- * @param {number} minDuration - Minimum session duration in minutes
+ * @param {Array} pricingData - Array of pricing objects with type and price (for 15 minutes)
  * @returns {Promise<object>} The server response.
  */
-export const updatePricing = async (pricingData, minDuration) => {
+export const updatePricing = async (pricingData) => {
   const response = await api.put('/mentor/dashboard/pricing', {
-    pricing: pricingData,
-    minSessionDuration: minDuration
+    pricing: pricingData
+  });
+  return response.data;
+};
+
+/**
+ * Updates the mentor's profile information.
+ * This route sends cookies automatically for authentication.
+ * @param {FormData} formData - FormData object with profile fields
+ * @returns {Promise<object>} The server response.
+ */
+export const updateProfile = async (formData) => {
+  const response = await api.put('/mentor/dashboard/profile', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+/**
+ * Updates the mentor's pricing information for the new API format.
+ * This route sends cookies automatically for authentication.
+ * @param {Array} pricingData - Array of pricing objects with type and price (for 15 minutes)
+ * @returns {Promise<object>} The server response.
+ */
+export const updatePricingNew = async (pricingData) => {
+  const response = await api.put('/mentor/dashboard/pricing', {
+    pricing: pricingData
   });
   return response.data;
 };
@@ -93,6 +119,19 @@ export const updateProfilePhoto = async (formData) => {
 export const updateBio = async (bio) => {
   const response = await api.put('/mentor/dashboard/profile', {
     experienceInfo: bio
+  });
+  return response.data;
+};
+
+/**
+ * Updates the mentor's expertise areas.
+ * This route sends cookies automatically for authentication.
+ * @param {Array} expertiseData - Array of expertise strings
+ * @returns {Promise<object>} The server response.
+ */
+export const updateExpertise = async (expertiseData) => {
+  const response = await api.put('/expertise', {
+    expertise: expertiseData
   });
   return response.data;
 };

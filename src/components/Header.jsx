@@ -7,12 +7,11 @@ import Image from "next/image"; // No change
 import {
   FaUserCircle, FaBars, FaTimes,
   FaInstagram, FaYoutube, FaEnvelope, FaSearch,
-  FaWallet, FaUser, FaSignOutAlt, FaTachometerAlt
+  FaUser, FaSignOutAlt, FaTachometerAlt
 } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import AuthModal from "@/components/AuthModal";
-import ConsultantJoinModal from "@/components/ConsultantJoinModal";
-import RechargeModal from "@/components/RechargeModal"; 
+import ConsultantJoinModal from "@/components/ConsultantJoinModal"; 
 
 // Import Redux hooks and actions
 import { useSelector, useDispatch } from "react-redux";
@@ -69,8 +68,6 @@ export default function Header() {
   const [openCategoryIndex, setOpenCategoryIndex] = useState(null);
   const categoryRefs = useRef([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  
-  const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   
   const dispatch = useDispatch();
@@ -312,28 +309,6 @@ export default function Header() {
                       </p>
                     </div>
 
-                    <div className="px-4 py-3 border-b border-gray-700">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-xs text-gray-400 flex items-center">
-                            <FaWallet className="mr-2" /> Wallet Balance
-                          </p>
-                          <p className="text-lg font-semibold text-white">
-                            ₹{user?.walletBalance ? user.walletBalance.toFixed(2) : '0.00'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setShowRechargeModal(true);
-                            setProfileDropdownOpen(false);
-                          }}
-                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md transition"
-                        >
-                          Add Money
-                        </button>
-                      </div>
-                    </div>
-
                     <div className="py-1">
                       {user.role === 'MENTOR' && (
                         <Link
@@ -450,22 +425,6 @@ export default function Header() {
               {isLoggedIn && user ? (
                 // LOGGED-IN (MOBILE)
                 <>
-                  <div className="p-4 bg-gray-900 rounded-lg">
-                    <p className="text-xs text-gray-400">Wallet Balance</p>
-                    <p className="text-xl font-semibold text-white">
-                      ₹{user?.walletBalance ? user.walletBalance.toFixed(2) : '0.00'}
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowRechargeModal(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full mt-2 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-                    >
-                      Add Money
-                    </button>
-                  </div>
-                  
                   {user.role === 'MENTOR' && (
                     <Link
                       href="/mentor/myprofile"
@@ -609,17 +568,6 @@ export default function Header() {
             dispatch(setLoginSuccess(userData));
             // Ensure closing state is reset for future modal opens
             dispatch(setClosing(false));
-          }}
-        />
-      )}
-      
-      {/* Recharge Modal (No Change) */}
-      {showRechargeModal && (
-        <RechargeModal 
-          onClose={() => setShowRechargeModal(false)} 
-          onRechargeSuccess={(updatedUser) => {
-             dispatch(setLoginSuccess(updatedUser));
-             setShowRechargeModal(false);
           }}
         />
       )}

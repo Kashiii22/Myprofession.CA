@@ -49,6 +49,11 @@ export default function Dashboard() {
         setError(null);
         const response = await getDashboardProfile();
         
+        // Check if redirect was handled by axios interceptor
+        if (response.redirectHandled) {
+          return; // Don't proceed if redirect is happening
+        }
+        
         if (response.success) {
           console.log('Dashboard data received:', response.data);
           setDashboardData(response.data);
@@ -62,6 +67,11 @@ export default function Dashboard() {
           throw new Error(response.message || 'Failed to fetch dashboard data');
         }
       } catch (err) {
+        // Handle 403 error specifically for unauthorized access first
+        if (err.response && err.response.status === 403) {
+          router.push('/unauthorized');
+          return;
+        }
         console.error('Error fetching dashboard data:', err);
         setError(err.message);
         toast.error('Failed to load dashboard data');
@@ -116,7 +126,7 @@ export default function Dashboard() {
     // User is logged in but is not a mentor
     if (isAuthenticated && user && user.role !== "MENTOR") {
       toast.error("Access denied. Mentor access required.");
-      router.push("/");
+      router.push("/unauthorized");
       return;
     }
   }, [isAuthenticated, user, router, authCheckDelay]);

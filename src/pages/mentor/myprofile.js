@@ -8,7 +8,7 @@ import {
   updateProfessionalDetails,
 } from '../../redux/expertSlice';
 import { toast } from 'react-hot-toast';
-import { getDashboardProfile, updatePricing, updateAvailability, updateProfilePhoto, updateBio } from '../../lib/api/mentorApi';
+import { getDashboardProfile, updatePricing, updateProfilePhoto, updateBio, updatePricingNew, updateProfile, updateExpertise } from '../../lib/api/mentorApi';
 
 import {
   FaEdit, FaCamera, FaBriefcase, FaUserTie, FaEnvelope, FaUser,
@@ -25,6 +25,9 @@ const MyProfile = () => {
   const { personalDetails, professionalDetails } = useSelector((state) => state.profile);
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isLoggedIn);
+  
+  // Expertise categories from expert-profile.js
+  const expertiseCategories = ['Income Tax', 'GST', 'Audit', 'Accounting', 'Investment', 'Exam Oriented', 'Law & MCA'];
   
   // State for profile data
   const [profileData, setProfileData] = useState(null);
@@ -44,27 +47,16 @@ const MyProfile = () => {
   const [experience, setExperience] = useState(7);
   const [qualifications, setQualifications] = useState('CA, B.Com');
   const [editingProfessional, setEditingProfessional] = useState(false);
-  const [expertise, setExpertise] = useState('GST, Income Tax');
+  const [expertise, setExpertise] = useState('Income Tax, GST');
+  const [editingExpertise, setEditingExpertise] = useState(false);
   
   // Pricing state
   const [editingPricing, setEditingPricing] = useState(false);
   const [pricing, setPricing] = useState([
-    { type: 'chat', price: 5 }, // Price per minute
-    { type: 'video', price: 15 } // Price per minute
+    { type: 'chat', price: '' }, // Empty price for initial setup
+    { type: 'video', price: '' } // Empty price for initial setup
   ]);
   const [minSessionDuration, setMinSessionDuration] = useState(15);
-
-  // Availability state
-  const [editingAvailability, setEditingAvailability] = useState(false);
-  const [availability, setAvailability] = useState([
-    { day: 'Monday', slots: [] },
-    { day: 'Tuesday', slots: [] },
-    { day: 'Wednesday', slots: [] },
-    { day: 'Thursday', slots: [] },
-    { day: 'Friday', slots: [] },
-    { day: 'Saturday', slots: [] },
-    { day: 'Sunday', slots: [] }
-  ]);
 
   // useRef must also be declared before any conditional returns
   const profileRef = useRef(null);
@@ -77,20 +69,16 @@ const MyProfile = () => {
       setStatus(profileData?.registrationRef?.status || status);
       setExperience(profileData?.registrationRef?.yearsOfExperience || experience);
       setQualifications(profileData?.registrationRef?.qualification?.join(', ') || qualifications);
-      setExpertise((profileData?.registrationRef?.expertise || ['GST', 'Income Tax']).join(', '));
+      setExpertise((profileData?.registrationRef?.expertise || ['Income Tax', 'GST']).join(', '));
       
       // Update pricing data (filter out voice entries)
       if (profileData?.pricing) {
         const filteredPricing = profileData.pricing.filter(item => item.type !== 'voice');
+        // Pricing should already be in 15-minute format from backend
         setPricing(filteredPricing);
       }
       if (profileData?.minSessionDuration) {
         setMinSessionDuration(profileData.minSessionDuration);
-      }
-      
-      // Update availability data
-      if (profileData?.availability) {
-        setAvailability(profileData.availability);
       }
     }
   }, [profileData]);
@@ -309,22 +297,127 @@ const MyProfile = () => {
     }
   };
   
-  
 
-  const handleBioSave = () => {
-    dispatch(updatePersonalDetails({ bio }));
-    setEditingBio(false);
+  const handleBioSave = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('experienceInfo', bio);
+      
+      // Include existing name if available
+      if (profileData?.userRef?.name) {
+        formData.append('name', profileData.userRef.name);
+      }
+      
+      const response = await updateProfile(formData);
+      
+      if (response.success) {
+        toast.success('Bio updated successfully!');
+        setEditingBio(false);
+        // Refresh profile data
+        const profileResponse = await getDashboardProfile();
+        if (profileResponse.success) {
+          setProfileData(profileResponse.data);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update bio');
+      }
+    } catch (error) {
+      console.error('Error updating bio:', error);
+      toast.error('Failed to update bio: ' + error.message);
+    }
   };
 
-  const handleProfessionalSave = () => {
-    dispatch(updatePersonalDetails({ status }));
-    dispatch(updateProfessionalDetails({ experience, qualifications }));
-    setEditingProfessional(false);
+  const handleProfessionalSave = async () => {
+    try {
+      const formData = new FormData();
+      
+      // Include existing name if available
+      if (profileData?.userRef?.name) {
+        formData.append('name', profileData.userRef.name);
+      }
+      
+      // Include bio if available
+      if (bio) {
+        formData.append('experienceInfo', bio);
+      }
+      
+      // Add status (if backend expects this field)
+      formData.append('status', status);
+      
+      // Add years of experience
+      formData.append('yearsOfExperience', experience.toString());
+      
+      // Add qualifications as JSON string
+      const qualificationsArray = qualifications.split(',').map(q => q.trim()).filter(q => q);
+      formData.append('qualification', JSON.stringify(qualificationsArray));
+      
+      const response = await updateProfile(formData);
+      
+      if (response.success) {
+        toast.success('Professional details updated successfully!');
+        setEditingProfessional(false);
+        // Refresh profile data
+        const profileResponse = await getDashboardProfile();
+        if (profileResponse.success) {
+          setProfileData(profileResponse.data);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update professional details');
+      }
+    } catch (error) {
+      console.error('Error updating professional details:', error);
+      toast.error('Failed to update professional details: ' + error.message);
+    }
+  };
+
+  const handleExpertiseUpdate = async (newExpertise) => {
+    try {
+      // Convert expertise string to array with empty string check
+      const expertiseArray = newExpertise ? newExpertise.split(',').map(e => e.trim()).filter(e => e) : [];
+      
+      const response = await updateExpertise(expertiseArray);
+      
+      if (response.success) {
+        toast.success('Expertise updated successfully!');
+        setEditingExpertise(false);
+        // Refresh profile data
+        const profileResponse = await getDashboardProfile();
+        if (profileResponse.success) {
+          setProfileData(profileResponse.data);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update expertise');
+      }
+    } catch (error) {
+      console.error('Error updating expertise:', error);
+      toast.error('Failed to update expertise: ' + error.message);
+    }
   };
 
   const handlePricingSave = async () => {
     try {
-      const response = await updatePricing(pricing, minSessionDuration);
+      // Validate that both prices are filled when setting up new pricing
+      if (!profileData?.pricing || profileData.pricing.length === 0) {
+        const hasEmptyPrices = pricing.some(item => !item.price || item.price === '');
+        if (hasEmptyPrices) {
+          toast.error('Please fill in pricing for both chat and video sessions');
+          return;
+        }
+      }
+      
+      console.log('Saving pricing data (15-minute format):', pricing);
+      
+      // Backend expects 15-minute pricing format, no conversion needed
+      const pricingToSend = pricing.map(item => ({
+        type: item.type,
+        price: Number(item.price) // Send as 15-minute total price
+      }));
+      
+      console.log('Sending to API:', pricingToSend);
+      
+      // Use the new updatePricing API function that sends 15-minute pricing
+      const response = await updatePricingNew(pricingToSend);
+      
       if (response.success) {
         toast.success('Pricing updated successfully!');
         setEditingPricing(false);
@@ -338,6 +431,7 @@ const MyProfile = () => {
       }
     } catch (error) {
       console.error('Error updating pricing:', error);
+      console.error('Error details:', error.response?.data);
       toast.error('Failed to update pricing: ' + error.message);
     }
   };
@@ -345,56 +439,14 @@ const MyProfile = () => {
   const handlePriceChange = (index, field, value) => {
     const newPricing = [...pricing];
     if (field === 'price') {
-      newPricing[index][field] = Number(value);
+      // Allow empty string or valid numbers
+      if (value === '' || (!isNaN(value) && !isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+        newPricing[index][field] = value;
+      }
     } else {
       newPricing[index][field] = value;
     }
     setPricing(newPricing);
-  };
-
-  const handleAvailabilitySave = async () => {
-    try {
-      const response = await updateAvailability(availability);
-      if (response.success) {
-        toast.success('Availability updated successfully!');
-        setEditingAvailability(false);
-        // Refresh profile data to show updated availability
-        const profileResponse = await getDashboardProfile();
-        if (profileResponse.success) {
-          setProfileData(profileResponse.data);
-        }
-      } else {
-        throw new Error(response.message || 'Failed to update availability');
-      }
-    } catch (error) {
-      console.error('Error updating availability:', error);
-      toast.error('Failed to update availability: ' + error.message);
-    }
-  };
-
-  const handleSlotChange = (dayIndex, slotIndex, field, value) => {
-    const newAvailability = [...availability];
-    if (field === 'startTime' || field === 'endTime') {
-      newAvailability[dayIndex].slots[slotIndex][field] = value;
-    }
-    setAvailability(newAvailability);
-  };
-
-  const addSlot = (dayIndex) => {
-    const newAvailability = [...availability];
-    newAvailability[dayIndex].slots.push({
-      startTime: '',
-      endTime: ''
-    });
-    setAvailability(newAvailability);
-  };
-
-  const removeSlot = (dayIndex, slotIndex) => {
-    const newAvailability = [...availability];
-    if (newAvailability[dayIndex].slots.length > 0) {
-      newAvailability[dayIndex].slots.splice(slotIndex, 1);
-      setAvailability(newAvailability);
-    }
   };
 
   return (
@@ -422,7 +474,7 @@ const MyProfile = () => {
               <div className="flex-1">
                 <h3 className="text-yellow-300 text-lg font-bold mb-2">Complete Your Profile</h3>
                 <p className="text-yellow-100 text-sm leading-relaxed">
-                  Your mentor profile is not yet active. To start receiving consultation requests, please complete all required profile sections including personal information, professional details, pricing, and availability schedule.
+                  Your mentor profile is not yet active. To start receiving consultation requests, please complete all required profile sections including personal information, professional details, and pricing.
                 </p>
                 <div className="mt-4 flex gap-3">
                   <button
@@ -559,32 +611,128 @@ const MyProfile = () => {
                 <Detail label="KYC Status" value={profileData?.registrationRef?.kycProofType ? `Verified (${profileData.registrationRef.kycProofType})` : 'Not Verified'} icon={<FaCertificate />} />
                 <Detail label="Approval Status" value={profileData?.registrationRef?.approvalStatus || 'Pending'} icon={<FaCheckCircle />} />
                 <Detail label="Member Since" value={profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : '2024-01-01'} icon={<FaCalendarAlt />} />
-                <div className="flex justify-end col-span-full">
-                  <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingProfessional(true)} />
-                </div>
               </div>
             )}
           </Section>
 
           {/* Expertise */}
           <Section title="Areas of Expertise">
-            <div className="text-gray-300">
-              <p className="text-sm text-gray-400 font-semibold mb-2">Specialization Areas</p>
-              <div className="flex flex-wrap gap-2">
-                {profileData?.registrationRef?.expertise?.map((skill, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-blue-900/30 border border-blue-600/50 rounded-full text-blue-300">
-                    {skill}
-                  </span>
-                )) || <span className="text-gray-400">{expertise}</span>}
+            {editingExpertise ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-400 mb-4">Select your areas of expertise or enter custom ones separated by commas</p>
+                
+                {/* Expertise Categories - Using exact same categories as expert-profile.js */}
+                <div>
+                  <p className="text-sm text-gray-400 font-semibold mb-3">Available Categories:</p>
+                  <div className="flex flex-wrap gap-3">
+                    {expertiseCategories.map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          const currentExpertise = expertise ? expertise.split(',').map(e => e.trim()).filter(e => e) : [];
+                          if (!currentExpertise.includes(cat)) {
+                            setExpertise([...currentExpertise, cat].join(', '));
+                          } else {
+                            // Remove if already selected
+                            const newList = currentExpertise.filter(item => item !== cat);
+                            setExpertise(newList.join(', '));
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
+                          expertise && expertise.split(',').map(e => e.trim()).includes(cat)
+                            ? 'bg-blue-600 border-blue-500 text-white'
+                            : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Custom Input */}
+                <div>
+                  <p className="text-sm text-gray-400 font-semibold mb-2">Or enter custom areas:</p>
+                  <input
+                    type="text"
+                    value={expertise}
+                    onChange={(e) => setExpertise(e.target.value)}
+                    className="w-full bg-[#2c2c2e] text-white p-3 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="e.g., GST, Income Tax, Financial Planning"
+                  />
+                </div>
+                
+                {/* Preview Selected Expertise */}
+                {expertise && (
+                  <div>
+                    <p className="text-sm text-gray-400 font-semibold mb-2">Selected Expertise:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {expertise.split(',').map((e, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-blue-900/30 border border-blue-600/50 rounded-full text-blue-300 flex items-center gap-2">
+                          {e.trim()}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentList = expertise.split(',').map(item => item.trim()).filter(item => item);
+                              const newList = currentList.filter(item => item !== e.trim());
+                              setExpertise(newList.join(', '));
+                            }}
+                            className="text-blue-400 hover:text-red-400 transition text-xs"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      handleExpertiseUpdate(expertise);
+                      setEditingExpertise(false);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full transition"
+                  >
+                    Save Expertise
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExpertise((profileData?.registrationRef?.expertise || ['Income Tax', 'GST']).join(', '));
+                      setEditingExpertise(false);
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-full transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-400 font-semibold mb-2">Specialization Areas</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {profileData?.registrationRef?.expertise?.map((skill, idx) => (
+                    <span key={idx} className="px-3 py-1 bg-blue-900/30 border border-blue-600/50 rounded-full text-blue-300">
+                      {skill}
+                    </span>
+                  )) || <span className="text-gray-400">{expertise}</span>}
+                </div>
+                <div className="flex justify-end">
+                  <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingExpertise(true)} />
+                </div>
+              </div>
+            )}
           </Section>
 
           {/* Pricing */}
-          <Section title="Session Pricing (Per Minute)">
+          <Section title="Session Pricing (15 minute sessions)">
             {editingPricing ? (
               <div className="space-y-4">
-                <p className="text-sm text-gray-400">Set your pricing per minute for each session type</p>
+                <p className="text-sm text-gray-400">
+                  Set your pricing for 15-minute chat and video sessions
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {pricing.map((price, idx) => (
                     <div key={idx} className="space-y-2">
@@ -594,44 +742,27 @@ const MyProfile = () => {
                       <div className="flex gap-2 items-center">
                         <span className="text-gray-300">₹</span>
                         <input
-                          type="number"
-                          value={price.price}
+                          type="text"
+                          value={price.price || ''}
                           onChange={(e) => handlePriceChange(idx, 'price', e.target.value)}
                           className="flex-1 bg-[#2c2c2e] text-white p-2 rounded"
-                          placeholder="Price per minute"
-                          step="0.01"
-                          min="0"
+                          placeholder="Price for 15 minutes"
                         />
-                        <span className="text-gray-400 text-sm">/min</span>
+                        <span className="text-gray-400 text-sm">/15 min</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm text-gray-400 font-semibold">
-                      Minimum Session Duration (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      value={minSessionDuration}
-                      onChange={(e) => setMinSessionDuration(Number(e.target.value))}
-                      className="w-full bg-[#2c2c2e] text-white p-2 rounded"
-                      placeholder="Minimum duration in minutes"
-                      min="1"
-                    />
-                  </div>
-                </div>
                 <div className="flex gap-4">
                   <button
                     onClick={handlePricingSave}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full transition"
                   >
                     Save Pricing
                   </button>
                   <button
                     onClick={() => setEditingPricing(false)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-full"
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-full transition"
                   >
                     Cancel
                   </button>
@@ -639,111 +770,31 @@ const MyProfile = () => {
               </div>
             ) : (
               <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {profileData?.pricing?.map((price, idx) => (
-                    <Detail 
-                      key={idx} 
-                      label={`${price.type.charAt(0).toUpperCase() + price.type.slice(1)} Session`} 
-                      value={`₹${price.price}/minute`} 
-                      icon={<FaMoneyBillWave />} 
-                    />
+                <p className="text-sm text-gray-400 font-semibold mb-4">Current Pricing</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  {[
+                    { type: 'chat', price: pricing[0]?.price || 'Not set' },
+                    { type: 'video', price: pricing[1]?.price || 'Not set' }
+                  ].map((price, idx) => (
+                    <div key={idx} className="bg-[#2c2c2e] rounded-lg p-4 border border-gray-600">
+                      <p className="text-sm text-gray-400 mb-2">
+                        {price.type.charAt(0).toUpperCase() + price.type.slice(1)} Session
+                      </p>
+                      <p className="text-xl font-semibold text-white">
+                        {price.price === 'Not set' ? 'Not set' : `₹${price.price}`}
+                        <span className="text-sm text-gray-400 ml-2">/15 min</span>
+                      </p>
+                    </div>
                   ))}
-                  <Detail label="Minimum Session Duration" value={`${profileData?.minSessionDuration || 15} minutes`} icon={<FaClock />} />
                 </div>
-                <div className="flex justify-end mt-4">
+                <div className="flex justify-end">
                   <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingPricing(true)} />
                 </div>
               </div>
             )}
           </Section>
 
-          {/* Availability */}
-          <Section title="Availability Schedule">
-            {editingAvailability ? (
-              <div className="space-y-6">
-                <p className="text-sm text-gray-400">Manage your weekly availability schedule. Add time slots for each day when you're available.</p>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {availability.map((day, dayIndex) => (
-                    <div key={dayIndex} className="bg-[#2c2c2e] p-4 rounded-xl border border-gray-600">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-lg font-semibold text-blue-300">{day.day}</h4>
-                        <button
-                          onClick={() => addSlot(dayIndex)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm"
-                        >
-                          + Add Slot
-                        </button>
-                      </div>
-                      
-                      {day.slots.length > 0 ? (
-                        <div className="space-y-2">
-                          {day.slots.map((slot, slotIndex) => (
-                            <div key={slotIndex} className="flex gap-2 items-center">
-                              <input
-                                type="time"
-                                value={slot.startTime}
-                                onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'startTime', e.target.value)}
-                                className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
-                                placeholder="Start"
-                              />
-                              <span className="text-gray-400">to</span>
-                              <input
-                                type="time"
-                                value={slot.endTime}
-                                onChange={(e) => handleSlotChange(dayIndex, slotIndex, 'endTime', e.target.value)}
-                                className="bg-[#1a1a1d] text-white p-2 rounded border border-gray-600"
-                                placeholder="End"
-                              />
-                              <button
-                                onClick={() => removeSlot(dayIndex, slotIndex)}
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-sm">No slots scheduled for {day.day}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleAvailabilitySave}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
-                  >
-                    Save Schedule
-                  </button>
-                  <button
-                    onClick={() => setEditingAvailability(false)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-full"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {profileData?.availability?.map((day, idx) => (
-                    <Detail key={idx} label={day.day} value={day.slots.length > 0 ? 
-                      day.slots.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') : 
-                      'Not Available'
-                    } icon={<FaCalendarAlt />} />
-                  ))}
-                </div>
-                <div className="flex justify-end mt-4">
-                  <FaEdit className="text-blue-400 cursor-pointer text-sm sm:text-base" onClick={() => setEditingAvailability(true)} />
-                </div>
-              </div>
-            )}
-          </Section>
-
-          
-        </div>
+          </div>
       </main>
     </div>
   );

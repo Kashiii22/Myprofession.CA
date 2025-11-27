@@ -358,10 +358,6 @@ export default function ExpertProfile() {
   };
   
   const handleStep3to4 = () => {
-    if (professionalDetails.qualification.length === 0 || !professionalDetails.qualification[0]) {
-        toast.error("Please add at least one qualification.");
-        return;
-    }
     setIsSubmitting(false);
     setStep(4);
   };
@@ -498,7 +494,7 @@ export default function ExpertProfile() {
               {step === 3 && (
                 <section>
                   <h3 className="text-2xl font-semibold text-white border-b border-gray-700 pb-3 mb-6">Your Qualifications</h3>
-                  <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} required={true} />
+                  <DynamicFieldArray title="Qualifications" fieldKey="qualification" icon={FaBook} values={professionalDetails.qualification} placeholder="Qualification" onUpdate={(k, i, v) => handleDynamicField(setProfessionalDetails, k, 'UPDATE', {index: i, value: v})} onAdd={(k) => handleDynamicField(setProfessionalDetails, k, 'ADD')} onRemove={(k, i) => handleDynamicField(setProfessionalDetails, k, 'REMOVE', {index: i})} />
                   <div className="mt-12 flex justify-between">
                       <button type="button" onClick={() => {setIsSubmitting(false); setStep(2);}} className="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition">Back</button>
                       <button type="button" onClick={handleStep3to4} className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition">Save & Continue</button>
